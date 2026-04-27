@@ -1,6 +1,6 @@
 # Story 1.2: Design Tokens, Theme Bootstrap & Typography
 
-Status: review
+Status: done
 
 ## Story
 
@@ -241,6 +241,14 @@ Claude Opus 4.6
 - `vitest.config.ts` — MODIFIED: added jsdom environment
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` — MODIFIED: story status updated
 
+### Review Findings
+
+- [x] [Review][Decision] Inline bootstrap script does not validate localStorage theme value — RESOLVED: patched to validate `"light"`/`"dark"` like `theme-bootstrap.ts`. [apps/web/index.html:10-16]
+- [x] [Review][Patch] Inline bootstrap script has no try/catch around localStorage — FIXED: added try/catch in inline script. [apps/web/index.html:10]
+- [x] [Review][Defer] `shamefully-hoist=true` in `.npmrc` defeats pnpm strict isolation — deferred, pre-existing infra decision from Story 1.2 [apps/web/.npmrc:1]
+- [x] [Review][Defer] `pnpm.overrides` for `resolve` package undocumented in code — deferred, pre-existing sandbox workaround from Story 1.2 [package.json]
+
 ## Change Log
 
 - 2026-04-27: Implemented design tokens, theme bootstrap, typography, and comprehensive test suite
+- 2026-04-27: Code review complete (joint review with Story 1.3). 1 decision-needed, 1 patch, 2 deferred, 11 dismissed.

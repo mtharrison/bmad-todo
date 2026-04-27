@@ -12,8 +12,10 @@ export function CaptureLine() {
 
   function handleKeyDown(event: KeyboardEvent) {
     if (!inputEl) return;
+    if (event.isComposing) return;
     if (event.key === "Enter") {
       event.preventDefault();
+      if (inputEl.value.trim().length === 0) return;
       createTask(inputEl.value);
       inputEl.value = "";
       inputEl.focus();

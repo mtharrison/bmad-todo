@@ -5,6 +5,7 @@ export type ActiveTask = {
   id: string;
   text: string;
   createdAt: number;
+  completedAt: number | null;
 };
 
 const [tasks, setTasks] = createStore<ActiveTask[]>([]);
@@ -12,13 +13,23 @@ const [tasks, setTasks] = createStore<ActiveTask[]>([]);
 export { tasks };
 
 export function createTask(text: string): void {
-  if (text.trim().length === 0) return;
+  const trimmed = text.trim();
+  if (trimmed.length === 0) return;
   const task: ActiveTask = {
     id: generateId(),
-    text,
+    text: trimmed,
     createdAt: Date.now(),
+    completedAt: null,
   };
   setTasks((prev) => [task, ...prev]);
+}
+
+export function toggleTaskCompleted(id: string): void {
+  setTasks(
+    (t) => t.id === id,
+    "completedAt",
+    (current) => (current === null ? Date.now() : null),
+  );
 }
 
 export function clearAllTasks(): void {

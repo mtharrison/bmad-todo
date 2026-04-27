@@ -117,4 +117,51 @@ main.app-main {
 
 .task-row {
   padding: 8px 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 44px;
+  cursor: pointer;
+  outline: 0;
+}
+
+.task-row:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+.task-row[data-completed="true"] .task-text {
+  text-decoration: line-through;
+  color: var(--color-ink-muted);
+}
+
+.task-checkbox {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  clip-path: inset(50%);
+  transition: none;
+}
+
+.task-row:hover .task-checkbox,
+.task-row:focus-within .task-checkbox,
+.task-row:focus-visible .task-checkbox {
+  clip-path: none;
+}
+
+.task-row[data-completed="true"] .task-checkbox {
+  clip-path: none;
+}
+
+.task-tick {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  stroke: var(--color-accent);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
 }

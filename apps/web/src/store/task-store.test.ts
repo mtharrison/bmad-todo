@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { tasks, createTask, clearAllTasks } from "./task-store";
+import {
+  tasks,
+  createTask,
+  clearAllTasks,
+  toggleTaskCompleted,
+} from "./task-store";
 
 describe("task-store", () => {
   beforeEach(() => {
@@ -39,9 +44,70 @@ describe("task-store", () => {
     expect(tasks.length).toBe(0);
   });
 
+  it("trims whitespace from stored text", () => {
+    createTask("  Buy milk  ");
+    expect(tasks.length).toBe(1);
+    expect(tasks[0]!.text).toBe("Buy milk");
+  });
+
   it("produces distinct IDs for rapid consecutive calls", () => {
     createTask("a");
     createTask("b");
     expect(tasks[0]!.id).not.toBe(tasks[1]!.id);
+  });
+
+  it("new task has completedAt: null", () => {
+    createTask("walk dog");
+    expect(tasks[0]!.completedAt).toBeNull();
+  });
+
+  it("toggleTaskCompleted flips null to a number", () => {
+    createTask("walk dog");
+    const id = tasks[0]!.id;
+    toggleTaskCompleted(id);
+    expect(tasks[0]!.completedAt).toBeTypeOf("number");
+  });
+
+  it("toggleTaskCompleted flips back to null on second call", () => {
+    createTask("walk dog");
+    const id = tasks[0]!.id;
+    toggleTaskCompleted(id);
+    toggleTaskCompleted(id);
+    expect(tasks[0]!.completedAt).toBeNull();
+  });
+
+  it("toggleTaskCompleted preserves text, id, and createdAt", () => {
+    createTask("walk dog");
+    const { id, text, createdAt } = tasks[0]!;
+    toggleTaskCompleted(id);
+    expect(tasks[0]!.id).toBe(id);
+    expect(tasks[0]!.text).toBe(text);
+    expect(tasks[0]!.createdAt).toBe(createdAt);
+  });
+
+  it("toggleTaskCompleted preserves position (index)", () => {
+    createTask("first");
+    createTask("second");
+    const id = tasks[1]!.id;
+    toggleTaskCompleted(id);
+    expect(tasks[0]!.text).toBe("second");
+    expect(tasks[1]!.text).toBe("first");
+    expect(tasks[1]!.completedAt).toBeTypeOf("number");
+  });
+
+  it("toggling a non-existent id leaves the array unchanged", () => {
+    createTask("walk dog");
+    const before = tasks[0]!.completedAt;
+    toggleTaskCompleted("does-not-exist");
+    expect(tasks.length).toBe(1);
+    expect(tasks[0]!.completedAt).toBe(before);
+  });
+
+  it("toggling one task does not affect other tasks' completedAt", () => {
+    createTask("a");
+    createTask("b");
+    toggleTaskCompleted(tasks[0]!.id);
+    expect(tasks[0]!.completedAt).toBeTypeOf("number");
+    expect(tasks[1]!.completedAt).toBeNull();
   });
 });

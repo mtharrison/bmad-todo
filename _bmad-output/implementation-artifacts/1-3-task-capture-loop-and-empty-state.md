@@ -1,6 +1,6 @@
 # Story 1.3: Task Capture Loop and Empty State
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -598,7 +598,16 @@ Modified files:
 Deleted files:
 - apps/web/src/App.tsx (moved to components/)
 
+### Review Findings
+
+- [x] [Review][Decision] No text trimming before storage — RESOLVED: patched `createTask` to trim before storing. [apps/web/src/store/task-store.ts:14-18]
+- [x] [Review][Patch] Whitespace-only Enter clears input when it should not — FIXED: added trim guard before clearing input in `CaptureLine.tsx`. [apps/web/src/components/CaptureLine.tsx:16-19]
+- [x] [Review][Patch] IME composition events not handled — FIXED: added `event.isComposing` guard in `handleKeyDown`. [apps/web/src/components/CaptureLine.tsx:14]
+- [x] [Review][Defer] E2E tests assume desktop viewport for auto-focus assertions — if Playwright config adds mobile viewport, smoke and j4 tests will fail since `CaptureLine` skips auto-focus on mobile. [tests/e2e/smoke.spec.ts, tests/e2e/j4-first-ever-visit.spec.ts] — deferred, pre-existing assumption
+- [x] [Review][Defer] No maximum task count or text length limit — unbounded in-memory growth possible. Address when persistence lands in Story 1.9. [apps/web/src/store/task-store.ts] — deferred, out of scope
+
 ## Change Log
 
 - 2026-04-27: Story created and set to ready-for-dev. Comprehensive context engine analysis completed.
 - 2026-04-27: Implementation complete. All tasks/subtasks done. 48 unit tests pass, build succeeds (9.4 KB gzip). E2E tests written, deferred to CI (sandbox network restriction).
+- 2026-04-27: Code review complete (joint review with Story 1.2). 1 decision-needed, 2 patches, 2 deferred, 11 dismissed.

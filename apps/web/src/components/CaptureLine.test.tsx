@@ -57,7 +57,8 @@ describe("CaptureLine", () => {
     input.value = "   ";
     fireEvent.keyDown(input, { key: "Enter" });
 
-    expect(spy).toHaveBeenCalledWith("   ");
+    expect(spy).not.toHaveBeenCalled();
+    expect(input.value).toBe("   ");
     expect(taskStore.tasks.length).toBe(0);
   });
 

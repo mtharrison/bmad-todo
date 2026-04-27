@@ -208,3 +208,120 @@ The pattern across all 26 flips: **distinctiveness via competent restraint.** Th
 | ⭐⭐ | Checkbox A1 — Hand-textured tick mark | Cheap, distinctive, almost free to ship. |
 | ⭐⭐ | Checkbox C1+C2 — Stamp time + inline undo | Trust + reversibility wired into one gesture. |
 
+
+---
+
+## Synthesis & Action Plan
+
+### The product thesis (one-line)
+
+> **A Todo app that operates at the speed of thought, where empty is beautiful, and every millisecond is on the spec sheet.**
+
+### Three pillars × Concrete moves
+
+#### Pillar 1: Shockingly Fast
+- **Latency budgets as engineering discipline** — <16ms keystroke→render; <50ms check→strike; <100ms add→appear.
+- **Local-first architecture** — tasks instantly present on open; no skeleton loaders.
+- **Optimistic-everything** with honest sync state — never duplicate, never lose, surface conflict only if real.
+- **Sub-100ms feedback on check-off** — no animation that blocks the next action.
+- **Global quick-capture hotkey** — `cmd+enter` from anywhere drops a task in.
+
+#### Pillar 2: Test-First Rigor
+- **Latency budgets are tested** — automated regression tests on input → render timings.
+- **Property-based tests on destructive operations** — completion, deletion, undo, sync conflict resolution.
+- **Sync invariant tests** — never duplicate, never lose data; validated by stress test.
+- **Visible latency** in dev/debug mode — discipline made tangible.
+- **Real undo proven by test** — every destructive action reversible AND verified to actually restore data.
+
+#### Pillar 3: Distinctively Designed
+- **Reads like a journal page, not a UI** — single column, generous line-height, single typeface.
+- **No checkbox until row is focused/hovered** — list at rest is just text.
+- **One single asymmetric list** — no headers (Today/Upcoming/Someday), no persistent filter chrome.
+- **Newest at top; completed slide down but stay visible** — list visually narrates the day.
+- **Capture input merged into top of list** — no separate "+" button.
+- **Hand-textured tick mark** — slight randomness, inky human texture.
+- **Empty Canvas** — empty state is composed silence, not stock photo + quote.
+- **One intentional, non-blue color identity.**
+- **No tour, no tooltips, no onboarding.**
+- **No XP, no streaks, no leaderboards, no usage stats.**
+- **The app doesn't measure or shame the user.**
+
+### Themes that emerged across phases
+
+1. **The Quiet Tool** — distinctiveness via competent restraint. The app stands out by what it refuses to do.
+2. **Honesty over theatre** — no fake loading, no fake cheer, no performative intelligence.
+3. **Flow state is sacred** — keyboard-first, direct manipulation, never modal, real undo.
+4. **Empty is a designed state** — the negative space is composed, not a placeholder.
+5. **Trust is binary** — destructive operations need test discipline; one bug = uninstall forever.
+
+### Top priority moves (the v1 signature)
+
+| Priority | Move | Why |
+|---|---|---|
+| **P0** | Latency Budget Discipline (numeric + tested) | The marketing differentiator + proof of pillars 1 & 2. |
+| **P0** | Journal-page list aesthetic (single column, no chrome, no headers, generous type) | The visual identity. The thing screenshots will show. |
+| **P0** | No checkbox until focused/hovered | Required for the journal aesthetic to land. |
+| **P0** | Local-first + optimistic everything + honest sync | Required for "shockingly fast" to be true, not marketing. |
+| **P0** | Real undo across the session | Required for trust. |
+| **P1** | Capture input merged into top of list | Removes UI element + reinforces "place a task." |
+| **P1** | Hand-textured tick mark | Cheap, distinctive, ~free to ship. |
+| **P1** | Inline undo on completion | Trust + reversibility wired into one gesture. |
+| **P1** | One intentional color identity (not blue/grey) | Visual differentiation. |
+| **P2** | Sensible autocomplete (history-grounded only, single suggestion, no flicker) | Useful without performing intelligence. |
+| **P2** | Global quick-capture hotkey | Capture latency = ~0. |
+| **P2** | User-rebindable shortcuts | Power-user respect. |
+
+### Anti-features (deliberately NOT in v1)
+
+These came up across the session as things every competitor does that we explicitly refuse:
+
+- No XP / streaks / levels / gamification
+- No social / leaderboards / peer comparison
+- No usage stats / time tracking against the user
+- No re-engagement notifications
+- No onboarding tour or tooltips
+- No empty-state stock photos or motivational quotes
+- No persistent navigation chrome
+- No section headers (Today / Upcoming / Someday)
+- No skeleton loaders for local data
+- No blocking animations on completion
+- No autocomplete that guesses or rewrites mid-keystroke
+- No silent text correction
+- No default sound notifications
+- No spinners / "saving…" / "syncing…" indicators
+- No spatial canvas mode (deferred, possibly v2)
+- No timeline view (deferred, possibly v2)
+
+### Session statistics
+
+- **Total ideas generated:** 82 across 3 techniques
+  - Phase 1 (Reverse Brainstorming): 26 awful ideas → 26 flipped design rules
+  - Phase 2 (Cross-Pollination): 18 imported patterns + 3 signature intersections
+  - Phase 3 (SCAMPER): 28 candidate moves + 6 tier-ranked signature moves
+- **Techniques completed:** 3 of 3 in planned sequence
+- **Duration:** ~50 minutes
+- **Output:** v1 design constitution + thesis + tier-ranked priority list
+
+### Recommended next steps
+
+This session's output should flow directly into the next BMad phase. The PRD draft in `docs/` describes the *functional* skeleton (CRUD, single-user, persistence). This brainstorm has produced the *characterological* layer that makes v1 distinctive. Both need to merge.
+
+**Recommended sequence (run each in a fresh context window):**
+
+1. **`bmad-create-prd`** *(Phase 2-planning, required)* — start the formal PRD workflow. Reference this session document so the design constitution, anti-features list, and signature moves get baked in as non-functional requirements and explicit out-of-scope items.
+2. **`bmad-create-ux-design`** *(Phase 2-planning, recommended)* — strongly recommended given how UI-led this product is. The journal-page aesthetic and SCAMPER moves are UX specifications waiting to be made concrete.
+3. **`bmad-technical-research`** *(Phase 1-analysis, optional)* — if the latency budgets and local-first architecture need stack validation before the PRD locks. Particularly if "<16ms keystroke→render" requires specific framework / persistence / sync technology choices.
+4. **`bmad-create-architecture`** *(Phase 3-solutioning, required, later)* — the architecture phase will need to explicitly address the latency budgets and local-first sync model as primary design constraints, not afterthoughts.
+
+### Session reflections
+
+**What worked:** The disrupt → diverge → converge sequence was the right shape. Reverse Brainstorming exposed the genre's unwritten rules quickly; Cross-Pollination injected positive borrowed energy from three carefully chosen non-productivity domains; SCAMPER converged on shippable atoms.
+
+**Breakthrough moments:**
+- The "Quiet Tool" thesis crystallizing after the 26 reverse-brainstormed flips.
+- The aviation/audio/zen-garden trio reinforcing each other (latency discipline appeared in all three independently).
+- "Reads like a journal page, not a UI" emerging as the single most distinctive aesthetic move.
+- User pushback on "no autocomplete" → sharper rule about *sensible* autocomplete that performs no intelligence.
+
+**Creative dynamic:** User brought strong opinions and sharp critique; AI brought structured technique scaffolding and rapid synthesis. Productive partnership characterized by user willingness to push back on AI proposals (e.g., the autocomplete revision) — exactly the dynamic these techniques are designed to enable.
+

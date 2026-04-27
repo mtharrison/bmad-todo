@@ -14,6 +14,11 @@
     "format": "prettier --check .",
     "format:fix": "prettier --write ."
   },
+  "pnpm": {
+    "overrides": {
+      "resolve": "^1.22.8"
+    }
+  },
   "devDependencies": {
     "@eslint/js": "^9.25.1",
     "@playwright/test": "^1.52.0",

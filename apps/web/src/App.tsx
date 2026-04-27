@@ -1,6 +1,6 @@
 export function App() {
   return (
-    <main>
+    <main class="bg-paper text-ink">
       <h1>bmad-todo</h1>
     </main>
   );

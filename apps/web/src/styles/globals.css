@@ -1,6 +1,62 @@
+@font-face {
+  font-family: "Fraunces";
+  src: url("/fonts/Fraunces-VF.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-display: block;
+  font-variation-settings: "opsz" 14;
+}
+
 @theme {
-  /* Design tokens — placeholder for Story 1.2 */
-  --color-primary: #2563eb;
-  --color-background: #ffffff;
-  --color-foreground: #1a1a1a;
+  --color-*: initial;
+  --font-*: initial;
+
+  --color-paper: #F4EFE6;
+  --color-ink: #1F1A14;
+  --color-ink-muted: #1F1A1499;
+  --color-rule: #1F1A1422;
+  --color-accent: #9C3B1B;
+
+  --font-body: "Fraunces", serif;
+  --font-size-body: 18px;
+  --line-height-body: 1.55;
+  --letter-spacing-body: 0;
+
+  --spacing: 4px;
+
+  --motion-default: 150ms;
+  --motion-instant: 0ms;
+}
+
+:root,
+[data-theme="light"] {
+  --color-paper: #F4EFE6;
+  --color-ink: #1F1A14;
+  --color-ink-muted: #1F1A1499;
+  --color-rule: #1F1A1422;
+  --color-accent: #9C3B1B;
+  --motion-default: 150ms;
+  --motion-instant: 0ms;
+}
+
+[data-theme="dark"] {
+  --color-paper: #1A1612;
+  --color-ink: #E8DFCE;
+  --color-ink-muted: #E8DFCE99;
+  --color-rule: #E8DFCE22;
+  --color-accent: #6B8E7F;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-default: var(--motion-instant);
+  }
+}
+
+html {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  letter-spacing: var(--letter-spacing-body);
 }

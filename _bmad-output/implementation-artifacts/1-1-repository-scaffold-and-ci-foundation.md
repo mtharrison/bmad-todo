@@ -1,6 +1,6 @@
 # Story 1.1: Repository Scaffold and CI Foundation
 
-Status: review
+Status: done
 
 ## Story
 
@@ -307,3 +307,33 @@ Claude Opus 4.6 (1M context)
 - docs/ANTI-FEATURES.md (new)
 - docs/CONTRIBUTING.md (new)
 - data/.gitkeep (new)
+
+### Review Findings
+
+**Patch (fix these):**
+- [x] [Review][Patch] Add `concurrently` to dev script — replace & backgrounding with labeled output and crash propagation [package.json]
+- [x] [Review][Patch] Narrow ESLint `ignores` pattern — `**/*.config.*` is too broad; only ignore `eslint.config.js` itself [eslint.config.js]
+- [x] [Review][Patch] Add `eslint-plugin-import` + `no-restricted-paths` rule placeholder — components→store→sync boundary as specified in Dev Notes [eslint.config.js]
+- [x] [Review][Patch] server.ts has no error handling around app.listen() — unhandled rejection on port conflict [apps/api/src/server.ts:6-10]
+- [x] [Review][Patch] PORT env var not validated — Number('abc') is NaN; Fastify listens on NaN port [apps/api/src/server.ts:8]
+- [x] [Review][Patch] Non-null assertion on getElementById('root') — passes null to render() if element missing [apps/web/src/index.tsx:5]
+- [x] [Review][Patch] Duplicate imports from node:fs — readFileSync imported twice [scripts/check-bundle-size.ts:1,3]
+- [x] [Review][Patch] No guard when dist/assets directory missing — readdirSync throws ENOENT, no actionable message [scripts/check-bundle-size.ts:15]
+- [x] [Review][Patch] Empty build silently passes bundle check — 0 KB totals always pass [scripts/check-bundle-size.ts:15]
+- [x] [Review][Patch] import.meta.dirname unavailable before Node 20.11 — .nvmrc pins '20' which includes 20.0–20.10 [scripts/check-bundle-size.ts:6]
+- [x] [Review][Patch] $SEARCH_DIRS unquoted in grep call — breaks on paths with spaces; use array expansion [scripts/check-anti-features.sh:31]
+- [x] [Review][Patch] Anti-features grep matches .md files — ErrorBoundary in ANTI-FEATURES.md causes false positive in CI [scripts/check-anti-features.sh]
+- [x] [Review][Patch] \bXP\b word-boundary broken on macOS BSD grep -E [scripts/check-anti-features.sh]
+- [x] [Review][Patch] check-anti-features.sh never invoked in CI — violations can reach main undetected [.github/workflows/ci.yml]
+- [x] [Review][Patch] E2E smoke tests have no CI job — AC5 violated; smoke.spec.ts never runs in CI [.github/workflows/ci.yml]
+- [x] [Review][Patch] bundle-budget CI job uses npx tsx — may pick a different version than locked in pnpm-lock.yaml [.github/workflows/ci.yml:58]
+- [x] [Review][Patch] playwright.config.ts inside tests/e2e/ — pnpm test:e2e from root won't find it without --config [tests/e2e/playwright.config.ts]
+- [x] [Review][Patch] @types/node missing from apps/api devDependencies [apps/api/package.json]
+- [x] [Review][Patch] TaskSchema.id and .title accept empty strings — add .min(1) constraint [packages/shared/src/schema.ts]
+- [x] [Review][Patch] no-restricted-exports doesn't block export { foo as default } — doesn't fully implement no-default-export constraint [eslint.config.js]
+- [x] [Review][Patch] Playwright webServer has no readiness timeout — slow CI start may time out at 60s default [tests/e2e/playwright.config.ts]
+
+**Deferred (pre-existing, not actionable now):**
+- [x] [Review][Defer] Vite proxy target hardcoded to localhost:3000 [apps/web/vite.config.ts] — deferred, pre-existing; environment-configurable proxy is future work
+- [x] [Review][Defer] TaskSchema missing updatedAt/order fields [packages/shared/src/schema.ts] — deferred, pre-existing; schema design for later stories
+- [x] [Review][Defer] GET /health has no dependency checks [apps/api/src/routes/health.ts] — deferred, pre-existing; appropriate scope for scaffold story

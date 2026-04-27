@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  testDir: ".",
+  testDir: "./tests/e2e",
   fullyParallel: true,
   forbidOnly: !!process.env["CI"],
   retries: process.env["CI"] ? 2 : 0,
@@ -20,14 +20,14 @@ export default defineConfig({
     {
       command: "pnpm --filter @bmad-todo/api dev",
       port: 3000,
+      timeout: 120000,
       reuseExistingServer: !process.env["CI"],
-      cwd: "../..",
     },
     {
       command: "pnpm --filter @bmad-todo/web dev",
       port: 5173,
+      timeout: 120000,
       reuseExistingServer: !process.env["CI"],
-      cwd: "../..",
     },
   ],
 });

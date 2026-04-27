@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-27
-last_updated: 2026-04-28T00:00:00Z
+last_updated: 2026-04-27
 project: bmad-todo
 project_key: NOKEY
 tracking_system: file-system
@@ -44,8 +44,8 @@ story_location: "{implementation_artifacts}"
 development_status:
   # Epic 1: Personal Todo MVP — Character-Complete v1
   epic-1: in-progress
-  1-1-repository-scaffold-and-ci-foundation: review
-  1-2-design-tokens-theme-bootstrap-and-typography: backlog
+  1-1-repository-scaffold-and-ci-foundation: done
+  1-2-design-tokens-theme-bootstrap-and-typography: in-progress
   1-3-task-capture-loop-and-empty-state: backlog
   1-4-task-completion-visual-state-and-tick-component: backlog
   1-5-task-edit-and-delete: backlog

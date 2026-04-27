@@ -1,11 +1,18 @@
-import { readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
-import { readFileSync } from "node:fs";
 
-const DIST_DIR = join(import.meta.dirname, "..", "apps", "web", "dist", "assets");
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const DIST_DIR = join(__dirname, "..", "apps", "web", "dist", "assets");
 const INITIAL_BUDGET_KB = 50;
 const TOTAL_BUDGET_KB = 150;
+
+if (!existsSync(DIST_DIR)) {
+  // eslint-disable-next-line no-console
+  console.error(`dist/assets not found at ${DIST_DIR} — run pnpm build first`);
+  process.exit(1);
+}
 
 function getGzipSize(filePath: string): number {
   const content = readFileSync(filePath);
@@ -13,6 +20,13 @@ function getGzipSize(filePath: string): number {
 }
 
 const files = readdirSync(DIST_DIR);
+
+if (files.length === 0) {
+  // eslint-disable-next-line no-console
+  console.error("No assets found in dist/assets — build produced no output");
+  process.exit(1);
+}
+
 let totalGzipBytes = 0;
 let initialJsGzipBytes = 0;
 

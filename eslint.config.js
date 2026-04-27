@@ -2,11 +2,12 @@ import js from "@eslint/js";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import globals from "globals";
+import importPlugin from "eslint-plugin-import";
 
 export default [
   js.configs.recommended,
   {
-    ignores: ["**/dist/**", "**/node_modules/**", "**/*.config.*", ".corepack/**"],
+    ignores: ["**/dist/**", "**/node_modules/**", ".corepack/**"],
   },
   {
     files: ["**/*.ts", "**/*.tsx"],
@@ -19,14 +20,31 @@ export default [
     },
     plugins: {
       "@typescript-eslint": tsPlugin,
+      "import": importPlugin,
     },
     rules: {
       "no-console": "error",
-      "no-restricted-exports": [
+      "import/no-default-export": "error",
+      "import/no-restricted-paths": [
         "error",
-        { restrictDefaultExports: { direct: true } },
+        {
+          zones: [
+            // components → store → sync; no reverse imports
+            { target: "./apps/web/src/components", from: "./apps/web/src/sync" },
+            { target: "./apps/web/src/store", from: "./apps/web/src/components" },
+            { target: "./apps/web/src/sync", from: "./apps/web/src/components" },
+            { target: "./apps/web/src/sync", from: "./apps/web/src/store" },
+          ],
+        },
       ],
       ...tsPlugin.configs.recommended.rules,
+    },
+  },
+  {
+    // Config files require default exports by their respective frameworks
+    files: ["**/vite.config.ts", "**/vitest.config.ts", "playwright.config.ts"],
+    rules: {
+      "import/no-default-export": "off",
     },
   },
   {

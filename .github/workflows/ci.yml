@@ -44,6 +44,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
 
+  anti-features:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/check-anti-features.sh
+
   bundle-budget:
     runs-on: ubuntu-latest
     steps:
@@ -55,4 +61,18 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      - run: npx tsx scripts/check-bundle-size.ts
+      - run: pnpm exec tsx scripts/check-bundle-size.ts
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm build
+      - run: pnpm test:e2e

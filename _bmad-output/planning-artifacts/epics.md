@@ -1,5 +1,5 @@
 ---
-stepsCompleted: ['step-01-validate-prerequisites', 'step-02-design-epics']
+stepsCompleted: ['step-01-validate-prerequisites', 'step-02-design-epics', 'step-03-create-stories']
 inputDocuments:
   - '_bmad-output/planning-artifacts/prd.md'
   - '_bmad-output/planning-artifacts/architecture.md'
@@ -9,7 +9,7 @@ project_name: 'bmad-todo'
 user_name: 'Matt'
 date: '2026-04-27'
 workflowType: 'create-epics-and-stories'
-workflowComplete: false
+workflowComplete: true
 ---
 
 # bmad-todo - Epic Breakdown
@@ -359,5 +359,472 @@ Vision-scope items must each pass a Quiet-Tool-thesis review before promotion to
 
 **FRs / NFRs covered:** *None from this PRD revision.* Placeholder goal statement only.
 
-<!-- Story decomposition for Epic 1 will be appended in step-03. Epic 2 and Epic 3 receive no story decomposition in this workflow run. -->
+<!-- Story decomposition for Epic 1 appended in step-03. Epic 2 and Epic 3 receive no story decomposition in this workflow run. -->
+
+## Epic 1: Personal Todo MVP — Character-Complete v1
+
+### Story 1.1: Repository Scaffold and CI Foundation
+
+As a developer,
+I want a correctly configured monorepo with type-checking, linting, and CI skeleton in place,
+So that every subsequent story is built on a known, reproducible foundation with quality gates from day one.
+
+**Acceptance Criteria:**
+
+**Given** the repository is cloned,
+**When** `pnpm install && pnpm build` runs,
+**Then** both `apps/web` (Vite + React 18 + TypeScript strict) and `apps/server` (Fastify + TypeScript strict) compile without errors.
+
+**Given** the app is started,
+**When** `GET /health` is called on the server,
+**Then** it returns HTTP 200.
+
+**Given** a PR is opened,
+**When** CI runs,
+**Then** type-check, lint, test, and bundle-size steps all run; any failure blocks merge.
+
+**Given** the initial JS bundle is built,
+**When** the bundle-size gate runs,
+**Then** the CI step records initial bundle size (placeholder threshold; tightened as features land — final enforced limits are ≤50KB initial / ≤150KB total gzipped per NFR6).
+
+**Given** Playwright is installed,
+**When** the smoke test suite runs,
+**Then** at least one end-to-end smoke test passes against the running app.
+
+**And** all workspace scripts (`dev`, `build`, `test`, `typecheck`, `lint`) are documented in the root README.
+
+---
+
+### Story 1.2: Design Tokens, Theme Bootstrap & Typography
+
+As Sam,
+I want the application to load with the correct visual theme and typography without any flash of wrong appearance,
+So that first impressions of the app are calm and consistent regardless of my OS preference.
+
+**Acceptance Criteria:**
+
+**Given** the user has no stored theme preference and OS prefers dark mode,
+**When** the app loads,
+**Then** `data-theme="dark"` is set on `<html>` synchronously before first paint with no flash of unstyled content (FOUC).
+
+**Given** the user has `localStorage.theme = "light"` in a dark-preference OS,
+**When** the app loads,
+**Then** `data-theme="light"` is applied (user override wins over OS preference).
+
+**Given** both themes are defined,
+**When** the light theme is active,
+**Then** `--color-paper: #F4EFE6`, `--color-ink: #1F1A14`, `--color-ink-muted: rgba(31,26,20,.6)`, `--color-rule: rgba(31,26,20,.133)`, `--color-accent: #9C3B1B` are applied.
+
+**Given** both themes are defined,
+**When** the dark theme is active,
+**Then** `--color-paper: #1A1612`, `--color-ink: #E8DFCE`, `--color-ink-muted: rgba(232,223,206,.6)`, `--color-rule: rgba(232,223,206,.133)`, `--color-accent: #6B8E7F` are applied.
+
+**Given** the app is rendered,
+**When** any text element is inspected,
+**Then** body font is Fraunces Variable (self-hosted at `apps/web/public/fonts/Fraunces-VF.woff2`, subset Latin+Latin-Ext, `font-display: block`), 18px, weight 400, line-height 1.55, letter-spacing 0; no other font families are used in component code.
+
+**And** spacing scale tokens are defined (4/8/12/16/24/32/48/64/96px); Tailwind's default spacing scale is disabled.
+**And** `--motion-instant: 0ms` token is defined and applied on the `prefers-reduced-motion: reduce` path; no other animation runs under that preference.
+**And** a visual-regression snapshot of the blank screen passes for both light and dark themes.
+
+---
+
+### Story 1.3: Task Capture Loop and Empty State
+
+As Sam,
+I want to open the app and immediately type a new task that appears in my list when I press Enter,
+So that task capture requires zero navigation, zero clicks, and zero extra fields.
+
+**Acceptance Criteria:**
+
+**Given** the app is open on desktop,
+**When** the page loads,
+**Then** the CaptureLine `<input>` has focus automatically; no click is required.
+
+**Given** the CaptureLine has focus,
+**When** Sam types text and presses Enter,
+**Then** a new TaskRow appears at the top of the list containing exactly the typed text; CaptureLine clears and immediately retakes focus.
+
+**Given** Enter is pressed to add a task,
+**When** the task appears,
+**Then** no spinner, skeleton, or "saving…" indicator is shown at any point.
+
+**Given** no tasks exist,
+**When** the app renders,
+**Then** only the CaptureLine is visible on a generous canvas; no illustration, motivational copy, placeholder text, or onboarding content is present.
+
+**Given** two or more tasks exist,
+**When** a new task is added,
+**Then** it appears at position 1 (top); all existing tasks shift down, preserving newest-first order.
+
+**Given** the app is viewed at any viewport,
+**When** the layout renders,
+**Then** an asymmetric single column is applied via container queries (`@container` on `<main>`): left+96px on desktop (≥1024px), ≤640px max-width; 64px/32px margins on tablet; 24px each side on mobile.
+
+**And** CaptureLine is an uncontrolled `<input type="text">` (DOM owns typed text; no per-keystroke React re-render); `aria-label="Add a task"`, `autocomplete="off"`, `spellcheck="true"`, `enterkeyhint="done"`.
+**And** text is captured verbatim; no auto-correction, auto-formatting, or rewriting is applied.
+**And** state is in-memory only this story; persistence is added in Story 1.9.
+
+---
+
+### Story 1.4: Task Completion, Visual State & Tick Component
+
+As Sam,
+I want to mark a task done with a single keypress or tap and see it visually acknowledged without any spinner or confirmation dialog,
+So that completing tasks feels instant and unobtrusive.
+
+**Acceptance Criteria:**
+
+**Given** a TaskRow has list focus,
+**When** Sam presses `X`,
+**Then** the task toggles between active and completed states.
+
+**Given** a TaskRow is visible,
+**When** Sam clicks or taps the row outside the text region,
+**Then** the task toggles completion state.
+
+**Given** a task is completed,
+**Then** it displays strikethrough text and reduced opacity; `aria-checked="true"` is set on its checkbox element; a Tick SVG appears.
+
+**Given** a task is active and at rest (no focus, no hover),
+**Then** no checkbox or completion affordance is visible (hidden via `clip-path: inset(50%)`); the affordance appears on focus or hover.
+
+**Given** any completion toggle occurs,
+**Then** no spinner, saving indicator, or success toast appears.
+
+**Given** two different tasks are completed,
+**When** their Tick components are rendered,
+**Then** the two SVG paths are not pixel-identical (Bezier control-point jitter of ±0.4px seeded by task id, stable across re-completions); both use `stroke: --color-accent`, `stroke-width: 2.2px`, round line-cap and line-join; `aria-hidden="true"`.
+
+**And** completed tasks remain visible in the list for the duration of the session; nothing is hidden, archived, or removed automatically.
+
+---
+
+### Story 1.5: Task Edit and Delete
+
+As Sam,
+I want to edit a task's text in place and delete tasks with a single keystroke — without leaving the list view or seeing any confirmation dialog,
+So that corrections and cleanup have zero ceremony.
+
+**Acceptance Criteria:**
+
+**Given** a TaskRow has list focus,
+**When** Sam presses `E`,
+**Then** the row enters edit mode (`contenteditable="plaintext-only"` activated on the text region).
+
+**Given** a TaskRow is visible,
+**When** Sam clicks or taps the task text region,
+**Then** the row enters edit mode.
+
+**Given** edit mode is active,
+**When** Sam presses Enter or clicks outside the row,
+**Then** the edit is committed; the task displays the updated text.
+
+**Given** edit mode is active,
+**When** Sam presses Escape,
+**Then** the edit is cancelled; the original text is fully restored.
+
+**Given** edit mode is committed with whitespace-only text,
+**Then** the task is deleted and an undo entry is pushed to the stack (treated as delete-with-undo, not an empty save).
+
+**Given** a TaskRow has list focus,
+**When** Sam presses `D`,
+**Then** the task is removed from the list; the action is undoable.
+
+**Given** any edit or delete action,
+**Then** no modal dialog, confirmation prompt, or blocking overlay appears; the operation completes in place without leaving the list view.
+
+---
+
+### Story 1.6: Session-Long Undo Stack
+
+As Sam,
+I want to undo any action — completion toggle, edit, or deletion — during my session,
+So that mistakes are instantly reversible without fear.
+
+**Acceptance Criteria:**
+
+**Given** Sam has toggled completion on a task,
+**When** Sam presses `U`,
+**Then** the task returns to its prior completion state with its original text and position intact.
+
+**Given** Sam has edited a task,
+**When** Sam presses `U`,
+**Then** the task text is restored to its pre-edit value.
+
+**Given** Sam has deleted a task,
+**When** Sam presses `U`,
+**Then** the task reappears at its original position in the list with its original text and completion status.
+
+**Given** multiple actions have been taken,
+**When** Sam presses `U` repeatedly,
+**Then** actions are undone in reverse order (LIFO); each press undoes exactly one action.
+
+**Given** Sam presses `U` with an empty undo stack,
+**Then** nothing happens; no error or feedback is shown.
+
+**And** the undo stack is session-scoped (lost on page reload; cross-session undo is Growth scope).
+**And** each stack entry stores `{ inverseMutation, timestamp }`.
+**And** popped inverse mutations travel through the same `applyMutation` path as user mutations (idempotency-safe once persistence lands in Story 1.9).
+**And** 100% of destructive operations (complete, uncomplete, edit, delete) have reversibility tests verifying exact-state restoration: text, position, and completion status.
+
+---
+
+### Story 1.7: Keyboard Navigation and Two-Cursor Focus Model
+
+As Sam,
+I want to navigate and operate every task action from the keyboard alone, with a clear visual focus ring,
+So that I never need to reach for the mouse to manage my tasks.
+
+**Acceptance Criteria:**
+
+**Given** the app is open,
+**When** Sam presses `J` or `ArrowDown`,
+**Then** list focus moves to the next task down.
+
+**Given** the app is open,
+**When** Sam presses `K` or `ArrowUp`,
+**Then** list focus moves to the next task up.
+
+**Given** list focus is on a task,
+**When** Sam presses `X`, `E`, `D`, or `U`,
+**Then** the respective operation (toggle complete, edit, delete, undo) executes.
+
+**Given** the app is open,
+**When** Sam presses `N` or `Cmd+Enter`,
+**Then** CaptureLine receives focus.
+
+**Given** CaptureLine is focused,
+**When** Sam presses `X`, `U`, `J`, `K`, or activates the theme toggle,
+**Then** focus does not move away from CaptureLine (capture-line focus stickiness).
+
+**Given** list focus is on a task and the CaptureLine has its cursor,
+**When** Sam toggles completion on the focused row,
+**Then** the CaptureLine caret position is unaffected (two cursors are independent).
+
+**Given** any interactive element receives focus via keyboard,
+**Then** a 2px solid `--color-accent` outline with 4px offset and border-radius 2px appears on `:focus-visible` only (not `:focus` alone); the ring uses `outline` (not `box-shadow`) to survive `forced-colors` mode.
+
+**And** TaskList uses roving tabindex; each TaskRow is a tab stop reachable by Tab and by `J`/`K`.
+**And** a Playwright keyboard-only E2E test completes Journeys 1 (add task), 2 (complete task), and 5 (undo delete) with zero pointer events.
+
+---
+
+### Story 1.8: Theme Toggle, Dark Mode & Accessibility Tokens
+
+As Sam,
+I want to toggle between light and dark themes with my preference remembered across sessions, and for the app to always meet accessibility contrast requirements,
+So that I can use the app comfortably in any lighting condition and with any assistive technology.
+
+**Acceptance Criteria:**
+
+**Given** the theme toggle is activated (keyboard-accessible; `T` key or focusable button),
+**When** Sam triggers it,
+**Then** the theme switches between light and dark; `data-theme` on `<html>` updates immediately with no FOUC.
+
+**Given** Sam has switched the theme,
+**When** Sam closes and reopens the app,
+**Then** the previously selected theme is applied (`localStorage.theme` persisted).
+
+**Given** OS preference is dark and no override is stored,
+**When** Sam first opens the app,
+**Then** dark theme is active.
+
+**Given** both themes are active (separately),
+**When** contrast CI assertions run,
+**Then** body ink on paper ≥4.5:1; muted ink on paper ≥4.5:1; accent on paper ≥3:1 — both themes pass independently.
+
+**Given** `prefers-reduced-motion: reduce` is set,
+**When** any animation or transition would occur,
+**Then** `--motion-instant (0ms)` is substituted; no animation runs; p95 latency budgets remain within their thresholds.
+
+**Given** `prefers-contrast: more` is set,
+**Then** body ink darkens to maximum contrast, accent saturates, rule lines use full ink-muted; a visual-regression snapshot for this composition passes.
+
+**Given** `forced-colors` / Windows High Contrast mode is active,
+**Then** the focus ring uses `outline` (not `box-shadow`) and is visible; semantic system color tokens are applied where forced.
+
+**And** on mobile viewports, each TaskRow's tap target is ≥44×44px; tap on text region → edit mode; tap outside text region → toggle completion.
+
+---
+
+### Story 1.9: Cross-Session Persistence and Offline-First Sync
+
+As Sam,
+I want my tasks to be available every time I open the app — even offline — and to never see a loading spinner for any action I take,
+So that the app feels instant and trustworthy regardless of my network state.
+
+**Acceptance Criteria:**
+
+**Given** Sam has tasks from a previous session,
+**When** the app opens,
+**Then** tasks render from local cache (IndexedDB) before any network response arrives; no skeleton, spinner, or placeholder is displayed.
+
+**Given** Sam adds, completes, edits, or deletes a task while online,
+**When** the action is taken,
+**Then** the UI updates synchronously (optimistic mutation); server sync happens in the background with no visible indicator of any kind.
+
+**Given** Sam performs actions while offline,
+**When** each action is taken,
+**Then** it applies to local state immediately and is queued in the outbox.
+
+**Given** connectivity is restored after an offline period,
+**When** sync begins,
+**Then** queued mutations replay against the server in order; on completion the local state reflects the authoritative server state.
+
+**Given** a mutation is retried due to transient failure,
+**When** it is retried ≥10 times,
+**Then** the server produces no duplicate state (idempotency key on each mutation; TTL 14 days).
+
+**Given** the server and local state diverge (conflict),
+**When** reconciliation runs,
+**Then** the Annunciator is notified (wired fully in Story 1.10); local state is never silently overwritten without surfacing the conflict.
+
+**And** PostgreSQL schema: `tasks` table (`id`, `user_namespace`, `text`, `completed`, `position`, `created_at`, `updated_at`, `deleted_at` for soft-delete); `idempotency_keys` table (`key`, `result`, `created_at`).
+**And** Fastify API: `POST /tasks`, `GET /tasks`, `PATCH /tasks/:id`, `DELETE /tasks/:id` (soft-delete); all routes partitioned by `user_namespace`; idempotency key header accepted on all mutation routes.
+**And** server retains soft-deleted tasks for ≥30 days.
+**And** property-based test: 1000-op randomized workload with simulated offline/online/conflict transitions verifies never-duplicate and never-lose invariants; runs in CI.
+
+---
+
+### Story 1.10: Annunciator and Failure Feedback Routing
+
+As Sam,
+I want to be informed of sync problems through a single subtle indicator — and never see success confirmations for normal actions,
+So that the UI stays quiet and I only notice the dot when something genuinely needs my attention.
+
+**Acceptance Criteria:**
+
+**Given** the app is in normal operating state,
+**Then** the Annunciator is not visible (`display: none`); no status dot, badge, or indicator of any kind is shown.
+
+**Given** the app has been offline for more than 2 seconds,
+**When** the Annunciator threshold is crossed,
+**Then** a single 12px circular dot in `--color-accent` appears fixed-position at bottom-right (24px from each edge); `role="status"` and `aria-live="polite"` are present.
+
+**Given** a sync conflict is detected,
+**Then** the Annunciator dot appears; hovering or focusing it reveals a contextual label; clicking it triggers a recovery action.
+
+**Given** a storage error occurs,
+**Then** the Annunciator dot appears with the same treatment.
+
+**Given** a momentary network blip resolves within 2 seconds,
+**Then** the Annunciator never becomes visible (2-second transient threshold suppresses brief interruptions).
+
+**Given** connectivity is restored and sync completes successfully,
+**When** the normal state is re-established,
+**Then** the Annunciator disappears.
+
+**Given** any routine user action (add, complete, edit, delete, undo),
+**Then** no success toast, banner, modal, or animation appears confirming the action.
+
+**And** ALL failure feedback in the app routes through Annunciator; no component renders its own error UI; no per-action error toasts; no modal error dialogs; enforced by codebase grep blocking forbidden patterns (AR18).
+**And** Annunciator never: flashes red, plays sound, animates for decorative purposes, or displays a success state.
+
+---
+
+### Story 1.11: Dev Mode Latency Display & Anti-Feature Contract
+
+As a developer,
+I want a hidden in-browser latency display and a published anti-feature contract that makes the product's commitments explicit,
+So that performance regressions are immediately visible and the design constraints are a first-class repository artifact.
+
+**Acceptance Criteria:**
+
+**Given** the app is open,
+**When** the developer presses `Cmd+Shift+L`,
+**Then** a DevLatencyDisplay overlay appears showing live p95 keystroke-to-render and completion-gesture-to-strikethrough latency versus their respective budgets (<16ms and <50ms).
+
+**Given** DevLatencyDisplay is visible,
+**When** `Cmd+Shift+L` is pressed again,
+**Then** the overlay is hidden.
+
+**Given** DevLatencyDisplay is visible,
+**When** Sam types in CaptureLine,
+**Then** the latency display updates in real time with the measured latency.
+
+**And** DevLatencyDisplay has `aria-hidden="true"` (developer affordance, not a user feature).
+
+**Given** the repository,
+**When** `docs/ANTI-FEATURES.md` is read,
+**Then** it explicitly enumerates FR46–54 as observable commitments: no onboarding tour; no usage statistics; no gamification; no leaderboard; no re-engagement notifications; no mid-keystroke autocomplete rewrite; no default audible notification; no decorative/ambient motion; no AI-based task reordering.
+
+**And** `README.md` states the three p95 latency budgets (<16ms / <50ms / <100ms) and links to `ANTI-FEATURES.md`.
+**And** `docs/CONTRIBUTING.md` references `ANTI-FEATURES.md` as required reading before submitting a PR.
+
+---
+
+### Story 1.12: CI Performance, Accessibility & Visual-Regression Gates
+
+As a developer,
+I want every CI run to enforce the product's quality commitments — latency, bundle size, accessibility, contrast, and visual regression — so that no PR can ship a regression silently,
+So that the product's budgets are a living contract enforced by the build pipeline.
+
+**Acceptance Criteria:**
+
+**Given** a PR is opened,
+**When** the latency CI gate runs,
+**Then** p95 keystroke-to-render <16ms (NFR1), p95 completion-to-strikethrough <50ms (NFR2), and p95 enter-to-task-visible <100ms (NFR3) are each asserted; any regression fails the build.
+
+**Given** a PR is opened,
+**When** the bundle-size gate runs,
+**Then** initial JS bundle ≤50KB gzipped and total bundle ≤150KB gzipped are asserted; any regression fails the build.
+
+**Given** a PR is opened,
+**When** the axe-core accessibility audit runs against the rendered app,
+**Then** zero Level AA violations are reported; any violation fails the build.
+
+**Given** both themes are evaluated,
+**When** the contrast assertion test runs,
+**Then** body ink on paper ≥4.5:1, muted ink ≥4.5:1, accent ≥3:1 are each asserted for both light and dark themes independently; any failure fails the build.
+
+**Given** the keyboard-only E2E Playwright test runs,
+**When** it exercises Journeys 1 (add task), 2 (complete task), and 5 (undo delete),
+**Then** all three journeys complete successfully with zero pointer events; any pointer dependency fails the test.
+
+**Given** visual-regression snapshots are run,
+**When** the suite covers mobile/tablet/desktop viewports × both themes × all journey states (empty, populated, focused, completed, edit, annunciator-surfaced),
+**Then** all snapshots match baselines; the empty-state snapshot contains only the capture-line cursor (no chrome, illustration, copy) — the load-bearing anti-feature regression check.
+
+**And** the property-based sync test (1000-op workload, offline/online/conflict) runs in CI; any never-duplicate or never-lose invariant violation fails the build.
+**And** the `prefers-reduced-motion` path is covered: latency budgets hold under reduced-motion; tests run with the preference emulated.
+**And** `docs/` contains a manual screen-reader pre-ship checklist for VoiceOver (macOS Safari + iOS Safari) and NVDA (Windows Firefox/Edge) covering Journeys 1–6.
+
+---
+
+### Story 1.13: Deployment, Security Headers & Production Hardening
+
+As Sam,
+I want the app deployed to a production environment with HTTPS, security headers, and no search-engine indexing,
+So that my task data is private, the app is accessible from any browser, and the infrastructure is production-grade from day one.
+
+**Acceptance Criteria:**
+
+**Given** the app is deployed to Fly.io,
+**When** `GET /health` is called,
+**Then** it returns HTTP 200 with no sensitive data; the check is registered in `fly.toml` `[checks]`.
+
+**Given** any HTTP request is made to the app,
+**When** it arrives over plain HTTP,
+**Then** it is redirected to HTTPS; HSTS header is present on all HTTPS responses.
+
+**Given** any response from the server,
+**Then** it includes: `Content-Security-Policy`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`.
+
+**Given** the web app is loaded,
+**When** the HTML is inspected,
+**Then** `<meta name="robots" content="noindex, nofollow">` is present in `<head>`.
+
+**Given** a CORS request is made from an unauthorized origin in production,
+**Then** it is rejected; no wildcard CORS is present in the production config.
+
+**Given** the server starts,
+**When** the startup sequence runs,
+**Then** database migrations execute to completion before `app.listen` is called.
+
+**And** `fly.toml` is configured: single region, persistent volume mount for PostgreSQL data, `[checks]` pointing to `/health` (AR25).
+**And** all task data is partitioned by `user_namespace`; cross-user data leakage is prevented by query-level scoping.
+**And** task text is never logged in plaintext server-side beyond what storage requires.
+**And** no third-party analytics, tracking pixels, advertising SDKs, or session-replay tooling is present in the deployed build.
+**And** the deployment pipeline is: CI gates pass (Story 1.12) → build → deploy; no manual steps beyond initial approval.
 

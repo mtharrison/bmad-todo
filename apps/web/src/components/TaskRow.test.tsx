@@ -1,11 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { render, fireEvent, cleanup } from "@solidjs/testing-library";
 import { TaskRow } from "./TaskRow";
-import { tasks, createTask, clearAllTasks } from "../store/task-store";
+import { tasks, createTask, clearAllTasks, toggleTaskCompleted } from "../store/task-store";
+import { undoStack, clearUndoStack } from "../store/undo-stack";
 
 describe("TaskRow", () => {
   beforeEach(() => {
     clearAllTasks();
+    clearUndoStack();
   });
 
   afterEach(() => {
@@ -253,6 +255,132 @@ describe("TaskRow", () => {
 
       fireEvent.keyDown(li, { key: "d" });
       expect(tasks.length).toBe(0);
+    });
+  });
+
+  describe("undo entry push", () => {
+    it("pressing X on active task pushes setCompletedAt with previousCompletedAt: null", () => {
+      createTask("task");
+      const task = tasks[0]!;
+      const { container } = render(() => <TaskRow task={task} />);
+      const li = container.querySelector("li")!;
+
+      fireEvent.keyDown(li, { key: "X" });
+      expect(undoStack.length).toBe(1);
+      expect(undoStack[0]!.inverseMutation.type).toBe("setCompletedAt");
+      const im = undoStack[0]!.inverseMutation as { type: "setCompletedAt"; id: string; previousCompletedAt: number | null };
+      expect(im.previousCompletedAt).toBeNull();
+    });
+
+    it("pressing X on completed task pushes setCompletedAt with original timestamp", () => {
+      createTask("task");
+      const task = tasks[0]!;
+      toggleTaskCompleted(task.id);
+      const ts = tasks[0]!.completedAt!;
+      clearUndoStack();
+
+      const { container } = render(() => <TaskRow task={task} />);
+      const li = container.querySelector("li")!;
+
+      fireEvent.keyDown(li, { key: "X" });
+      expect(undoStack.length).toBe(1);
+      const im = undoStack[0]!.inverseMutation as { type: "setCompletedAt"; id: string; previousCompletedAt: number | null };
+      expect(im.previousCompletedAt).toBe(ts);
+    });
+
+    it("clicking row outside .task-text pushes setCompletedAt undo entry", () => {
+      createTask("task");
+      const task = tasks[0]!;
+      const { container } = render(() => <TaskRow task={task} />);
+      const li = container.querySelector("li")!;
+
+      fireEvent.click(li);
+      expect(undoStack.length).toBe(1);
+      expect(undoStack[0]!.inverseMutation.type).toBe("setCompletedAt");
+    });
+
+    it("checkbox onChange pushes exactly one undo entry (no double-fire)", () => {
+      createTask("task");
+      const task = tasks[0]!;
+      const { container } = render(() => <TaskRow task={task} />);
+      const input = container.querySelector("input[type=checkbox]")!;
+
+      fireEvent.change(input);
+      expect(undoStack.length).toBe(1);
+      expect(undoStack[0]!.inverseMutation.type).toBe("setCompletedAt");
+    });
+
+    it("pressing D pushes insert undo entry with snapshot clone", () => {
+      createTask("to delete");
+      const task = tasks[0]!;
+      const originalText = tasks[0]!.text;
+      const { container } = render(() => <TaskRow task={task} />);
+      const li = container.querySelector("li")!;
+
+      fireEvent.keyDown(li, { key: "D" });
+      expect(undoStack.length).toBe(1);
+      expect(undoStack[0]!.inverseMutation.type).toBe("insert");
+      const im = undoStack[0]!.inverseMutation as { type: "insert"; task: { text: string }; index: number };
+      expect(im.task.text).toBe(originalText);
+      expect(im.index).toBe(0);
+    });
+
+    it("editing text via Enter pushes updateText undo entry", () => {
+      createTask("original text");
+      const task = tasks[0]!;
+      const { container } = render(() => <TaskRow task={task} />);
+      const span = container.querySelector(".task-text")!;
+
+      fireEvent.click(span);
+      span.textContent = "updated text";
+      fireEvent.keyDown(span, { key: "Enter" });
+
+      expect(undoStack.length).toBe(1);
+      expect(undoStack[0]!.inverseMutation.type).toBe("updateText");
+      const im = undoStack[0]!.inverseMutation as { type: "updateText"; id: string; previousText: string };
+      expect(im.previousText).toBe("original text");
+    });
+
+    it("editing to whitespace-only pushes insert undo with original text", () => {
+      createTask("draft text");
+      const task = tasks[0]!;
+      const { container } = render(() => <TaskRow task={task} />);
+      const span = container.querySelector(".task-text")!;
+
+      fireEvent.click(span);
+      span.textContent = "   ";
+      fireEvent.keyDown(span, { key: "Enter" });
+
+      expect(tasks.length).toBe(0);
+      expect(undoStack.length).toBe(1);
+      expect(undoStack[0]!.inverseMutation.type).toBe("insert");
+      const im = undoStack[0]!.inverseMutation as { type: "insert"; task: { text: string }; index: number };
+      expect(im.task.text).toBe("draft text");
+    });
+
+    it("pressing Escape during edit pushes NO undo entry", () => {
+      createTask("keep this");
+      const task = tasks[0]!;
+      const { container } = render(() => <TaskRow task={task} />);
+      const span = container.querySelector(".task-text")!;
+
+      fireEvent.click(span);
+      span.textContent = "changed";
+      fireEvent.keyDown(span, { key: "Escape" });
+
+      expect(undoStack.length).toBe(0);
+    });
+
+    it("committing unchanged text pushes NO undo entry", () => {
+      createTask("unchanged");
+      const task = tasks[0]!;
+      const { container } = render(() => <TaskRow task={task} />);
+      const span = container.querySelector(".task-text")!;
+
+      fireEvent.click(span);
+      fireEvent.keyDown(span, { key: "Enter" });
+
+      expect(undoStack.length).toBe(0);
     });
   });
 });

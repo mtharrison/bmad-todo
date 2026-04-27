@@ -2,10 +2,13 @@ import { createSignal, createRenderEffect } from "solid-js";
 import { Show } from "solid-js";
 import type { ActiveTask } from "../store/task-store";
 import {
+  tasks,
   toggleTaskCompleted,
   updateTaskText,
   deleteTask,
+  getTaskById,
 } from "../store/task-store";
+import { pushUndo } from "../store/undo-stack";
 import { Tick } from "./Tick";
 
 function placeCursorAtEnd(el: HTMLElement) {
@@ -46,13 +49,18 @@ export function TaskRow(props: { task: ActiveTask }) {
     if (!isEditing()) return;
     const newText = textRef?.textContent ?? "";
     if (newText.trim().length === 0) {
-      // 1.6: const snapshot = getTaskById(props.task.id); const index = tasks.findIndex(t => t.id === props.task.id);
+      const snapshot = getTaskById(props.task.id);
+      const index = tasks.findIndex((t) => t.id === props.task.id);
+      if (!snapshot || index === -1) {
+        setIsEditing(false);
+        return;
+      }
       deleteTask(props.task.id);
-      // 1.6: pushUndo({ type: 'insert', task: snapshot, index });
+      pushUndo({ inverseMutation: { type: "insert", task: snapshot, index } });
     } else if (newText.trim() !== originalText) {
-      // 1.6: const previousText = originalText;
+      const previousText = originalText;
       updateTaskText(props.task.id, newText.trim());
-      // 1.6: pushUndo({ type: 'updateText', id: props.task.id, previousText });
+      pushUndo({ inverseMutation: { type: "updateText", id: props.task.id, previousText } });
     }
 
     setIsEditing(false);
@@ -79,6 +87,12 @@ export function TaskRow(props: { task: ActiveTask }) {
     commitEdit();
   }
 
+  function handleCheckboxChange() {
+    const previousCompletedAt = props.task.completedAt;
+    toggleTaskCompleted(props.task.id);
+    pushUndo({ inverseMutation: { type: "setCompletedAt", id: props.task.id, previousCompletedAt } });
+  }
+
   function handleRowClick(event: MouseEvent) {
     if (isEditing()) return;
     const target = event.target as HTMLElement;
@@ -86,7 +100,9 @@ export function TaskRow(props: { task: ActiveTask }) {
       enterEditMode();
       return;
     }
+    const previousCompletedAt = props.task.completedAt;
     toggleTaskCompleted(props.task.id);
+    pushUndo({ inverseMutation: { type: "setCompletedAt", id: props.task.id, previousCompletedAt } });
   }
 
   function handleRowKeyDown(event: KeyboardEvent) {
@@ -95,15 +111,19 @@ export function TaskRow(props: { task: ActiveTask }) {
     if (event.metaKey || event.ctrlKey || event.altKey) return;
     if (event.key === "x" || event.key === "X") {
       event.preventDefault();
+      const previousCompletedAt = props.task.completedAt;
       toggleTaskCompleted(props.task.id);
+      pushUndo({ inverseMutation: { type: "setCompletedAt", id: props.task.id, previousCompletedAt } });
     } else if (event.key === "e" || event.key === "E") {
       event.preventDefault();
       enterEditMode();
     } else if (event.key === "d" || event.key === "D") {
       event.preventDefault();
-      // 1.6: const snapshot = getTaskById(props.task.id); const index = tasks.findIndex(t => t.id === props.task.id);
+      const snapshot = getTaskById(props.task.id);
+      const index = tasks.findIndex((t) => t.id === props.task.id);
+      if (!snapshot || index === -1) return;
       deleteTask(props.task.id);
-      // 1.6: pushUndo({ type: 'insert', task: snapshot, index });
+      pushUndo({ inverseMutation: { type: "insert", task: snapshot, index } });
     }
   }
 
@@ -121,7 +141,7 @@ export function TaskRow(props: { task: ActiveTask }) {
         aria-label="Mark complete"
         checked={props.task.completedAt !== null}
         aria-checked={props.task.completedAt !== null}
-        onChange={() => toggleTaskCompleted(props.task.id)}
+        onChange={handleCheckboxChange}
         onClick={(e) => e.stopPropagation()}
       />
       <Show when={props.task.completedAt !== null}>

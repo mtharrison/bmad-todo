@@ -37,6 +37,10 @@ export function updateTaskText(id: string, text: string): void {
   setTasks((t) => t.id === id, "text", text);
 }
 
+export function setTaskCompletedAt(id: string, value: number | null): void {
+  setTasks((t) => t.id === id, "completedAt", value);
+}
+
 export function deleteTask(id: string): void {
   setTasks((prev) => prev.filter((t) => t.id !== id));
 }

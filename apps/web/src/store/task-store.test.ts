@@ -8,6 +8,7 @@ import {
   deleteTask,
   getTaskById,
   insertTaskAtIndex,
+  setTaskCompletedAt,
 } from "./task-store";
 
 describe("task-store", () => {
@@ -183,6 +184,44 @@ describe("task-store", () => {
     it("returns undefined for non-existent id", () => {
       createTask("foo");
       expect(getTaskById("does-not-exist")).toBeUndefined();
+    });
+  });
+
+  describe("setTaskCompletedAt", () => {
+    it("sets a null completedAt to a timestamp", () => {
+      createTask("test");
+      const id = tasks[0]!.id;
+      expect(tasks[0]!.completedAt).toBeNull();
+      setTaskCompletedAt(id, 12345);
+      expect(tasks[0]!.completedAt).toBe(12345);
+    });
+
+    it("sets a timestamp completedAt back to null", () => {
+      createTask("test");
+      const id = tasks[0]!.id;
+      toggleTaskCompleted(id);
+      expect(tasks[0]!.completedAt).toBeTypeOf("number");
+      setTaskCompletedAt(id, null);
+      expect(tasks[0]!.completedAt).toBeNull();
+    });
+
+    it("preserves text, id, createdAt, and position", () => {
+      createTask("first");
+      createTask("second");
+      const { id, text, createdAt } = tasks[1]!;
+      setTaskCompletedAt(id, 99999);
+      expect(tasks[1]!.id).toBe(id);
+      expect(tasks[1]!.text).toBe(text);
+      expect(tasks[1]!.createdAt).toBe(createdAt);
+      expect(tasks[0]!.text).toBe("second");
+      expect(tasks[1]!.text).toBe("first");
+    });
+
+    it("non-existent id is a no-op", () => {
+      createTask("test");
+      setTaskCompletedAt("does-not-exist", 12345);
+      expect(tasks.length).toBe(1);
+      expect(tasks[0]!.completedAt).toBeNull();
     });
   });
 

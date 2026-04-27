@@ -1,5 +1,12 @@
 # Deferred Work
 
+## Deferred from: code review of 1-6-session-long-undo-stack (2026-04-28)
+
+- Unbounded undo stack growth — no size cap on `pushUndo`; session-scoped by design so practical concern only at thousands of operations; consider adding a max-entries eviction if memory profiling surfaces issues
+- Stale index on undo-insert after intervening create/delete mutations — index-based `insertTaskAtIndex` uses the index captured at delete time; if other tasks are created/deleted before undo, the restored task may land at a slightly wrong position; a neighbor-anchor approach would be more robust but is a design change
+- No undo entry for `createTask` — pressing `u` after creating a task undoes a prior unrelated action; explicitly out of scope per AC#1–9 (only complete/uncomplete/edit/delete are undoable); consider adding `delete` as the inverse of `create` in a future story
+- No `isComposing` guard on `handleRowKeyDown` in TaskRow — pre-existing from Story 1.5; safe in practice due to `event.target !== event.currentTarget` guard filtering out events from child elements; consistency improvement for Story 1.7's keyboard refactor
+
 ## Deferred from: code review of 1-5-task-edit-and-delete (2026-04-28)
 
 - Paste rich HTML in browsers that ignore `contenteditable="plaintext-only"` may store HTML markup as task text — add an `onPaste` handler that strips to `text/plain` for full cross-browser safety

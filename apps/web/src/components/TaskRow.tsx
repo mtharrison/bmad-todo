@@ -31,6 +31,7 @@ export function TaskRow(props: { task: ActiveTask }) {
   });
 
   function enterEditMode() {
+    if (isEditing()) return;
     originalText = props.task.text;
     setIsEditing(true);
     queueMicrotask(() => {
@@ -44,21 +45,27 @@ export function TaskRow(props: { task: ActiveTask }) {
   function commitEdit() {
     if (!isEditing()) return;
     const newText = textRef?.textContent ?? "";
-    setIsEditing(false);
-
     if (newText.trim().length === 0) {
+      // 1.6: const snapshot = getTaskById(props.task.id); const index = tasks.findIndex(t => t.id === props.task.id);
       deleteTask(props.task.id);
+      // 1.6: pushUndo({ type: 'insert', task: snapshot, index });
     } else if (newText.trim() !== originalText) {
+      // 1.6: const previousText = originalText;
       updateTaskText(props.task.id, newText.trim());
+      // 1.6: pushUndo({ type: 'updateText', id: props.task.id, previousText });
     }
+
+    setIsEditing(false);
   }
 
   function cancelEdit() {
+    if (textRef) textRef.textContent = originalText;
     setIsEditing(false);
   }
 
   function handleEditKeyDown(event: KeyboardEvent) {
     if (!isEditing()) return;
+    if (event.isComposing) return;
     if (event.key === "Enter") {
       event.preventDefault();
       commitEdit();
@@ -94,7 +101,9 @@ export function TaskRow(props: { task: ActiveTask }) {
       enterEditMode();
     } else if (event.key === "d" || event.key === "D") {
       event.preventDefault();
+      // 1.6: const snapshot = getTaskById(props.task.id); const index = tasks.findIndex(t => t.id === props.task.id);
       deleteTask(props.task.id);
+      // 1.6: pushUndo({ type: 'insert', task: snapshot, index });
     }
   }
 

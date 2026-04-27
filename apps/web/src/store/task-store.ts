@@ -33,6 +33,7 @@ export function toggleTaskCompleted(id: string): void {
 }
 
 export function updateTaskText(id: string, text: string): void {
+  if (text.trim().length === 0) return;
   setTasks((t) => t.id === id, "text", text);
 }
 
@@ -41,11 +42,15 @@ export function deleteTask(id: string): void {
 }
 
 export function getTaskById(id: string): ActiveTask | undefined {
-  return tasks.find((t) => t.id === id);
+  const found = tasks.find((t) => t.id === id);
+  return found ? { ...found } : undefined;
 }
 
 export function insertTaskAtIndex(task: ActiveTask, index: number): void {
-  setTasks((prev) => [...prev.slice(0, index), task, ...prev.slice(index)]);
+  setTasks((prev) => {
+    const clamped = Math.max(0, Math.min(index, prev.length));
+    return [...prev.slice(0, clamped), task, ...prev.slice(clamped)];
+  });
 }
 
 export function clearAllTasks(): void {

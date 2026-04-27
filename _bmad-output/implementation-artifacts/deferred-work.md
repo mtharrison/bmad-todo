@@ -1,5 +1,9 @@
 # Deferred Work
 
+## Deferred from: code review of 1-5-task-edit-and-delete (2026-04-28)
+
+- Paste rich HTML in browsers that ignore `contenteditable="plaintext-only"` may store HTML markup as task text — add an `onPaste` handler that strips to `text/plain` for full cross-browser safety
+
 ## Deferred from: code review of 1-4 (2026-04-27)
 
 - Row keydown handler does not honor Space/Enter as activation keys — defer to Story 1.7 (keyboard navigation) which lands the full focus + activation model

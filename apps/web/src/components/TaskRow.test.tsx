@@ -181,6 +181,20 @@ describe("TaskRow", () => {
       expect(tasks.length).toBe(0);
     });
 
+    it("focusout in edit mode commits the text change", () => {
+      createTask("original text");
+      const task = tasks[0]!;
+      const { container } = render(() => <TaskRow task={task} />);
+      const span = container.querySelector(".task-text")!;
+
+      fireEvent.click(span);
+      span.textContent = "blur updated";
+      fireEvent.focusOut(span);
+
+      expect(tasks[0]!.text).toBe("blur updated");
+      expect(span.getAttribute("contenteditable")).toBeNull();
+    });
+
     it("committing same text as original does not call updateTaskText", () => {
       createTask("unchanged");
       const task = tasks[0]!;

@@ -1,6 +1,6 @@
 # Story 1.5: Task Edit and Delete
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -475,9 +475,23 @@ Claude Opus 4.6
 - Task 6: Created `j5-inline-edit.spec.ts` (4 tests) and `j2-delete-undo.spec.ts` (2 tests). E2E runs deferred to CI.
 - Task 7: All gates pass — typecheck, lint, anti-features, 95 unit tests, build (JS 8.72KB + CSS 2.18KB gzip).
 
+### Review Findings
+
+- [x] [Review][Patch] `cancelEdit` does not explicitly restore `textContent` — relies on `createRenderEffect` timing, risking a brief flash of edited text before reactive sync [`apps/web/src/components/TaskRow.tsx:56-58`] — fixed: added explicit `textRef.textContent = originalText` in `cancelEdit`
+- [x] [Review][Patch] `commitEdit` calls `setIsEditing(false)` before store mutations — spec prescribes it last; current ordering fires render effect prematurely and blocks Story 1.6 undo snapshot wiring [`apps/web/src/components/TaskRow.tsx:44-53`] — fixed: moved `setIsEditing(false)` after store mutation calls
+- [x] [Review][Patch] `insertTaskAtIndex` has no bounds checking — negative index or `NaN` from `findIndex(-1)` silently produces incorrect array via `slice` semantics [`apps/web/src/store/task-store.ts:47-49`] — fixed: added `Math.max(0, Math.min(index, prev.length))` clamping
+- [x] [Review][Patch] `updateTaskText` accepts empty or whitespace-only strings — no guard unlike `createTask`, store API footgun for future callers [`apps/web/src/store/task-store.ts:35-36`] — fixed: added `if (text.trim().length === 0) return` guard
+- [x] [Review][Patch] No pre-action snapshot captured before delete or edit mutations — Story 1.6 undo wirability requires snapshot + index capture before `deleteTask`/`updateTaskText` calls [`apps/web/src/components/TaskRow.tsx:44-53,95-98`] — fixed: added inline comments marking exact 1.6 insertion points for `getTaskById`/`findIndex` snapshot capture; `getTaskById` returns shallow clone (safe for snapshots); imports deferred to 1.6 to satisfy linter
+- [x] [Review][Patch] `getTaskById` returns live Solid store proxy, not a snapshot — callers mutating the return value corrupt store state; should return shallow clone [`apps/web/src/store/task-store.ts:43-45`] — fixed: returns `{ ...found }` shallow clone
+- [x] [Review][Patch] No unit test for `focusout` commit path — AC#3 "click outside the row" commits via focusout but only `Enter` commit is unit-tested [`apps/web/src/components/TaskRow.test.tsx`] — fixed: added `focusout in edit mode commits the text change` test
+- [x] [Review][Patch] Missing `event.isComposing` guard in `handleEditKeyDown` — Enter during CJK IME composition commits partial text instead of confirming IME input [`apps/web/src/components/TaskRow.tsx:60-68`] — fixed: added `if (event.isComposing) return` guard
+- [x] [Review][Patch] `enterEditMode` has no re-entry guard — double-click or programmatic double-trigger overwrites `originalText` with current DOM content, corrupting cancel path [`apps/web/src/components/TaskRow.tsx:33-41`] — fixed: added `if (isEditing()) return` guard
+- [x] [Review][Defer] Paste rich HTML in browsers that ignore `contenteditable="plaintext-only"` — older browsers may store HTML markup as task text [`apps/web/src/components/TaskRow.tsx:121-130`] — deferred, pre-existing browser support limitation
+
 ### Change Log
 
 - 2026-04-28: Implemented inline task editing and single-keystroke delete (Story 1.5)
+- 2026-04-28: Code review complete. 9 patches applied, 1 deferral, ~13 dismissed. All gates green (96/96 unit tests). Status → done.
 
 ### File List
 

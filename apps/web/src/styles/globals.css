@@ -60,3 +60,61 @@ html {
   line-height: var(--line-height-body);
   letter-spacing: var(--letter-spacing-body);
 }
+
+body {
+  container-type: inline-size;
+  margin: 0;
+}
+
+main.app-main {
+  margin-top: 48px;
+  margin-left: 24px;
+  margin-right: 24px;
+  max-width: calc(100% - 48px);
+}
+
+@container (min-width: 640px) {
+  main.app-main {
+    margin-top: 64px;
+    margin-left: 64px;
+    margin-right: 32px;
+    max-width: 640px;
+  }
+}
+
+@container (min-width: 1024px) {
+  main.app-main {
+    margin-top: 96px;
+    margin-left: 96px;
+    margin-right: 0;
+    max-width: 640px;
+  }
+}
+
+.capture-line {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  padding: 8px 0;
+  font: inherit;
+  color: var(--color-ink);
+  caret-color: var(--color-accent);
+}
+
+.capture-line:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+.task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.task-row {
+  padding: 8px 0;
+}

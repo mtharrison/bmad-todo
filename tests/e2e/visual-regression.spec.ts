@@ -27,17 +27,15 @@ test.describe("visual regression - blank screen", () => {
     });
   });
 
-  test("empty state contains only page background and minimal content", async ({
+  test("empty state contains only capture line and empty list", async ({
     page,
   }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    const body = page.locator("body");
-    const children = body.locator(":scope > *");
-    const childCount = await children.count();
-
-    expect(childCount).toBeLessThanOrEqual(2);
+    const rootChildren = page.locator("#root > *");
+    const rootChildCount = await rootChildren.count();
+    expect(rootChildCount).toBeLessThanOrEqual(1);
 
     const images = page.locator("img, svg, picture, canvas");
     const imageCount = await images.count();

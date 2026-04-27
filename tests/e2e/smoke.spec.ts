@@ -1,8 +1,10 @@
 import { test, expect } from "@playwright/test";
 
-test("web app loads", async ({ page }) => {
+test("web app loads with capture line focused", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("h1")).toHaveText("bmad-todo");
+  await expect(
+    page.locator('input[aria-label="Add a task"]'),
+  ).toBeFocused();
 });
 
 test("health endpoint returns 200", async ({ request }) => {

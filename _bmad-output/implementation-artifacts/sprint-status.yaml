@@ -1,5 +1,5 @@
 # generated: 2026-04-27
-# last_updated: 2026-04-28T00:00:00Z
+# last_updated: 2026-04-27T00:00:00Z
 # project: bmad-todo
 # project_key: NOKEY
 # tracking_system: file-system
@@ -46,7 +46,7 @@ development_status:
   epic-1: in-progress
   1-1-repository-scaffold-and-ci-foundation: done
   1-2-design-tokens-theme-bootstrap-and-typography: review
-  1-3-task-capture-loop-and-empty-state: backlog
+  1-3-task-capture-loop-and-empty-state: review
   1-4-task-completion-visual-state-and-tick-component: backlog
   1-5-task-edit-and-delete: backlog
   1-6-session-long-undo-stack: backlog

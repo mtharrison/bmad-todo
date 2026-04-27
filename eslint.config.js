@@ -54,9 +54,15 @@ export default [
     },
   },
   {
-    files: ["apps/api/**/*.ts", "scripts/**/*.ts"],
+    files: ["apps/api/**/*.ts", "scripts/**/*.ts", "playwright.config.ts"],
     languageOptions: {
       globals: globals.node,
+    },
+  },
+  {
+    files: ["tests/e2e/**/*.ts"],
+    languageOptions: {
+      globals: globals.browser,
     },
   },
 ];

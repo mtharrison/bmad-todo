@@ -12,7 +12,7 @@
 
   --color-paper: #F4EFE6;
   --color-ink: #1F1A14;
-  --color-ink-muted: #1F1A1499;
+  --color-ink-muted: #1F1A14A6;
   --color-rule: #1F1A1422;
   --color-accent: #9C3B1B;
 
@@ -31,7 +31,7 @@
 [data-theme="light"] {
   --color-paper: #F4EFE6;
   --color-ink: #1F1A14;
-  --color-ink-muted: #1F1A1499;
+  --color-ink-muted: #1F1A14A6;
   --color-rule: #1F1A1422;
   --color-accent: #9C3B1B;
   --motion-default: 150ms;

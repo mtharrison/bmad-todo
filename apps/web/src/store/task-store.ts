@@ -32,6 +32,22 @@ export function toggleTaskCompleted(id: string): void {
   );
 }
 
+export function updateTaskText(id: string, text: string): void {
+  setTasks((t) => t.id === id, "text", text);
+}
+
+export function deleteTask(id: string): void {
+  setTasks((prev) => prev.filter((t) => t.id !== id));
+}
+
+export function getTaskById(id: string): ActiveTask | undefined {
+  return tasks.find((t) => t.id === id);
+}
+
+export function insertTaskAtIndex(task: ActiveTask, index: number): void {
+  setTasks((prev) => [...prev.slice(0, index), task, ...prev.slice(index)]);
+}
+
 export function clearAllTasks(): void {
   setTasks(() => []);
 }

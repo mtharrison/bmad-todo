@@ -4,6 +4,10 @@ import {
   createTask,
   clearAllTasks,
   toggleTaskCompleted,
+  updateTaskText,
+  deleteTask,
+  getTaskById,
+  insertTaskAtIndex,
 } from "./task-store";
 
 describe("task-store", () => {
@@ -109,5 +113,107 @@ describe("task-store", () => {
     toggleTaskCompleted(tasks[0]!.id);
     expect(tasks[0]!.completedAt).toBeTypeOf("number");
     expect(tasks[1]!.completedAt).toBeNull();
+  });
+
+  describe("updateTaskText", () => {
+    it("changes text and preserves id, createdAt, completedAt", () => {
+      createTask("original");
+      const { id, createdAt, completedAt } = tasks[0]!;
+      updateTaskText(id, "updated");
+      expect(tasks[0]!.text).toBe("updated");
+      expect(tasks[0]!.id).toBe(id);
+      expect(tasks[0]!.createdAt).toBe(createdAt);
+      expect(tasks[0]!.completedAt).toBe(completedAt);
+    });
+
+    it("preserves position (index) in the list", () => {
+      createTask("first");
+      createTask("second");
+      createTask("third");
+      const id = tasks[1]!.id;
+      updateTaskText(id, "changed");
+      expect(tasks[0]!.text).toBe("third");
+      expect(tasks[1]!.text).toBe("changed");
+      expect(tasks[2]!.text).toBe("first");
+    });
+
+    it("updating non-existent id is a no-op", () => {
+      createTask("foo");
+      updateTaskText("does-not-exist", "bar");
+      expect(tasks.length).toBe(1);
+      expect(tasks[0]!.text).toBe("foo");
+    });
+  });
+
+  describe("deleteTask", () => {
+    it("removes the task from the store", () => {
+      createTask("to delete");
+      const id = tasks[0]!.id;
+      deleteTask(id);
+      expect(tasks.length).toBe(0);
+    });
+
+    it("removes only the targeted task", () => {
+      createTask("keep");
+      createTask("remove");
+      const id = tasks[0]!.id;
+      deleteTask(id);
+      expect(tasks.length).toBe(1);
+      expect(tasks[0]!.text).toBe("keep");
+    });
+
+    it("deleting non-existent id is a no-op", () => {
+      createTask("foo");
+      deleteTask("does-not-exist");
+      expect(tasks.length).toBe(1);
+      expect(tasks[0]!.text).toBe("foo");
+    });
+  });
+
+  describe("getTaskById", () => {
+    it("returns the task when it exists", () => {
+      createTask("find me");
+      const id = tasks[0]!.id;
+      const found = getTaskById(id);
+      expect(found).toBeDefined();
+      expect(found!.text).toBe("find me");
+      expect(found!.id).toBe(id);
+    });
+
+    it("returns undefined for non-existent id", () => {
+      createTask("foo");
+      expect(getTaskById("does-not-exist")).toBeUndefined();
+    });
+  });
+
+  describe("insertTaskAtIndex", () => {
+    it("inserts at index 0 (beginning)", () => {
+      createTask("existing");
+      const newTask = { id: "ins-1", text: "inserted", createdAt: 1, completedAt: null };
+      insertTaskAtIndex(newTask, 0);
+      expect(tasks.length).toBe(2);
+      expect(tasks[0]!.text).toBe("inserted");
+      expect(tasks[1]!.text).toBe("existing");
+    });
+
+    it("inserts at the end", () => {
+      createTask("existing");
+      const newTask = { id: "ins-2", text: "at end", createdAt: 1, completedAt: null };
+      insertTaskAtIndex(newTask, 1);
+      expect(tasks.length).toBe(2);
+      expect(tasks[0]!.text).toBe("existing");
+      expect(tasks[1]!.text).toBe("at end");
+    });
+
+    it("inserts at a middle index", () => {
+      createTask("c");
+      createTask("a");
+      const newTask = { id: "ins-3", text: "b", createdAt: 1, completedAt: null };
+      insertTaskAtIndex(newTask, 1);
+      expect(tasks.length).toBe(3);
+      expect(tasks[0]!.text).toBe("a");
+      expect(tasks[1]!.text).toBe("b");
+      expect(tasks[2]!.text).toBe("c");
+    });
   });
 });

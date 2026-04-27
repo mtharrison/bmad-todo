@@ -12,13 +12,15 @@ test.describe("Journey 1: Completion toggle", () => {
 
     const row = page.locator("li").first();
     const checkbox = row.locator('input[type="checkbox"]');
+    const box = (await row.boundingBox())!;
+    const rowOutsideTextPosition = { x: box.width - 4, y: box.height / 2 };
 
-    await checkbox.click();
+    await row.click({ position: rowOutsideTextPosition });
     await expect(row).toHaveAttribute("data-completed", "true");
     await expect(checkbox).toHaveAttribute("aria-checked", "true");
     await expect(row.locator("svg")).toHaveCount(1);
 
-    await checkbox.click();
+    await row.click({ position: rowOutsideTextPosition });
     await expect(row).toHaveAttribute("data-completed", "false");
     await expect(checkbox).toHaveAttribute("aria-checked", "false");
     await expect(row.locator("svg")).toHaveCount(0);

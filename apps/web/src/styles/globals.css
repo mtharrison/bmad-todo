@@ -165,3 +165,9 @@ main.app-main {
   stroke-linejoin: round;
   fill: none;
 }
+
+.task-text[contenteditable] {
+  outline: 0;
+  cursor: text;
+  caret-color: var(--color-accent);
+}

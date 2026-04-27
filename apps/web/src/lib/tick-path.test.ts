@@ -30,18 +30,20 @@ describe("generateTickPath", () => {
     expect(qCount).toBe(2);
   });
 
-  it("jitters control points within ±0.4px of canonical values", () => {
-    const cps = extractControlPoints(generateTickPath("seed-check"));
-    expect(cps).not.toBeNull();
-    const [cp1, cp2] = cps!;
-    expect(cp1!.x).toBeGreaterThanOrEqual(CANONICAL_CP1.x - JITTER);
-    expect(cp1!.x).toBeLessThanOrEqual(CANONICAL_CP1.x + JITTER);
-    expect(cp1!.y).toBeGreaterThanOrEqual(CANONICAL_CP1.y - JITTER);
-    expect(cp1!.y).toBeLessThanOrEqual(CANONICAL_CP1.y + JITTER);
-    expect(cp2!.x).toBeGreaterThanOrEqual(CANONICAL_CP2.x - JITTER);
-    expect(cp2!.x).toBeLessThanOrEqual(CANONICAL_CP2.x + JITTER);
-    expect(cp2!.y).toBeGreaterThanOrEqual(CANONICAL_CP2.y - JITTER);
-    expect(cp2!.y).toBeLessThanOrEqual(CANONICAL_CP2.y + JITTER);
+  it("jitters control points within ±0.4px of canonical values across many seeds", () => {
+    for (let i = 0; i < 200; i++) {
+      const cps = extractControlPoints(generateTickPath(`jitter-${i}`));
+      expect(cps).not.toBeNull();
+      const [cp1, cp2] = cps!;
+      expect(cp1!.x).toBeGreaterThanOrEqual(CANONICAL_CP1.x - JITTER);
+      expect(cp1!.x).toBeLessThanOrEqual(CANONICAL_CP1.x + JITTER);
+      expect(cp1!.y).toBeGreaterThanOrEqual(CANONICAL_CP1.y - JITTER);
+      expect(cp1!.y).toBeLessThanOrEqual(CANONICAL_CP1.y + JITTER);
+      expect(cp2!.x).toBeGreaterThanOrEqual(CANONICAL_CP2.x - JITTER);
+      expect(cp2!.x).toBeLessThanOrEqual(CANONICAL_CP2.x + JITTER);
+      expect(cp2!.y).toBeGreaterThanOrEqual(CANONICAL_CP2.y - JITTER);
+      expect(cp2!.y).toBeLessThanOrEqual(CANONICAL_CP2.y + JITTER);
+    }
   });
 
   it("produces distinct strings across 1000 random seeds", () => {

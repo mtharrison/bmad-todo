@@ -1,6 +1,6 @@
 # Story 1.4: Task Completion, Visual State & Tick Component
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -735,7 +735,21 @@ None — clean implementation, no debugging required.
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` — MODIFIED (status update)
 - `_bmad-output/implementation-artifacts/1-4-task-completion-visual-state-and-tick-component.md` — MODIFIED (task tracking)
 
+### Review Findings
+
+- [x] [Review][Patch] `x`/`X` keydown handler accepts modifier combinations (Cmd+X cut, Ctrl+X cut, Alt+X) and toggles the row [`apps/web/src/components/TaskRow.tsx:9-14`] — fixed: added modifier guard + unit test
+- [x] [Review][Patch] AC#2 row-click path is not exercised by E2E — `j1-completion-toggle.spec.ts` clicks the checkbox (which `stopPropagation`s through `onChange`) rather than the row outside `.task-text` [`tests/e2e/j1-completion-toggle.spec.ts:14-26`] — fixed: switched to `row.click({ position })` at the right edge
+- [x] [Review][Patch] AC#3 active-state `aria-checked="false"` not asserted in the active-task test (Task 4.8 lists "aria-checked reflects state") [`apps/web/src/components/TaskRow.test.tsx:13-21`] — fixed: added the assertion
+- [x] [Review][Patch] `tick-path.test.ts` jitter-range test uses a single seed; loop across multiple seeds to verify the ±0.4 invariant across the distribution [`apps/web/src/lib/tick-path.test.ts:25-36`] — fixed: now loops 200 seeds
+- [x] [Review][Defer] Row keydown ignores Space/Enter (a11y convention for activating focusable rows) [`apps/web/src/components/TaskRow.tsx:9-14`] — deferred to Story 1.7 keyboard navigation
+- [x] [Review][Defer] `tabindex={0}` on every `<li>` linearizes tab traversal with N tasks [`apps/web/src/components/TaskRow.tsx:21`] — deferred to Story 1.7 roving-tabindex (already noted in code)
+- [x] [Review][Defer] Clip-path-hidden checkbox remains focusable creating a phantom focus stop [`apps/web/src/styles/globals.css:140-148`] — deferred to Story 1.7 / 1.8 a11y audit
+- [x] [Review][Defer] Static `aria-label="Mark complete"` doesn't switch to "Mark incomplete" when completed [`apps/web/src/components/TaskRow.tsx:25`] — spec-prescribed literal; revisit in Story 1.8 a11y audit
+- [x] [Review][Defer] `window.matchMedia` unavailable case throws in theme bootstrap (pre-existing) [`apps/web/index.html:7-30`] — deferred, pre-existing gap from Story 1.2
+
 ## Change Log
 
 - 2026-04-27: Story created and set to ready-for-dev. Comprehensive context engine analysis completed.
 - 2026-04-27: Implementation complete. All 7 tasks done, 73/73 unit tests pass, all gates green. Status → review.
+- 2026-04-27: Code review complete. 4 patches identified, 5 deferrals, ~22 dismissed. Findings appended above.
+- 2026-04-27: All 4 patches applied and verified (74/74 unit tests pass, typecheck/lint/anti-features clean). Status → done.

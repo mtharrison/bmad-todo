@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5, 6]
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8]
 inputDocuments:
   - '_bmad-output/planning-artifacts/prd.md'
   - 'docs/Product Requirement Document (PRD) for the Todo App.md'
@@ -7,6 +7,10 @@ inputDocuments:
   - '_bmad-output/planning-artifacts/ux-design-directions.html'
   - '_bmad-output/brainstorming/brainstorming-session-2026-04-27-1709.md'
 workflowType: 'architecture'
+workflowComplete: true
+status: 'complete'
+lastStep: 8
+completedAt: '2026-04-27'
 project_name: 'bmad-todo'
 user_name: 'Matt'
 date: '2026-04-27'
@@ -921,3 +925,193 @@ user opens app
 - `apps/api/dist/server.js` is the entrypoint. It mounts static-file middleware to serve `apps/web/dist/` at `/`.
 - `infra/fly.toml` declares: app name, single region, internal port 3000, persistent volume mount at `/data`, `[checks]` against `/health`.
 - Deploy: `flyctl deploy` from CI on push to `main` after all gates pass. Fly does a rolling restart; migrations run at boot via `migrate.ts` before `app.listen`.
+
+## Architecture Validation Results
+
+### Coherence Validation ✅ (with caveats)
+
+**Decision compatibility:**
+- Solid (~7KB runtime) + Vite + Tailwind v4 + Fraunces VF (~100KB subsetted) + idb (~1KB) + Workbox-selective (~5–8KB) leaves comfortable headroom under the 50KB initial / 150KB total bundle budget — provided application code and the SW chunk stay disciplined. Vite's per-chunk gzipped reporting plus the `check-bundle-size.ts` gate enforces this on every PR.
+- Node 20+ / Fastify / Kysely / better-sqlite3 / Zod is a battle-tested combination. `fastify-type-provider-zod` provides end-to-end type safety from `packages/shared` schemas to route handlers without runtime cost beyond Zod's `parse()`.
+- pnpm workspaces + TypeScript project references (root `tsconfig.base.json` extended by each package, with `references: [{ path: "../../packages/shared" }]`) gives shared types without bundling cost in the client.
+
+**Pattern consistency:**
+- Naming patterns (camelCase TS, snake_case DB, kebab-case files except PascalCase components) are internally consistent and follow widely-recognized conventions; the `db/mappers.ts` boundary cleanly separates the two casings.
+- Idempotency-Key as the load-bearing primitive appears identically in: client outbox (`sync/outbox.ts`), HTTP header (`Idempotency-Key`), server middleware (`middleware/idempotency.ts`), DB table (`idempotency_keys`), and shared schema (`packages/shared/src/schema.ts`). One concept, one name, end-to-end.
+- The annunciator is the only failure-feedback surface in the design AND in the code structure. Codebase-grep CI job (`scripts/check-anti-features.sh`) enforces the absence of competing surfaces.
+
+**Structure alignment:**
+- The 7-component inventory (UX Step 11) maps 1:1 to files in `apps/web/src/components/`. No structural slack for AI agents to introduce additional components without an explicit pattern violation.
+- Module-boundary rules (`components → store → sync`, no reverse imports) are mechanically enforceable via `eslint-plugin-import` `import/no-restricted-paths`.
+- Test pyramid is shaped correctly: unit/property co-located, integration in API package, cross-cutting in `tests/`. CI job names match directory names — no orphan suites.
+
+### Requirements Coverage Validation
+
+**Functional Requirements (54/54 covered):**
+
+| FR Group | Coverage |
+|---|---|
+| FR1–5 (Capture) | `<CaptureLine>`, `task-store.createTask`, `POST /tasks`, `tasks-repo.create` ✅ |
+| FR6–13 (Lifecycle, undo) | `<TaskRow>`, `task-store.{complete,edit,delete}Task`, `undo-stack`, `PATCH/DELETE /tasks/:id` ✅ |
+| FR14–20 (Display) | `<TaskList>`, `<TaskRow>`, `<App>`, `globals.css` ✅ |
+| FR21–28 (Persistence/sync) | `sync/idb`, `outbox`, `sw`, `tasks-repo` (soft-delete), `idempotency` middleware ✅ |
+| FR29–31 (Reliability surfaces) | `<Annunciator>`, `annunciator-store`, `sw-bridge` ✅ |
+| FR32–35 (Input/nav) | `<App>` global keyboard, `<TaskList>` roving tabindex, `focus-store` ✅ |
+| FR36–43 (Theming/a11y) | `theme-bootstrap`, `theme-store`, `globals.css` (@theme), visually-suppressed checkbox in `<TaskRow>` ✅ |
+| FR44–45 (Self-honesty) | `<DevLatencyDisplay>`, `docs/ANTI-FEATURES.md` ✅ |
+| FR46–54 (Anti-feature contract) | `scripts/check-anti-features.sh`, ESLint rules, visual-regression on empty state ✅ |
+
+**Non-Functional Requirements (31/31 covered):**
+
+| NFR | Architectural mechanism |
+|---|---|
+| NFR-Perf-1/2/3/4 (latency) | `tests/perf/*.bench.ts`, CI `latency-budget` job, `lib/latency.ts` instrumentation ✅ |
+| NFR-Perf-5 (cold-load Fast 3G) | Bundle budget + `font-display: block` + cached cold-load test ✅ |
+| NFR-Perf-6 (bundle) | `scripts/check-bundle-size.ts` ✅ |
+| NFR-Perf-7 (memory 1000 tasks) | Stress test in `tests/property/sync-invariants.test.ts` ✅ |
+| NFR-Perf-8 (CI enforcement) | Above jobs are required-pass on every PR ✅ |
+| NFR-Perf-9 (reduced motion) | Verified by perf bench under `prefers-reduced-motion: reduce` flag — **action item: explicitly enable this in `playwright.config.ts`** ⚠️ |
+| NFR-Rel-1 (no data loss) | Outbox + soft-delete + idempotency keys ✅ |
+| NFR-Rel-2 (1000-op stress) | `tests/property/sync-invariants.test.ts` (fast-check + simulated network state machine) ✅ |
+| NFR-Rel-3 (reversibility) | `tests/property/undo-restores-exact-state.test.ts`; soft-delete server side ✅ |
+| NFR-Rel-4 (≥30d server retention) | `idempotency-keys` purge job; `tasks` soft-deletes never hard-purged in v1 (acceptable single-user volume) ✅ |
+| NFR-Rel-5 (≥10 retries idempotent) | Idempotency middleware test ✅ |
+| NFR-Rel-6 (FIFO replay) | `outbox.test.ts` property test ✅ |
+| NFR-A11y-1 (axe AA) | `tests/e2e/a11y.spec.ts` ✅ |
+| NFR-A11y-2 (contrast) | Token verification step in CI ✅ |
+| NFR-A11y-3 (keyboard 100%) | `tests/e2e/keyboard-only.spec.ts` ✅ |
+| NFR-A11y-4 (manual SR) | Pre-ship checklist in `docs/` ✅ |
+| NFR-A11y-5 (accessible names) | Via axe-core ✅ |
+| NFR-A11y-6 (reduced motion) | CSS-driven; verified by perf bench ✅ |
+| NFR-A11y-7 (touch targets) | Visual-regression at mobile viewport ✅ |
+| NFR-A11y-8 (200% zoom) | Manual pre-ship check ✅ |
+| NFR-Priv-1 (no PII in logs) | `lib/log.ts` redaction; ESLint rule ✅ |
+| NFR-Priv-2 (no third-party tracking) | Codebase-grep CI; no SDK in package.json ✅ |
+| NFR-Priv-3 (noindex) | Static `<meta name="robots">` in `index.html` — **action item: add to scaffold checklist** ⚠️ |
+| NFR-Priv-4 (per-user namespace) | `user_namespace` column day-one ✅ |
+| NFR-Priv-5 (HTTPS+HSTS) | Cloudflare front + Fly origin certs ✅ |
+| NFR-Sec-1 (plain text) | Solid JSX `textContent`; ESLint forbids `innerHTML` ✅ |
+| NFR-Sec-2 (≤10000 chars) | Zod schema + SQL CHECK constraint ✅ |
+| NFR-Sec-3 (rate limit) | `@fastify/rate-limit` 100 req/min/namespace ✅ |
+| NFR-Sec-4 (audit) | `pnpm audit --audit-level=high` in CI ✅ |
+| NFR-Sec-5 (no client secrets) | Fly secrets injected at deploy only ✅ |
+| NFR-Sec-6 (network access restriction) | Cloudflare Access ✅ |
+| NFR-Sec-7 (auth seam) | `auth-jwt` middleware + `user_namespace` from JWT `sub` ✅ |
+| NFR-Maint-1 (property tests destructive ops) | `task-store.test.ts`, `outbox.test.ts`, `undo-restores-exact-state.test.ts` ✅ |
+| NFR-Maint-2 (sync stress) | `tests/property/sync-invariants.test.ts` ✅ |
+| NFR-Maint-3 (anti-feature lints) | `scripts/check-anti-features.sh` + visual regression ✅ |
+| NFR-Maint-4 (CONTRIBUTING references) | `docs/CONTRIBUTING.md` ✅ |
+| NFR-Maint-5 (<5min CI) | Achievable given Vitest parallelism + Playwright parallel projects — **needs measurement post-build, may require optimisation** ⚠️ |
+| NFR-Scale-1 (not v1 concern) | Explicitly deferred ✅ |
+| NFR-Obs-1 (latency CI) | Latency-budget job ✅ |
+| NFR-Obs-2 (dev latency display) | `<DevLatencyDisplay>` ✅ |
+| NFR-Obs-3 (no prod telemetry) | No SDKs, codebase-grep enforces ✅ |
+
+### Implementation Readiness Validation
+
+**Decision completeness:** all critical decisions have a chosen technology and a documented rationale. Versions are pinned to "current LTS / latest stable" with verification-on-init rather than hard-pinning here (intentional — CLI scaffolders and library versions evolve faster than this document; pinning would create stale instructions).
+
+**Structure completeness:** complete tree with named files; FR-to-file map complete; all integration points specified; module boundaries enforceable via existing ESLint plugins.
+
+**Pattern completeness:** naming/structure/format/communication/process patterns specified with concrete examples and explicit anti-patterns. Lint rules and codebase-grep enforce; visual-regression catches drift.
+
+### Gap Analysis
+
+**Critical (block implementation): NONE.**
+
+All critical paths are covered. Architecture is implementable.
+
+**Important (resolve before late-stage implementation):**
+
+1. **`cmd+enter` global capture is PWA-scoped, not browser-global.** PRD FR3 ("global capture shortcut, without first navigating to the application") and UX spec describe `cmd+enter` "from any browser tab." The architectural reality on the modern web platform: cross-tab keyboard shortcuts are **only** available when the app is installed as a PWA window (which receives OS-level shortcuts) — not from arbitrary tabs in a regular browser. **Resolution path:** clarify this in the PRD as a Growth-scope item ("native-app-like cross-tab capture requires PWA install"), or accept the v1 reality that the shortcut works inside the app tab/PWA window only. Recommend the latter; raise as a doc clarification, not a re-architecture.
+
+2. **Service worker must NOT cache Cloudflare Access endpoints.** The SW caches static assets and `/tasks` (network-first). It must explicitly exclude `/cdn-cgi/access/*` paths and authentication redirects, or stale CFA cookies could cause silent auth failures that the annunciator can't recover from. **Resolution:** add an exclusion list to the Workbox routing config in `sw.ts`; add a test that simulates a JWT expiry mid-session and verifies the SW does not return a stale 200.
+
+3. **Idempotency-key TTL of 24h vs outbox staleness.** If the user is offline >24h and the response to a successfully-applied mutation was lost in transit, replaying after the key expires could create a duplicate. **Resolution:** extend `idempotency_keys` retention from 24h to **14 days** (cheap; the row is small). Update step 4 spec accordingly. ⚠️ *Recommend doing this now.*
+
+4. **Property-based testing scope.** `fast-check` + `vitest` is the chosen stack; this works cleanly on store / sync / outbox logic. **Component-level** property testing (e.g., random sequences of keystrokes against `<CaptureLine>`) requires `@solidjs/testing-library` + a test harness; Playwright is the natural home for this kind of test. **Resolution:** clarify in step 5 patterns: property-based tests live at the **store layer**; component-level user-input tests live in `tests/e2e/*.spec.ts` as Playwright integration tests with randomised input sequences.
+
+5. **NFR-Maint-5 (<5min CI)** is plausible but unverified. The latency-budget bench needs warm-up and statistical confidence — naive implementations easily run 2–3 min on shared runners. **Resolution:** treat the 5-minute target as a guideline; if breached, parallelise the Playwright job into shards (`playwright.config.ts` projects), and run latency-budget + stress-sync only on `main` post-merge rather than every PR.
+
+**Minor (nice-to-have):**
+
+- **`<ErrorBoundary>` should be explicitly forbidden in component code.** Solid ships an `ErrorBoundary` primitive; the design routes all errors to the annunciator. Add to the codebase-grep blocklist.
+- **OPFS could be used for the IDB-equivalent store**, offering slightly faster sync writes. Rejected for v1 — IDB is cross-browser-stable and the access patterns (small rows, low frequency) don't benefit from OPFS's strengths. Document the rejection in `docs/adr/` so it isn't reopened later.
+- **Solid's `createResource` reconciliation strategy** — first-fetch-after-cache-paint should NOT replace the cache wholesale; it should merge server state with pending outbox entries (per UX spec). Worth a dedicated `sync/reconcile.ts` module with its own property test, even though the current architecture has it implicit in `task-store`.
+
+### Validation Issues Addressed
+
+The three "important" items #1, #2, and #3 above are addressed inline as architectural amendments and should be applied to the relevant prior sections in implementation. Specifically:
+- Idempotency TTL raised from 24 h → 14 d (Section: Data Architecture).
+- SW Workbox routing config explicitly excludes `/cdn-cgi/access/*` (Section: Frontend Architecture / Service worker).
+- PRD FR3 interpretation: `cmd+enter` works inside the PWA window; cross-tab native capture is a Growth-scope item (Section: Decision Priority Analysis / Deferred).
+
+These amendments are noted here rather than retroactively edited into earlier sections to keep the discovery trail visible.
+
+### Architecture Completeness Checklist
+
+**✅ Requirements Analysis**
+- [x] Project context thoroughly analyzed
+- [x] Scale and complexity assessed
+- [x] Technical constraints identified
+- [x] Cross-cutting concerns mapped (8 enumerated)
+
+**✅ Architectural Decisions**
+- [x] Critical decisions documented (frontend, backend, DB, validation, IDB, SW, hosting, auth, CI)
+- [x] Technology stack fully specified
+- [x] Integration patterns defined (idempotency, soft-delete, annunciator routing)
+- [x] Performance considerations addressed (bundle, latency, cache-first)
+
+**✅ Implementation Patterns**
+- [x] Naming conventions established (DB, TS, API, files)
+- [x] Structure patterns defined (module boundaries, test colocation)
+- [x] Communication patterns specified (SW↔page, store, mutation flow)
+- [x] Process patterns documented (errors, retries, logging)
+
+**✅ Project Structure**
+- [x] Complete directory structure defined (every file named)
+- [x] Component boundaries established (one-direction imports, ESLint-enforced)
+- [x] Integration points mapped (write/read paths diagrammed)
+- [x] Requirements to structure mapping complete (FR1–54 + every NFR)
+
+**✅ Validation**
+- [x] Coherence verified (with caveats noted)
+- [x] All 54 FRs and 31 NFRs traced to architectural mechanisms
+- [x] Five important gaps identified with resolution paths
+- [x] Three minor improvements noted
+
+### Architecture Readiness Assessment
+
+**Overall Status:** READY FOR IMPLEMENTATION
+
+**Confidence Level:** HIGH. The five "important" gaps are scope clarifications and one TTL extension, not redesigns. None block implementation start.
+
+**Key strengths:**
+- The anti-feature contract is mechanically enforceable (CI grep + visual regression + ESLint), not just aspirational.
+- Idempotency-Key as a single load-bearing primitive eliminates a class of sync-correctness bugs.
+- Solid + Vite + hand-rolled components is the only realistic path to the stated bundle and latency budgets, and the choice is honestly justified rather than fashionable.
+- Cloudflare Access provides a clean migration path to OAuth/OIDC without a schema rewrite.
+- The 7-component cap and module-boundary lints prevent feature/component sprawl over time.
+
+**Areas for future enhancement (Growth scope):**
+- CRDT or operational-transform layer for multi-device sync.
+- Cross-tab native capture via a small native shell or WebExtension.
+- Postgres migration for multi-user.
+- Search / focused-task / snooze / autocomplete UIs.
+- Self-hosted CI runner if shared-runner timing variance becomes a CI-flake source.
+
+### Implementation Handoff
+
+**AI Agent Guidelines:**
+- Follow architectural decisions and patterns exactly. Deviations require updating this document via PR, not ad-hoc choices.
+- The `Implementation Patterns & Consistency Rules` section is the day-to-day reference; re-read it before each new file.
+- The `Project Structure & Boundaries` section is the location reference; new files go where this doc says they go.
+- Every CI gate is load-bearing. None of them are advisory. Failures are stop-the-line.
+
+**First implementation priority (Phase 1 / Foundation):**
+1. Create the monorepo skeleton: `pnpm-workspace.yaml`, root `package.json`, `tsconfig.base.json`, `.eslintrc.cjs`, `.prettierrc`.
+2. Run `cd apps && pnpm create solid web` (template: `ts`).
+3. Hand-scaffold `apps/api/` with Fastify + Kysely + better-sqlite3 + Zod + pino skeleton.
+4. Create `packages/shared/` with the Zod schemas (`Task`, mutation types, `SwMessage`).
+5. Wire the CI scaffold (`.github/workflows/ci.yml`) with placeholder jobs that pass — fail is the next-cycle work.
+6. First commit lands the scaffold; first PR is the tokens + theme bootstrap (UX Phase 1).

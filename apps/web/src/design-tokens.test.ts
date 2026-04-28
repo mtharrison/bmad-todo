@@ -133,19 +133,21 @@ describe("design tokens in globals.css", () => {
   });
 
   it("defines all light theme color tokens", () => {
-    expect(css).toContain("--color-paper: #F4EFE6");
-    expect(css).toContain("--color-ink: #1F1A14");
-    expect(css).toContain("--color-ink-muted: #1F1A14A6");
-    expect(css).toContain("--color-rule: #1F1A1422");
-    expect(css).toContain("--color-accent: #9C3B1B");
+    const lower = css.toLowerCase();
+    expect(lower).toContain("--color-paper: #f4efe6");
+    expect(lower).toContain("--color-ink: #1f1a14;");
+    expect(lower).toContain("--color-ink-muted: #1f1a14a6");
+    expect(lower).toContain("--color-rule: #1f1a1422");
+    expect(lower).toContain("--color-accent: #9c3b1b");
   });
 
   it("defines all dark theme color tokens", () => {
-    expect(css).toContain("--color-paper: #1A1612");
-    expect(css).toContain("--color-ink: #E8DFCE");
-    expect(css).toContain("--color-ink-muted: #E8DFCE99");
-    expect(css).toContain("--color-rule: #E8DFCE22");
-    expect(css).toContain("--color-accent: #6B8E7F");
+    const lower = css.toLowerCase();
+    expect(lower).toContain("--color-paper: #1a1612");
+    expect(lower).toContain("--color-ink: #e8dfce;");
+    expect(lower).toContain("--color-ink-muted: #e8dfce99");
+    expect(lower).toContain("--color-rule: #e8dfce22");
+    expect(lower).toContain("--color-accent: #6b8e7f");
   });
 
   it("defines spacing base of 4px", () => {
@@ -183,9 +185,10 @@ describe("design tokens in globals.css", () => {
   });
 
   it("declares prefers-contrast: more block with high-contrast ink", () => {
-    expect(css).toContain("prefers-contrast: more");
-    expect(css).toContain("--color-ink: #000000");
-    expect(css).toContain("--color-ink: #FFFFFF");
+    const lower = css.toLowerCase();
+    expect(lower).toContain("prefers-contrast: more");
+    expect(lower).toContain("--color-ink: #000000");
+    expect(lower).toContain("--color-ink: #ffffff");
   });
 
   it("declares forced-colors: active block", () => {

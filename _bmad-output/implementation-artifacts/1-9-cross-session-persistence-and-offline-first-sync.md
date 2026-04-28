@@ -1214,7 +1214,7 @@ claude-opus-4-7 (Claude Opus 4.7, 1M context)
 - [x] [Review][Patch] Mutations enqueued for nonexistent task IDs — patched: `updateTaskText`, `setTaskCompletedAt`, `deleteTask` now guard `safeEnqueue` behind existence check
 - [x] [Review][Patch] 4xx handling drops 429 (rate-limit) permanently — patched: 429 now treated as retriable (same as 5xx)
 - [x] [Review][Patch] `parseOrThrow` unsafe ErrorEnvelope cast — patched: validates error shape before constructing `ApiError`; falls back to `ServerError` envelope for non-standard responses
-- [x] [Review][Patch] `drain()` breaks on first backed-off entry, skipping processable later entries — patched: changed `break` to `continue`
+- [x] [Review][Defer] `drain()` breaks on first backed-off entry, skipping processable later entries — reverted to `break` to preserve causal ordering; safely skipping independent entries requires per-task-ID dependency tracking (deferred)
 - [x] [Review][Defer] Unbounded `idempotency_keys` table growth [`apps/api/migrations/0001_init.sql`] — deferred, single-user v1 volume bounded; purge cron is Growth-scope
 - [x] [Review][Defer] Production auth throws unconditionally [`apps/api/src/middleware/auth-jwt.ts:622-629`] — deferred, intentional per spec; Story 1.13 territory
 - [x] [Review][Defer] `hashRequestBody` non-canonical JSON serialization [`apps/api/src/lib/hash.ts`] — deferred, client always sends same key order; proxy reorder is theoretical for v1

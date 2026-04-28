@@ -83,7 +83,9 @@ async function drainInternal(): Promise<DrainResult> {
 
   for (const entry of entries) {
     if (entry.nextAttemptAt && entry.nextAttemptAt > now) {
-      continue;
+      // Preserve causal ordering: do not skip backed-off entries, as later
+      // entries may depend on them (e.g., create→update for the same task).
+      break;
     }
     try {
       const serverTask = await dispatchEntry(entry);

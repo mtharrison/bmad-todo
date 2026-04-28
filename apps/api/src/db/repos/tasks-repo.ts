@@ -24,20 +24,40 @@ export class TasksRepo {
     createdAt: number;
   }): Promise<Task> {
     const now = Date.now();
-    const row = await this.db
-      .insertInto("tasks")
-      .values({
-        id: input.id,
-        user_namespace: input.userNamespace,
-        text: input.text,
-        completed_at: null,
-        created_at: input.createdAt,
-        updated_at: now,
-        deleted_at: null,
-      })
-      .returningAll()
-      .executeTakeFirstOrThrow();
-    return rowToTask(row);
+    try {
+      const row = await this.db
+        .insertInto("tasks")
+        .values({
+          id: input.id,
+          user_namespace: input.userNamespace,
+          text: input.text,
+          completed_at: null,
+          created_at: input.createdAt,
+          updated_at: now,
+          deleted_at: null,
+        })
+        .returningAll()
+        .executeTakeFirstOrThrow();
+      return rowToTask(row);
+    } catch (err) {
+      if (err instanceof Error && err.message.includes("UNIQUE constraint")) {
+        // Undo-of-delete re-creates with the same ID. Revive the soft-deleted row.
+        const revived = await this.db
+          .updateTable("tasks")
+          .set({
+            text: input.text,
+            completed_at: null,
+            updated_at: now,
+            deleted_at: null,
+          })
+          .where("id", "=", input.id)
+          .where("user_namespace", "=", input.userNamespace)
+          .returningAll()
+          .executeTakeFirstOrThrow();
+        return rowToTask(revived);
+      }
+      throw err;
+    }
   }
 
   async update(

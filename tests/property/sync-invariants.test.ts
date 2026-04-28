@@ -13,7 +13,7 @@ import {
   updateTaskText,
 } from "../../apps/web/src/store/task-store.js";
 import { applyUndo, pushUndo, clearUndoStack } from "../../apps/web/src/store/undo-stack.js";
-import { drain } from "../../apps/web/src/sync/outbox.js";
+import { drain, resetBackoff } from "../../apps/web/src/sync/outbox.js";
 import { clearAll } from "../../apps/web/src/sync/idb.js";
 
 interface Harness {
@@ -188,10 +188,18 @@ async function applyCommand(cmd: Command, model: ModelState): Promise<void> {
   }
 }
 
-async function drainUntilQuiet(maxRounds = 10): Promise<void> {
+async function drainUntilQuiet(maxRounds = 20): Promise<void> {
+  // Yield to let fire-and-forget enqueueAndDrain settle before we start
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  await resetBackoff();
   for (let i = 0; i < maxRounds; i++) {
     const r = await drain();
     if (r.remaining === 0) return;
+    if (r.remaining === -1) {
+      // Another drain in progress; yield and retry
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      continue;
+    }
     if (r.applied === 0 && r.rejected === 0) return;
   }
 }

@@ -5,7 +5,7 @@ import { TasksRepo } from "../db/repos/tasks-repo.js";
 import { IdempotencyRepo } from "../db/repos/idempotency-repo.js";
 import type { DB } from "../db/kysely.js";
 import { makeIdempotencyHook } from "../middleware/idempotency.js";
-import { NotFoundError, ConflictError } from "../middleware/error-envelope.js";
+import { NotFoundError } from "../middleware/error-envelope.js";
 import { log } from "../lib/log.js";
 
 export interface TaskRoutesDeps {
@@ -45,20 +45,12 @@ export async function taskRoutes(app: FastifyInstance, deps: TaskRoutesDeps): Pr
     const parsed = CreateTaskInput.parse(req.body);
     const task = await kysely.transaction().execute(async (trx) => {
       const trxTasksRepo = new TasksRepo(trx);
-      let created;
-      try {
-        created = await trxTasksRepo.create({
-          id: parsed.id,
-          userNamespace: req.userNamespace,
-          text: parsed.text,
-          createdAt: parsed.createdAt,
-        });
-      } catch (err) {
-        if (err instanceof Error && err.message.includes("UNIQUE constraint")) {
-          throw new ConflictError(`Task ${parsed.id} already exists`);
-        }
-        throw err;
-      }
+      const created = await trxTasksRepo.create({
+        id: parsed.id,
+        userNamespace: req.userNamespace,
+        text: parsed.text,
+        createdAt: parsed.createdAt,
+      });
       await storeIdempotencyTrx(trx, req, 201, created);
       return created;
     });

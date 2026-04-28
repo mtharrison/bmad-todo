@@ -11,6 +11,7 @@
 - `listActive` has no pagination — unbounded result set for GET /tasks; single-user todo app with practical limits; add LIMIT/offset when multi-user or large-scale
 - Idempotency race with concurrent same-key requests — read-then-write gap in middleware; theoretical in single-user v1 with SQLite serialization and single-threaded Node.js
 - `hydrateFromCache` blocks first render in `index.tsx` — matches spec intent (no empty flash before cached data); IDB read is <10ms for small datasets; risk of white screen on corrupted/slow IDB
+- `drain()` uses `break` on backed-off entries, blocking independent entries behind a failed one — safely skipping only independent entries requires per-task-ID dependency tracking; `break` preserves causal ordering at the cost of delayed sync for unrelated mutations
 
 ## Deferred from: code review of 1-8-theme-toggle-dark-mode-and-accessibility-tokens (2026-04-28)
 

@@ -144,7 +144,11 @@ export function clearAllTasks(): void {
   setTasks(() => []);
 }
 
+let flushing = false;
+
 export async function flushOutbox(): Promise<void> {
+  if (flushing) return;
+  flushing = true;
   try {
     await resetBackoff();
     for (let i = 0; i < 5; i++) {
@@ -158,6 +162,8 @@ export async function flushOutbox(): Promise<void> {
     }
   } catch {
     setSyncState("error");
+  } finally {
+    flushing = false;
   }
 }
 

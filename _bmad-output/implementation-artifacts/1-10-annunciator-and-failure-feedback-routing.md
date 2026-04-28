@@ -1,6 +1,6 @@
 # Story 1.10: Annunciator and Failure Feedback Routing
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -370,3 +370,13 @@ No debug issues encountered. Clean implementation.
 - `apps/web/src/components/App.tsx` (added Annunciator import and render)
 - `apps/web/src/styles/globals.css` (added annunciator CSS rules + forced-colors overrides)
 - `tests/e2e/visual-regression.spec.ts` (added 2 annunciator-surfaced snapshot tests)
+
+### Review Findings
+
+- [x] [Review][Decision] forced-colors dot background uses `CanvasText` instead of `Canvas` — dismissed: filled dot is correct UX for forced-colors indicators; "where applicable" qualifier exempts the dot.
+- [x] [Review][Patch] `flushOutbox` has no concurrent invocation guard — FIXED: added `flushing` boolean guard with finally cleanup. [task-store.ts:147]
+- [x] [Review][Patch] Test fixture retry loop silently proceeds if all 5 reset attempts fail — FIXED: added throw after loop if not clean. [test-fixtures.ts:14]
+- [x] [Review][Defer] No E2E tests for conflict/error annunciator states (AC3/AC4) — unit tests cover these states but no integration-level coverage. [annunciator.spec.ts]
+- [x] [Review][Defer] No E2E test for 2-second transient suppression (AC5) — covered at store unit level; timing-based E2E is fragile. [annunciator.spec.ts]
+- [x] [Review][Defer] `flushOutbox` retry loop can block async for 5s with no progress — fire-and-forget from click handler so UI is not blocked, but consecutive `resetBackoff()` calls may hammer a failing server. [task-store.ts:153-157]
+- [x] [Review][Defer] `reconcileWithServer` lock silently drops sync requests during long fetches — rapid network events while reconciling in progress are silently ignored. Design limitation for v1 single-device model. [task-store.ts:179]

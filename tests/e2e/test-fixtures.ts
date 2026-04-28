@@ -11,13 +11,15 @@ export const test = base.extend({
     // test's in-flight drain may land on the server between resets. We reset,
     // wait for in-flight requests to settle, verify the server is empty, and
     // repeat if stragglers arrived.
+    let clean = false;
     for (let attempt = 0; attempt < 5; attempt++) {
       await request.post("/admin/reset");
       await new Promise((r) => setTimeout(r, 100));
       const res = await request.get("/tasks");
       const body = (await res.json()) as unknown[];
-      if (body.length === 0) break;
+      if (body.length === 0) { clean = true; break; }
     }
+    if (!clean) throw new Error("Server reset failed after 5 attempts — stale data remains");
     await use(page);
   },
 });

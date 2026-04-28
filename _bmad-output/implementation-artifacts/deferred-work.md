@@ -1,5 +1,12 @@
 # Deferred Work
 
+## Deferred from: code review of 1-10-annunciator-and-failure-feedback-routing (2026-04-28)
+
+- No E2E tests for conflict/error annunciator states (AC3/AC4) — unit tests cover state-to-label mapping and click-to-flush, but no Playwright test exercises conflict or error states at integration level
+- No E2E test for 2-second transient suppression (AC5) — store unit tests verify the threshold; timing-based E2E is fragile and prone to flake
+- `flushOutbox` retry loop can block async for 5s with no progress detection — sleeps 1s and resets backoff up to 5 times when drain returns stuck entries; UI is not blocked (fire-and-forget), but consecutive `resetBackoff()` calls may hammer a failing server
+- `reconcileWithServer` lock silently drops sync requests during long fetches — rapid online events while a reconcile is in progress are silently ignored; design limitation acceptable for v1 single-device single-user model
+
 ## Deferred from: code review of 1-9-cross-session-persistence-and-offline-first-sync (2026-04-28)
 
 - Unbounded `idempotency_keys` table growth — no TTL or purge logic; rows accumulate forever; `idx_idem_created` index exists but is never queried; single-user v1 volume is bounded; purge cron is Growth-scope

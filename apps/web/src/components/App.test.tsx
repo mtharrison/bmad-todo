@@ -512,6 +512,57 @@ describe("App global keyboard handler", () => {
       setTheme("light");
       expect(button.getAttribute("aria-pressed")).toBe("false");
     });
+
+    it("AC#10 (a) — tab order: capture line → row (if any) → theme button (last tab stop)", () => {
+      createTask("a");
+      const { container } = render(() => <App />);
+      const input = container.querySelector("input[type=text]") as HTMLInputElement;
+      const li = container.querySelector("li") as HTMLLIElement;
+      const button = container.querySelector("button.theme-toggle") as HTMLButtonElement;
+
+      const focusables = Array.from(
+        container.querySelectorAll<HTMLElement>(
+          'input, button, [tabindex="0"]',
+        ),
+      );
+      const inputIdx = focusables.indexOf(input);
+      const liIdx = focusables.indexOf(li);
+      const buttonIdx = focusables.indexOf(button);
+
+      expect(inputIdx).toBeGreaterThanOrEqual(0);
+      expect(liIdx).toBeGreaterThan(inputIdx);
+      expect(buttonIdx).toBeGreaterThan(liIdx);
+      expect(buttonIdx).toBe(focusables.length - 1);
+    });
+
+    it("AC#10 (a) — with no rows, theme button is the next tab stop after capture line", () => {
+      const { container } = render(() => <App />);
+      const input = container.querySelector("input[type=text]") as HTMLInputElement;
+      const button = container.querySelector("button.theme-toggle") as HTMLButtonElement;
+
+      const focusables = Array.from(
+        container.querySelectorAll<HTMLElement>(
+          'input, button, [tabindex="0"]',
+        ),
+      );
+      const inputIdx = focusables.indexOf(input);
+      const buttonIdx = focusables.indexOf(button);
+
+      expect(buttonIdx).toBe(inputIdx + 1);
+    });
+
+    it("onMouseDown preventDefault: pointer-down on toggle keeps focus on prior element", () => {
+      const { container } = render(() => <App />);
+      const input = container.querySelector("input[type=text]") as HTMLInputElement;
+      const button = container.querySelector("button.theme-toggle") as HTMLButtonElement;
+      input.focus();
+
+      const event = new MouseEvent("mousedown", { bubbles: true, cancelable: true });
+      const defaulted = !button.dispatchEvent(event);
+
+      expect(defaulted).toBe(true);
+      expect(document.activeElement).toBe(input);
+    });
   });
 
   describe("IME guard (AC#3 regression)", () => {

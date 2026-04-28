@@ -46,6 +46,23 @@
   --color-accent: #6B8E7F;
 }
 
+@media (prefers-contrast: more) {
+  :root,
+  [data-theme="light"] {
+    --color-ink: #000000;
+    --color-ink-muted: #1F1A14CC;
+    --color-rule: #1F1A14CC;
+    --color-accent: #7A2810;
+  }
+
+  [data-theme="dark"] {
+    --color-ink: #FFFFFF;
+    --color-ink-muted: #E8DFCECC;
+    --color-rule: #E8DFCECC;
+    --color-accent: #86B5A2;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   :root {
     --motion-default: var(--motion-instant);
@@ -190,28 +207,19 @@ main.app-main {
   transition: none;
 }
 
-.theme-toggle:focus-visible,
-.theme-toggle:hover {
+.theme-toggle:focus-visible {
   clip-path: none;
   font-size: 12px;
   outline: 2px solid var(--color-accent);
   outline-offset: 4px;
 }
 
-@media (prefers-contrast: more) {
-  :root,
-  [data-theme="light"] {
-    --color-ink: #000000;
-    --color-ink-muted: #1F1A14CC;
-    --color-rule: #1F1A14CC;
-    --color-accent: #7A2810;
-  }
-
-  [data-theme="dark"] {
-    --color-ink: #FFFFFF;
-    --color-ink-muted: #E8DFCECC;
-    --color-rule: #E8DFCECC;
-    --color-accent: #86B5A2;
+@media (hover: hover) {
+  .theme-toggle:hover {
+    clip-path: none;
+    font-size: 12px;
+    outline: 2px solid var(--color-accent);
+    outline-offset: 4px;
   }
 }
 
@@ -227,6 +235,8 @@ main.app-main {
   }
 
   .theme-toggle {
+    clip-path: none;
+    font-size: 12px;
     border-color: CanvasText;
     color: CanvasText;
   }

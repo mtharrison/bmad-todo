@@ -144,10 +144,8 @@ export function App() {
         class="theme-toggle"
         aria-label="Toggle theme"
         aria-pressed={theme() === "dark" ? "true" : "false"}
-        onClick={(e) => {
-          e.preventDefault();
-          toggleTheme();
-        }}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => toggleTheme()}
       >
         Toggle theme
       </button>

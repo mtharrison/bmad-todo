@@ -37,6 +37,7 @@
 generated: 2026-04-27
 last_updated: 2026-04-28
 # 2026-04-28: 1-9 moved to ready-for-dev (story context created)
+# 2026-04-28: 1-8 moved to done after code review (7 patches applied, 4 deferred)
 
 
 project: bmad-todo
@@ -55,7 +56,7 @@ development_status:
   1-5-task-edit-and-delete: done
   1-6-session-long-undo-stack: done
   1-7-keyboard-navigation-and-two-cursor-focus-model: done
-  1-8-theme-toggle-dark-mode-and-accessibility-tokens: review
+  1-8-theme-toggle-dark-mode-and-accessibility-tokens: done
   1-9-cross-session-persistence-and-offline-first-sync: ready-for-dev
   1-10-annunciator-and-failure-feedback-routing: backlog
   1-11-dev-mode-latency-display-and-anti-feature-contract: backlog

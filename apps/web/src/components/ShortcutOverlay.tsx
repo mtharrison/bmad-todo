@@ -51,6 +51,13 @@ function ShortcutOverlayDialog() {
   const onDialogKeyDown = (e: KeyboardEvent) => {
     if (e.key === "Tab") {
       e.preventDefault();
+      const closeBtn = dialogRef?.querySelector<HTMLElement>(".shortcut-overlay-close");
+      if (!closeBtn) return;
+      if (document.activeElement === closeBtn) {
+        dialogRef?.focus();
+      } else {
+        closeBtn.focus();
+      }
     }
   };
 

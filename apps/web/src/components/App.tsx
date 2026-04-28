@@ -1,4 +1,4 @@
-import { onMount, onCleanup } from "solid-js";
+import { onMount, onCleanup, createEffect, on } from "solid-js";
 import { Annunciator } from "./Annunciator";
 import { CaptureLine } from "./CaptureLine";
 import { DevLatencyDisplay, setDevModeVisible, devModeVisible } from "./DevLatencyDisplay";
@@ -38,6 +38,15 @@ function isEditableTarget(target: EventTarget | null): boolean {
 export function App() {
   let prevFocus: HTMLElement | null = null;
 
+  createEffect(
+    on(overlayOpen, (isOpen, wasOpen) => {
+      if (wasOpen && !isOpen) {
+        prevFocus?.focus();
+        prevFocus = null;
+      }
+    }),
+  );
+
   onMount(() => {
     const handler = (event: KeyboardEvent) => {
       if (event.isComposing) return;
@@ -49,8 +58,6 @@ export function App() {
         if (event.key === "Escape" || event.key === "?") {
           event.preventDefault();
           setOverlayOpen(false);
-          prevFocus?.focus();
-          prevFocus = null;
         }
         return;
       }

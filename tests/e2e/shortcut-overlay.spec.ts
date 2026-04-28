@@ -80,10 +80,14 @@ test.describe("Keyboard Shortcut Overlay (Story 1.14)", () => {
     await expect(task).not.toHaveAttribute("data-completed", "true");
   });
 
-  test("clicking scrim closes overlay", async ({ page }) => {
+  test("clicking scrim closes overlay and restores focus", async ({ page }) => {
     await page.goto("/");
-    const input = page.locator('input[aria-label="Add a task"]');
-    await input.blur();
+    await page.keyboard.type("task one");
+    await page.keyboard.press("Enter");
+
+    await page.keyboard.press("Tab");
+    const row = page.locator("li").first();
+    await expect(row).toBeFocused();
 
     await page.keyboard.press("?");
     await expect(page.locator("[role='dialog']")).toBeVisible();
@@ -91,6 +95,7 @@ test.describe("Keyboard Shortcut Overlay (Story 1.14)", () => {
     const scrim = page.locator(".shortcut-overlay-scrim");
     await scrim.click({ position: { x: 10, y: 10 } });
     await expect(page.locator("[role='dialog']")).not.toBeVisible();
+    await expect(row).toBeFocused();
   });
 
   test("overlay never auto-opens on page load", async ({ page }) => {

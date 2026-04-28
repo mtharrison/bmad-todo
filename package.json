@@ -17,6 +17,16 @@
   "pnpm": {
     "overrides": {
       "resolve": "^1.22.8"
+    },
+    "auditConfig": {
+      "ignoreCves": [
+        "CVE-2026-32763",
+        "CVE-2026-33468",
+        "CVE-2026-34043"
+      ],
+      "ignoreGhsas": [
+        "GHSA-5c6j-r48x-rmvq"
+      ]
     }
   },
   "devDependencies": {

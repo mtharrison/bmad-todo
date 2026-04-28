@@ -1,6 +1,6 @@
 # Story 1.14: Keyboard Shortcut Overlay
 
-Status: review
+Status: done
 
 ## Story
 
@@ -226,9 +226,9 @@ None — clean implementation, no debug cycles needed.
 
 ### Review Findings
 
-- [ ] [Review][Patch] Focus not restored on scrim click / close button — `prevFocus` is scoped to App.tsx handler; only Escape/? keyboard path restores focus; scrim click and close button call `setOverlayOpen(false)` without restoring `prevFocus` [ShortcutOverlay.tsx:41,90 / App.tsx:39]
-- [ ] [Review][Patch] Tab focus trap blocks all Tab — close button unreachable by keyboard — `onDialogKeyDown` prevents all Tab presses; focus should cycle between dialog and close button instead of being fully blocked [ShortcutOverlay.tsx:52-54]
-- [ ] [Review][Patch] E2E test for scrim click does not assert focus restoration — test only checks dialog visibility, not that `document.activeElement` returns to prior focus holder [shortcut-overlay.spec.ts:83-94]
+- [x] [Review][Patch] Focus not restored on scrim click / close button — fixed via `createEffect(on(overlayOpen, ...))` in App.tsx that restores focus on any close path [ShortcutOverlay.tsx:41,90 / App.tsx:39]
+- [x] [Review][Patch] Tab focus trap blocks all Tab — close button unreachable by keyboard — fixed: Tab now cycles between dialog container and close button [ShortcutOverlay.tsx:52-54]
+- [x] [Review][Patch] E2E test for scrim click does not assert focus restoration — fixed: test now creates a task, focuses it, opens overlay, clicks scrim, and asserts row is re-focused [shortcut-overlay.spec.ts:83-94]
 - [x] [Review][Defer] Module-level signal export (SSR concern) — matches existing DevLatencyDisplay pattern; project is client-only SPA — deferred, pre-existing
 - [x] [Review][Defer] `navigator.platform` deprecated — still functional in all browsers; matches existing project pattern — deferred, pre-existing
 - [x] [Review][Defer] Background scroll not locked while modal open — low-impact for help overlay; common tradeoff for simple modals — deferred, pre-existing

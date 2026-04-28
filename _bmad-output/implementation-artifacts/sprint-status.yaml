@@ -36,6 +36,7 @@
 
 generated: 2026-04-27
 last_updated: 2026-04-28
+# 2026-04-28: 1-14 done after code review (3 patches applied, 5 deferred, 9 dismissed)
 # 2026-04-28: 1-14 review (implementation complete, all 9 tasks; 211 unit tests pass; 104 E2E tests pass; typecheck/lint clean)
 # 2026-04-28: 1-14 in-progress (dev started)
 # 2026-04-28: 1-13 round 3 review (1 additional patch — fly.toml dockerfile path, 6 dismissed)
@@ -86,7 +87,7 @@ development_status:
   1-11-dev-mode-latency-display-and-anti-feature-contract: done
   1-12-ci-performance-accessibility-and-visual-regression-gates: done
   1-13-deployment-security-headers-and-production-hardening: done
-  1-14-keyboard-shortcut-overlay: review
+  1-14-keyboard-shortcut-overlay: done
   epic-1-retrospective: optional
 
   # Epic 2: Growth — Daily-Driver Enhancements (post-MVP)

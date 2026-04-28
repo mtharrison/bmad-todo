@@ -1,5 +1,13 @@
 # Deferred Work
 
+## Deferred from: code review of 1-14-keyboard-shortcut-overlay (2026-04-28)
+
+- Module-level signal export (SSR concern) — `overlayOpen`/`setOverlayOpen` exported at module scope; shared mutable state across consumers; would be a bug in SSR; matches existing DevLatencyDisplay pattern; project is client-only SPA
+- `navigator.platform` deprecated — used for Mac/Ctrl detection in ShortcutOverlay.tsx; `navigator.userAgentData?.platform` is the modern replacement but lacks Safari support; still functional in all browsers
+- Background scroll not locked while modal open — scrim covers viewport but no `overflow: hidden` set on body; mouse wheel and touch scroll pass through to underlying document; low-impact for a help overlay
+- No E2E test for forced-colors visual regression snapshot — AC #8 specifies Playwright snapshot verification; forced-colors emulation is limited in Playwright; not reliably testable across CI environments
+- No E2E test for reduced-motion instant transitions — AC #9 specifies verification; component uses binary `<Show>` with no CSS transition, so reduced-motion is inherently satisfied; test would assert nothing meaningful
+
 ## Deferred from: code review of 1-13-deployment-security-headers-and-production-hardening (2026-04-28)
 
 - SPA fallback `notFoundHandler` prefix list is incomplete/fragile — hardcoded `/tasks`, `/health`, `/admin` won't cover future API routes. Consider adopting a `/api/` prefix convention or inverting the logic to match known SPA routes instead. [apps/api/src/middleware/static.ts:25]

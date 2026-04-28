@@ -1,4 +1,4 @@
-import { createSignal, Show, onMount, onCleanup } from "solid-js";
+import { createSignal, Show, onMount } from "solid-js";
 
 export const [overlayOpen, setOverlayOpen] = createSignal(false);
 

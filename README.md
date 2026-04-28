@@ -4,13 +4,16 @@ A deliberately minimal, character-rich personal todo app. Speed and simplicity o
 
 **Thesis:** A todo app that feels faster than thought, with personality expressed through typography and animation — not through gamification, modals, or feature bloat.
 
-**Latency budgets:**
+**p95 Latency budgets:**
 
-- Input → render: < 16ms (single frame)
-- Action → persist: < 100ms
+- Keystroke → render: < 16ms
+- Completion → strikethrough: < 50ms
+- Enter → task visible: < 100ms
 - Cold start → interactive: < 500ms
 - Initial JS bundle: ≤ 50KB gzipped
 - Total assets: ≤ 150KB gzipped
+
+Dev mode (`Cmd+Shift+L` / `Ctrl+Shift+L`) shows live p95 latency versus these budgets.
 
 ## Tech Stack
 

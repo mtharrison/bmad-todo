@@ -360,6 +360,7 @@ No debug issues encountered. Clean implementation.
 ### File List
 
 **New files:**
+
 - `apps/web/src/components/Annunciator.tsx`
 - `apps/web/src/components/Annunciator.test.tsx`
 - `tests/e2e/annunciator.spec.ts`
@@ -367,6 +368,7 @@ No debug issues encountered. Clean implementation.
 - `tests/e2e/visual-regression.spec.ts-snapshots/annunciator-surfaced-dark-chromium-darwin.png`
 
 **Modified files:**
+
 - `apps/web/src/components/App.tsx` (added Annunciator import and render)
 - `apps/web/src/styles/globals.css` (added annunciator CSS rules + forced-colors overrides)
 - `tests/e2e/visual-regression.spec.ts` (added 2 annunciator-surfaced snapshot tests)

@@ -36,6 +36,9 @@
 
 generated: 2026-04-27
 last_updated: 2026-04-28
+# 2026-04-28: 1-11 review (implementation complete, all 10 tasks; 281 unit tests pass; 48/49 E2E pass — 1 pre-existing flaky)
+# 2026-04-28: 1-11 in-progress (dev started)
+# 2026-04-28: 1-11 moved to ready-for-dev (story context created)
 # 2026-04-28: 1-10 done after code review (2 patches applied, 4 deferred, 10 dismissed)
 # 2026-04-28: 1-10 review (implementation complete, all 7 tasks; 265 unit tests pass; 49 E2E tests pass)
 # 2026-04-28: 1-10 in-progress (dev started)
@@ -66,7 +69,7 @@ development_status:
   1-8-theme-toggle-dark-mode-and-accessibility-tokens: done
   1-9-cross-session-persistence-and-offline-first-sync: done
   1-10-annunciator-and-failure-feedback-routing: done
-  1-11-dev-mode-latency-display-and-anti-feature-contract: backlog
+  1-11-dev-mode-latency-display-and-anti-feature-contract: review
   1-12-ci-performance-accessibility-and-visual-regression-gates: backlog
   1-13-deployment-security-headers-and-production-hardening: backlog
   1-14-keyboard-shortcut-overlay: backlog

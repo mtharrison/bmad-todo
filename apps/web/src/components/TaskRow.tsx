@@ -11,6 +11,7 @@ import {
 import { editingTaskId, setEditingTask, focusedRowIndex, setRowFocus } from "../store/focus-store";
 import { pushUndo } from "../store/undo-stack";
 import { Tick } from "./Tick";
+import { latencyTracker } from "../lib/latency";
 
 function placeCursorAtEnd(el: HTMLElement) {
   const range = document.createRange();
@@ -104,6 +105,10 @@ export function TaskRow(props: { task: ActiveTask; index: number }) {
   }
 
   function handleCheckboxChange() {
+    if (latencyTracker.isActive()) {
+      latencyTracker.recordCompletionStart();
+      requestAnimationFrame(() => latencyTracker.recordCompletionEnd());
+    }
     const previousCompletedAt = props.task.completedAt;
     toggleTaskCompleted(props.task.id);
     pushUndo({
@@ -117,6 +122,10 @@ export function TaskRow(props: { task: ActiveTask; index: number }) {
     if (target.closest(".task-text")) {
       enterEditMode();
       return;
+    }
+    if (latencyTracker.isActive()) {
+      latencyTracker.recordCompletionStart();
+      requestAnimationFrame(() => latencyTracker.recordCompletionEnd());
     }
     const previousCompletedAt = props.task.completedAt;
     toggleTaskCompleted(props.task.id);

@@ -1,6 +1,7 @@
 import { onMount, onCleanup } from "solid-js";
 import { createTask } from "../store/task-store";
 import { setCaptureInputRef } from "../store/focus-store";
+import { latencyTracker } from "../lib/latency";
 
 export function CaptureLine() {
   let inputEl: HTMLInputElement | undefined;
@@ -20,6 +21,12 @@ export function CaptureLine() {
     if (!inputEl) return;
     if (event.metaKey || event.ctrlKey) return;
     if (event.isComposing) return;
+
+    if (latencyTracker.isActive()) {
+      latencyTracker.recordKeystrokeStart();
+      requestAnimationFrame(() => latencyTracker.recordKeystrokeEnd());
+    }
+
     if (event.key === "Enter") {
       event.preventDefault();
       if (inputEl.value.trim().length === 0) return;

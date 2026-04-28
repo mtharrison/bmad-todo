@@ -1,6 +1,7 @@
 import { onMount, onCleanup } from "solid-js";
 import { Annunciator } from "./Annunciator";
 import { CaptureLine } from "./CaptureLine";
+import { DevLatencyDisplay, setDevModeVisible, devModeVisible } from "./DevLatencyDisplay";
 import { TaskList } from "./TaskList";
 import { applyUndo, pushUndo } from "../store/undo-stack";
 import {
@@ -23,6 +24,7 @@ import {
 } from "../store/task-store";
 import { theme, toggleTheme } from "../store/theme-store";
 import { setSyncState } from "../store/annunciator-store";
+import { latencyTracker } from "../lib/latency";
 
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -40,8 +42,14 @@ export function App() {
       // held `u` would flood the undo stack, held `d`/`x` would mutate per repeat.
       if (event.repeat) return;
 
-      // Cmd+Enter / Ctrl+Enter focuses capture line — works EVEN from inside the capture line
-      // and EVEN from inside an editable element. Must come BEFORE the isEditableTarget guard.
+      if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === "L") {
+        event.preventDefault();
+        const next = !devModeVisible();
+        setDevModeVisible(next);
+        latencyTracker.setActive(next);
+        return;
+      }
+
       if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
         event.preventDefault();
         focusCaptureLine();
@@ -86,9 +94,12 @@ export function App() {
           if (idx === null) return;
           const task = tasks[idx];
           if (!task) return;
-          // Refuse mid-edit toggles on the editing row to keep the commit boundary clean.
           if (editingTaskId() === task.id) return;
           event.preventDefault();
+          if (latencyTracker.isActive()) {
+            latencyTracker.recordCompletionStart();
+            requestAnimationFrame(() => latencyTracker.recordCompletionEnd());
+          }
           const previousCompletedAt = task.completedAt;
           toggleTaskCompleted(task.id);
           pushUndo({
@@ -163,6 +174,7 @@ export function App() {
     <main class="app-main bg-paper text-ink">
       <CaptureLine />
       <TaskList />
+      <DevLatencyDisplay />
       <Annunciator />
       <button
         type="button"

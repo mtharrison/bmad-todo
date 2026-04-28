@@ -17,7 +17,10 @@ export const test = base.extend({
       await new Promise((r) => setTimeout(r, 100));
       const res = await request.get("/tasks");
       const body = (await res.json()) as unknown[];
-      if (body.length === 0) { clean = true; break; }
+      if (body.length === 0) {
+        clean = true;
+        break;
+      }
     }
     if (!clean) throw new Error("Server reset failed after 5 attempts — stale data remains");
     await use(page);

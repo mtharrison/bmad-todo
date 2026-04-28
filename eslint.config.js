@@ -20,7 +20,7 @@ export default [
     },
     plugins: {
       "@typescript-eslint": tsPlugin,
-      "import": importPlugin,
+      import: importPlugin,
     },
     rules: {
       "no-console": "error",
@@ -48,7 +48,7 @@ export default [
     },
   },
   {
-    files: ["apps/web/**/*.ts", "apps/web/**/*.tsx"],
+    files: ["apps/web/**/*.ts", "apps/web/**/*.tsx", "vitest.setup.ts"],
     languageOptions: {
       globals: globals.browser,
     },

@@ -1,0 +1,701 @@
+diff --git a/apps/web/src/components/App.test.tsx b/apps/web/src/components/App.test.tsx
+index d2820cf..2618c1a 100644
+--- a/apps/web/src/components/App.test.tsx
++++ b/apps/web/src/components/App.test.tsx
+@@ -1,17 +1,19 @@
+ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+-import { render, cleanup } from "@solidjs/testing-library";
++import { render, cleanup, fireEvent } from "@solidjs/testing-library";
+ import { App } from "./App";
+ import { tasks, createTask, clearAllTasks } from "../store/task-store";
+ import { undoStack, pushUndo, clearUndoStack } from "../store/undo-stack";
+-import {
+-  focusedRowIndex,
+-  editingTaskId,
+-  setRowFocus,
+-  clearAllFocus,
+-} from "../store/focus-store";
++import { focusedRowIndex, editingTaskId, setRowFocus, clearAllFocus } from "../store/focus-store";
++import { theme, setTheme } from "../store/theme-store";
+ 
+ function dispatchKey(
+-  init: { key: string; metaKey?: boolean; ctrlKey?: boolean; altKey?: boolean; isComposing?: boolean },
++  init: {
++    key: string;
++    metaKey?: boolean;
++    ctrlKey?: boolean;
++    altKey?: boolean;
++    isComposing?: boolean;
++  },
+   target: EventTarget = window,
+ ) {
+   target.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, ...init }));
+@@ -113,6 +115,25 @@ describe("App global keyboard handler", () => {
+       expect(focusedRowIndex()).toBe(2);
+     });
+ 
++    it("k from null with 3 tasks lands on 0 (AC#2 first-K-from-null)", () => {
++      createTask("a");
++      createTask("b");
++      createTask("c");
++      setupAndBlur();
++
++      dispatchKey({ key: "k" });
++      expect(focusedRowIndex()).toBe(0);
++    });
++
++    it("ArrowUp from null with tasks lands on 0", () => {
++      createTask("a");
++      createTask("b");
++      setupAndBlur();
++
++      dispatchKey({ key: "ArrowUp" });
++      expect(focusedRowIndex()).toBe(0);
++    });
++
+     it("k from 2 decrements to 0, clamps", () => {
+       createTask("a");
+       createTask("b");
+@@ -385,6 +406,114 @@ describe("App global keyboard handler", () => {
+     });
+   });
+ 
++  describe("theme toggle (Story 1.8)", () => {
++    beforeEach(() => {
++      localStorage.clear();
++      setTheme("light");
++      document.documentElement.setAttribute("data-theme", "light");
++    });
++
++    it("t keystroke toggles theme when no editable target is focused", () => {
++      const { container } = render(() => <App />);
++      const input = container.querySelector("input[type=text]") as HTMLInputElement;
++      input.blur();
++
++      dispatchKey({ key: "t" });
++
++      expect(theme()).toBe("dark");
++      expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
++    });
++
++    it("T (uppercase) also toggles", () => {
++      const { container } = render(() => <App />);
++      const input = container.querySelector("input[type=text]") as HTMLInputElement;
++      input.blur();
++
++      dispatchKey({ key: "T" });
++
++      expect(theme()).toBe("dark");
++      expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
++    });
++
++    it("t typed inside CaptureLine does NOT toggle (AC#9 stickiness)", () => {
++      const { container } = render(() => <App />);
++      const input = container.querySelector("input[type=text]") as HTMLInputElement;
++      input.focus();
++
++      dispatchKey({ key: "t" }, input);
++
++      expect(theme()).toBe("light");
++    });
++
++    it("Cmd+t does NOT toggle (browser shortcut preserved)", () => {
++      const { container } = render(() => <App />);
++      const input = container.querySelector("input[type=text]") as HTMLInputElement;
++      input.blur();
++
++      dispatchKey({ key: "t", metaKey: true });
++
++      expect(theme()).toBe("light");
++    });
++
++    it("Ctrl+t does NOT toggle", () => {
++      const { container } = render(() => <App />);
++      const input = container.querySelector("input[type=text]") as HTMLInputElement;
++      input.blur();
++
++      dispatchKey({ key: "t", ctrlKey: true });
++
++      expect(theme()).toBe("light");
++    });
++
++    it("renders a theme-toggle button with aria-label='Toggle theme'", () => {
++      const { container } = render(() => <App />);
++      const button = container.querySelector("button.theme-toggle") as HTMLButtonElement;
++      expect(button).not.toBeNull();
++      expect(button.getAttribute("aria-label")).toBe("Toggle theme");
++    });
++
++    it("clicking the button toggles theme and aria-pressed reflects state", () => {
++      const { container } = render(() => <App />);
++      const button = container.querySelector("button.theme-toggle") as HTMLButtonElement;
++
++      expect(button.getAttribute("aria-pressed")).toBe("false");
++
++      fireEvent.click(button);
++      expect(theme()).toBe("dark");
++      expect(button.getAttribute("aria-pressed")).toBe("true");
++
++      fireEvent.click(button);
++      expect(theme()).toBe("light");
++      expect(button.getAttribute("aria-pressed")).toBe("false");
++    });
++
++    it("button.click() does NOT change document.activeElement", () => {
++      const { container } = render(() => <App />);
++      const input = container.querySelector("input[type=text]") as HTMLInputElement;
++      const button = container.querySelector("button.theme-toggle") as HTMLButtonElement;
++      input.focus();
++      expect(document.activeElement).toBe(input);
++
++      button.click();
++
++      expect(document.activeElement).toBe(input);
++      expect(theme()).toBe("dark");
++    });
++
++    it("aria-pressed is 'false' in light, 'true' in dark", () => {
++      const { container } = render(() => <App />);
++      const button = container.querySelector("button.theme-toggle") as HTMLButtonElement;
++
++      expect(button.getAttribute("aria-pressed")).toBe("false");
++
++      setTheme("dark");
++      expect(button.getAttribute("aria-pressed")).toBe("true");
++
++      setTheme("light");
++      expect(button.getAttribute("aria-pressed")).toBe("false");
++    });
++  });
++
+   describe("IME guard (AC#3 regression)", () => {
+     it("isComposing keystrokes are ignored", () => {
+       createTask("a");
+diff --git a/apps/web/src/components/App.tsx b/apps/web/src/components/App.tsx
+index 64bd6a9..835e587 100644
+--- a/apps/web/src/components/App.tsx
++++ b/apps/web/src/components/App.tsx
+@@ -8,15 +8,12 @@ import {
+   focusPrevRow,
+   setRowFocus,
+   clearRowFocus,
++  editingTaskId,
+   setEditingTask,
+   focusCaptureLine,
+ } from "../store/focus-store";
+-import {
+-  tasks,
+-  toggleTaskCompleted,
+-  deleteTask,
+-  getTaskById,
+-} from "../store/task-store";
++import { tasks, toggleTaskCompleted, deleteTask, getTaskById } from "../store/task-store";
++import { theme, toggleTheme } from "../store/theme-store";
+ 
+ function isEditableTarget(target: EventTarget | null): boolean {
+   if (!(target instanceof HTMLElement)) return false;
+@@ -30,6 +27,9 @@ export function App() {
+   onMount(() => {
+     const handler = (event: KeyboardEvent) => {
+       if (event.isComposing) return;
++      // OS auto-repeat from a held key is not the intended interaction model:
++      // held `u` would flood the undo stack, held `d`/`x` would mutate per repeat.
++      if (event.repeat) return;
+ 
+       // Cmd+Enter / Ctrl+Enter focuses capture line — works EVEN from inside the capture line
+       // and EVEN from inside an editable element. Must come BEFORE the isEditableTarget guard.
+@@ -77,6 +77,8 @@ export function App() {
+           if (idx === null) return;
+           const task = tasks[idx];
+           if (!task) return;
++          // Refuse mid-edit toggles on the editing row to keep the commit boundary clean.
++          if (editingTaskId() === task.id) return;
+           event.preventDefault();
+           const previousCompletedAt = task.completedAt;
+           toggleTaskCompleted(task.id);
+@@ -92,17 +94,29 @@ export function App() {
+           if (idx === null) return;
+           const task = tasks[idx];
+           if (!task) return;
++          // Mirror TaskRow's enterEditMode guard: refuse a second edit while another row is editing.
++          const editing = editingTaskId();
++          if (editing !== null && editing !== task.id) return;
+           event.preventDefault();
+           setEditingTask(task.id);
+           return;
+         }
+ 
++        case "t":
++        case "T":
++          event.preventDefault();
++          toggleTheme();
++          return;
++
+         case "d":
+         case "D": {
+           const idx = focusedRowIndex();
+           if (idx === null) return;
+           const task = tasks[idx];
+           if (!task) return;
++          // Refuse delete on a row that is currently being edited so the contenteditable
++          // and editingTaskId never outlive the underlying task.
++          if (editingTaskId() === task.id) return;
+           event.preventDefault();
+           const snapshot = getTaskById(task.id);
+           if (!snapshot) return;
+@@ -125,6 +139,18 @@ export function App() {
+     <main class="app-main bg-paper text-ink">
+       <CaptureLine />
+       <TaskList />
++      <button
++        type="button"
++        class="theme-toggle"
++        aria-label="Toggle theme"
++        aria-pressed={theme() === "dark" ? "true" : "false"}
++        onClick={(e) => {
++          e.preventDefault();
++          toggleTheme();
++        }}
++      >
++        Toggle theme
++      </button>
+     </main>
+   );
+ }
+diff --git a/apps/web/src/components/TaskRow.test.tsx b/apps/web/src/components/TaskRow.test.tsx
+index 1f74295..7a31e2c 100644
+--- a/apps/web/src/components/TaskRow.test.tsx
++++ b/apps/web/src/components/TaskRow.test.tsx
+@@ -176,6 +176,19 @@ describe("TaskRow", () => {
+       expect(span.getAttribute("contenteditable")).toBeNull();
+     });
+ 
++    it("setEditingTask(null) returns DOM focus to the li when row is focused (AC#10)", () => {
++      createTask("editable");
++      const task = tasks[0]!;
++      const { container } = render(() => <TaskRow task={task} index={0} />);
++      const li = container.querySelector("li")!;
++
++      setRowFocus(0);
++      setEditingTask(task.id);
++      setEditingTask(null);
++
++      expect(document.activeElement).toBe(li);
++    });
++
+     it("pressing Enter in edit mode commits the text change", () => {
+       createTask("original text");
+       const task = tasks[0]!;
+diff --git a/apps/web/src/design-tokens.test.ts b/apps/web/src/design-tokens.test.ts
+index 7f9a8a0..9996927 100644
+--- a/apps/web/src/design-tokens.test.ts
++++ b/apps/web/src/design-tokens.test.ts
+@@ -62,7 +62,7 @@ describe("WCAG AA contrast ratios", () => {
+     });
+ 
+     it("ink-muted (65% alpha composited) on paper >= 4.5:1", () => {
+-      const muted = compositeAlpha(LIGHT.ink, 0xA6 / 255, LIGHT.paper);
++      const muted = compositeAlpha(LIGHT.ink, 0xa6 / 255, LIGHT.paper);
+       const ratio = contrastRatio(muted, LIGHT.paper);
+       expect(ratio).toBeGreaterThanOrEqual(4.5);
+     });
+@@ -90,6 +90,36 @@ describe("WCAG AA contrast ratios", () => {
+       expect(ratio).toBeGreaterThanOrEqual(3);
+     });
+   });
++
++  describe("high-contrast (prefers-contrast: more)", () => {
++    const LIGHT_HC = {
++      paper: hexToRgb("#F4EFE6"),
++      ink: hexToRgb("#000000"),
++      accent: hexToRgb("#7A2810"),
++    };
++    const DARK_HC = {
++      paper: hexToRgb("#1A1612"),
++      ink: hexToRgb("#FFFFFF"),
++      accent: hexToRgb("#86B5A2"),
++    };
++
++    it("light high-contrast ink on paper >= 7:1", () => {
++      const ratio = contrastRatio(LIGHT_HC.ink, LIGHT_HC.paper);
++      expect(ratio).toBeGreaterThanOrEqual(7);
++    });
++
++    it("dark high-contrast ink on paper >= 7:1", () => {
++      const ratio = contrastRatio(DARK_HC.ink, DARK_HC.paper);
++      expect(ratio).toBeGreaterThanOrEqual(7);
++    });
++
++    it("high-contrast accent on paper >= 4.5:1 in both themes", () => {
++      const lightRatio = contrastRatio(LIGHT_HC.accent, LIGHT_HC.paper);
++      const darkRatio = contrastRatio(DARK_HC.accent, DARK_HC.paper);
++      expect(lightRatio).toBeGreaterThanOrEqual(4.5);
++      expect(darkRatio).toBeGreaterThanOrEqual(4.5);
++    });
++  });
+ });
+ 
+ describe("design tokens in globals.css", () => {
+@@ -151,6 +181,18 @@ describe("design tokens in globals.css", () => {
+     expect(css).toContain("font-size: var(--font-size-body)");
+     expect(css).toContain("line-height: var(--line-height-body)");
+   });
++
++  it("declares prefers-contrast: more block with high-contrast ink", () => {
++    expect(css).toContain("prefers-contrast: more");
++    expect(css).toContain("--color-ink: #000000");
++    expect(css).toContain("--color-ink: #FFFFFF");
++  });
++
++  it("declares forced-colors: active block", () => {
++    expect(css).toContain("forced-colors: active");
++    expect(css).toContain("outline-color: Highlight");
++    expect(css).toContain("stroke: CanvasText");
++  });
+ });
+ 
+ describe("font file", () => {
+diff --git a/apps/web/src/styles/globals.css b/apps/web/src/styles/globals.css
+index 1072d4a..c6d34f1 100644
+--- a/apps/web/src/styles/globals.css
++++ b/apps/web/src/styles/globals.css
+@@ -171,3 +171,63 @@ main.app-main {
+   cursor: text;
+   caret-color: var(--color-accent);
+ }
++
++.theme-toggle {
++  position: fixed;
++  bottom: 24px;
++  left: 24px;
++  width: 44px;
++  height: 44px;
++  padding: 0;
++  background: transparent;
++  border: 1px solid var(--color-rule);
++  border-radius: 50%;
++  color: var(--color-ink-muted);
++  font: inherit;
++  font-size: 0;
++  cursor: pointer;
++  clip-path: inset(50%);
++  transition: none;
++}
++
++.theme-toggle:focus-visible,
++.theme-toggle:hover {
++  clip-path: none;
++  font-size: 12px;
++  outline: 2px solid var(--color-accent);
++  outline-offset: 4px;
++}
++
++@media (prefers-contrast: more) {
++  :root,
++  [data-theme="light"] {
++    --color-ink: #000000;
++    --color-ink-muted: #1F1A14CC;
++    --color-rule: #1F1A14CC;
++    --color-accent: #7A2810;
++  }
++
++  [data-theme="dark"] {
++    --color-ink: #FFFFFF;
++    --color-ink-muted: #E8DFCECC;
++    --color-rule: #E8DFCECC;
++    --color-accent: #86B5A2;
++  }
++}
++
++@media (forced-colors: active) {
++  .capture-line:focus-visible,
++  .task-row:focus-visible,
++  .theme-toggle:focus-visible {
++    outline-color: Highlight;
++  }
++
++  .task-tick {
++    stroke: CanvasText;
++  }
++
++  .theme-toggle {
++    border-color: CanvasText;
++    color: CanvasText;
++  }
++}
+diff --git a/eslint.config.js b/eslint.config.js
+index c36ac5d..61a9c01 100644
+--- a/eslint.config.js
++++ b/eslint.config.js
+@@ -20,7 +20,7 @@ export default [
+     },
+     plugins: {
+       "@typescript-eslint": tsPlugin,
+-      "import": importPlugin,
++      import: importPlugin,
+     },
+     rules: {
+       "no-console": "error",
+@@ -48,7 +48,7 @@ export default [
+     },
+   },
+   {
+-    files: ["apps/web/**/*.ts", "apps/web/**/*.tsx"],
++    files: ["apps/web/**/*.ts", "apps/web/**/*.tsx", "vitest.setup.ts"],
+     languageOptions: {
+       globals: globals.browser,
+     },
+diff --git a/tests/e2e/keyboard-only.spec.ts b/tests/e2e/keyboard-only.spec.ts
+index 9958e93..e9ef90b 100644
+--- a/tests/e2e/keyboard-only.spec.ts
++++ b/tests/e2e/keyboard-only.spec.ts
+@@ -77,9 +77,14 @@ test.describe("Keyboard-only journeys (NFR-A11y-3)", () => {
+ 
+   test("typing j/k/x/u in capture line types letters, does not navigate", async ({ page }) => {
+     await page.goto("/");
++    // Add a task first so a focusable row exists; if stickiness leaks, it would receive focus.
++    await page.keyboard.type("seed task");
++    await page.keyboard.press("Enter");
++
+     await page.keyboard.type("jkxu");
+     await expect(page.locator('input[aria-label="Add a task"]')).toHaveValue("jkxu");
+-    await expect(page.locator("li")).toHaveCount(0);
++    // No row should have data-focused="true" while CaptureLine retained DOM focus (AC#5).
++    await expect(page.locator('li[data-focused="true"]')).toHaveCount(0);
+   });
+ 
+   test("j/k navigation moves the focus ring between rows", async ({ page }) => {
+diff --git a/tests/e2e/visual-regression.spec.ts b/tests/e2e/visual-regression.spec.ts
+index 368d9f4..382fc05 100644
+--- a/tests/e2e/visual-regression.spec.ts
++++ b/tests/e2e/visual-regression.spec.ts
+@@ -27,9 +27,45 @@ test.describe("visual regression - blank screen", () => {
+     });
+   });
+ 
+-  test("empty state contains only capture line and empty list", async ({
+-    page,
+-  }) => {
++  test("light theme high-contrast snapshot", async ({ page }) => {
++    await page.addInitScript(() => {
++      localStorage.setItem("theme", "light");
++    });
++    await page.emulateMedia({ contrast: "more", colorScheme: "light" });
++    await page.goto("/");
++    await page.waitForLoadState("networkidle");
++    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
++    await expect(page).toHaveScreenshot("blank-light-high-contrast.png", {
++      fullPage: true,
++      maxDiffPixelRatio: 0.01,
++    });
++  });
++
++  test("dark theme high-contrast snapshot", async ({ page }) => {
++    await page.addInitScript(() => {
++      localStorage.setItem("theme", "dark");
++    });
++    await page.emulateMedia({ contrast: "more", colorScheme: "dark" });
++    await page.goto("/");
++    await page.waitForLoadState("networkidle");
++    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
++    await expect(page).toHaveScreenshot("blank-dark-high-contrast.png", {
++      fullPage: true,
++      maxDiffPixelRatio: 0.01,
++    });
++  });
++
++  test("forced-colors active snapshot", async ({ page }) => {
++    await page.emulateMedia({ forcedColors: "active" });
++    await page.goto("/");
++    await page.waitForLoadState("networkidle");
++    await expect(page).toHaveScreenshot("blank-forced-colors.png", {
++      fullPage: true,
++      maxDiffPixelRatio: 0.01,
++    });
++  });
++
++  test("empty state contains only capture line and empty list", async ({ page }) => {
+     await page.goto("/");
+     await page.waitForLoadState("networkidle");
+ 
+diff --git a/vitest.config.ts b/vitest.config.ts
+index 658aadd..6b5bef1 100644
+--- a/vitest.config.ts
++++ b/vitest.config.ts
+@@ -4,10 +4,8 @@ import solidPlugin from "vite-plugin-solid";
+ export default defineConfig({
+   plugins: [solidPlugin()],
+   test: {
+-    include: [
+-      "packages/**/*.test.ts",
+-      "apps/**/*.test.{ts,tsx}",
+-    ],
++    include: ["packages/**/*.test.ts", "apps/**/*.test.{ts,tsx}"],
+     environment: "jsdom",
++    setupFiles: ["./vitest.setup.ts"],
+   },
+ });
+diff --git a/apps/web/src/store/theme-store.ts b/apps/web/src/store/theme-store.ts
+new file mode 100644
+index 0000000..4b7c55d
+--- /dev/null
++++ b/apps/web/src/store/theme-store.ts
+@@ -0,0 +1,22 @@
++import { createSignal } from "solid-js";
++import { resolveTheme, applyTheme } from "../theme-bootstrap";
++
++export type Theme = "light" | "dark";
++
++const [themeSignal, setThemeInternal] = createSignal<Theme>(resolveTheme());
++
++export const theme = themeSignal;
++
++export function setTheme(next: Theme): void {
++  setThemeInternal(next);
++  applyTheme(next);
++  try {
++    localStorage.setItem("theme", next);
++  } catch {
++    // Safari private mode etc. — silent
++  }
++}
++
++export function toggleTheme(): void {
++  setTheme(themeSignal() === "light" ? "dark" : "light");
++}
+diff --git a/apps/web/src/store/theme-store.test.ts b/apps/web/src/store/theme-store.test.ts
+new file mode 100644
+index 0000000..53d84fa
+--- /dev/null
++++ b/apps/web/src/store/theme-store.test.ts
+@@ -0,0 +1,74 @@
++import { describe, it, expect, beforeEach, vi } from "vitest";
++
++describe("theme-store", () => {
++  beforeEach(() => {
++    localStorage.clear();
++    document.documentElement.removeAttribute("data-theme");
++    window.matchMedia = vi.fn().mockReturnValue({
++      matches: false,
++    } as MediaQueryList);
++    vi.resetModules();
++  });
++
++  it("initializes light when no localStorage and OS prefers light", async () => {
++    const { theme } = await import("./theme-store");
++    expect(theme()).toBe("light");
++  });
++
++  it("initializes dark when localStorage.theme is dark", async () => {
++    localStorage.setItem("theme", "dark");
++    const { theme } = await import("./theme-store");
++    expect(theme()).toBe("dark");
++  });
++
++  it("initializes dark when OS prefers dark and no localStorage override", async () => {
++    window.matchMedia = vi.fn().mockReturnValue({
++      matches: true,
++    } as MediaQueryList);
++    const { theme } = await import("./theme-store");
++    expect(theme()).toBe("dark");
++  });
++
++  it("setTheme updates the signal, the DOM, and localStorage", async () => {
++    const { theme, setTheme } = await import("./theme-store");
++    setTheme("dark");
++    expect(theme()).toBe("dark");
++    expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
++    expect(localStorage.getItem("theme")).toBe("dark");
++  });
++
++  it("setTheme survives localStorage.setItem throwing", async () => {
++    const { theme, setTheme } = await import("./theme-store");
++    const setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
++      throw new Error("QuotaExceededError");
++    });
++    expect(() => setTheme("dark")).not.toThrow();
++    expect(theme()).toBe("dark");
++    expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
++    setItemSpy.mockRestore();
++  });
++
++  it("toggleTheme flips light → dark → light, writing to DOM and localStorage", async () => {
++    const { theme, toggleTheme } = await import("./theme-store");
++    expect(theme()).toBe("light");
++    toggleTheme();
++    expect(theme()).toBe("dark");
++    expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
++    expect(localStorage.getItem("theme")).toBe("dark");
++    toggleTheme();
++    expect(theme()).toBe("light");
++    expect(document.documentElement.getAttribute("data-theme")).toBe("light");
++    expect(localStorage.getItem("theme")).toBe("light");
++  });
++
++  it("toggleTheme does NOT call .focus() on any element (AC#9)", async () => {
++    const { toggleTheme } = await import("./theme-store");
++    const input = document.createElement("input");
++    document.body.appendChild(input);
++    input.focus();
++    expect(document.activeElement).toBe(input);
++    toggleTheme();
++    expect(document.activeElement).toBe(input);
++    document.body.removeChild(input);
++  });
++});
+diff --git a/tests/e2e/j8-mobile-tap-target.spec.ts b/tests/e2e/j8-mobile-tap-target.spec.ts
+new file mode 100644
+index 0000000..482bdca
+--- /dev/null
++++ b/tests/e2e/j8-mobile-tap-target.spec.ts
+@@ -0,0 +1,27 @@
++import { test, expect } from "@playwright/test";
++
++test.use({ viewport: { width: 375, height: 667 } });
++
++test.describe("mobile tap-target routing (Story 1.8 AC#8)", () => {
++  test("task row is at least 44×44px and tap routing splits text vs row", async ({ page }) => {
++    await page.goto("/");
++    await page.waitForLoadState("networkidle");
++    await page.locator(".capture-line").fill("buy oats");
++    await page.keyboard.press("Enter");
++
++    const row = page.locator(".task-row").first();
++    const box = await row.boundingBox();
++    expect(box).not.toBeNull();
++    expect(box!.height).toBeGreaterThanOrEqual(44);
++    expect(box!.width).toBeGreaterThanOrEqual(44);
++
++    await row.locator(".task-text").click();
++    await expect(row.locator('.task-text[contenteditable="plaintext-only"]')).toBeVisible();
++    await page.keyboard.press("Escape");
++
++    const outsideX = box!.x + box!.width - 8;
++    const insideY = box!.y + box!.height / 2;
++    await page.mouse.click(outsideX, insideY);
++    await expect(row).toHaveAttribute("data-completed", "true");
++  });
++});
+diff --git a/vitest.setup.ts b/vitest.setup.ts
+new file mode 100644
+index 0000000..f3767f3
+--- /dev/null
++++ b/vitest.setup.ts
+@@ -0,0 +1,17 @@
++// Default jsdom does not provide matchMedia. The theme-store eagerly calls
++// resolveTheme() at module load, which reaches for window.matchMedia. Provide a
++// no-preference stub so module imports don't blow up; individual tests may still
++// override window.matchMedia per-test.
++if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
++  window.matchMedia = (() =>
++    ({
++      matches: false,
++      media: "",
++      onchange: null,
++      addListener: () => {},
++      removeListener: () => {},
++      addEventListener: () => {},
++      removeEventListener: () => {},
++      dispatchEvent: () => false,
++    }) as unknown as MediaQueryList) as Window["matchMedia"];
++}

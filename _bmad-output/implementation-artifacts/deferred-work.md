@@ -1,5 +1,30 @@
 # Deferred Work
 
+## Deferred from: code review of 1-8-theme-toggle-dark-mode-and-accessibility-tokens (2026-04-28)
+
+- `design-tokens.test.ts` high-contrast contrast tests assert against locally declared hex constants instead of parsing the actual CSS, so a drift in `globals.css` `prefers-contrast: more` values would not be caught — align with the CSS-parsing approach used in the existing AA tests further down the file
+- Theme-store / theme-bootstrap module-load safety — `resolveTheme()` reads `window.matchMedia` and `localStorage.getItem` without `typeof window` / try-catch guards; pre-existing from Story 1.2, not in Story 1.8 scope
+- `theme-store.ts` does not subscribe to `prefers-color-scheme` change events — runtime OS theme flips do not propagate without an explicit toggle; not required by spec
+- Real-browser pointer-focus behavior for `.theme-toggle` not validated — unit tests mix `fireEvent.click()` and `.click()`; pair with the `onMouseDown preventDefault` patch by adding a Playwright assertion that pointer clicks preserve `document.activeElement`
+
+## Deferred from: implementation of 1-8-theme-toggle-dark-mode-and-accessibility-tokens (2026-04-28)
+
+- **`e`-keystroke does not focus the contenteditable span** — Story 1.7 added the global `e` shortcut that calls `setEditingTask(task.id)` from `App.tsx`, but unlike `enterEditMode()` in `TaskRow.tsx` the `App.tsx` path does not focus `textRef`. As a result, `keyboard-only.spec.ts` J5 (Tab → e → Ctrl+A → type → Enter) routes the typed letters back to the global handler — for example the `d` in "almond" deletes the task. Add a `createEffect` in `TaskRow.tsx` (or in `App.tsx` after `setEditingTask`) that focuses `textRef` when editing transitions on. Pre-existing from Story 1.7 — does not block Story 1.8 ACs.
+- **`Control+a` in contenteditable not consistently selecting all on macOS Playwright** — `j6-undo-edit.spec.ts` (both subtests) uses literal `Control+a`; the Mac binding is `Meta+a`. Same J5 root cause cascades here. Switch to `ControlOrMeta+A` literal in `j6-*` like `keyboard-only.spec.ts` already does, then re-verify. Pre-existing from Story 1.6 / 1.7.
+- **`j1-completion-toggle.spec.ts:46` checkbox click intercepted by row** — the `.task-row` covers the checkbox and Playwright's `checkbox.click()` retries 58× and times out. Fix is either `force: true` on the click, or `eventually-stable` checkbox geometry once the row is hovered. Pre-existing from Story 1.4 visual-suppress-checkbox idiom.
+- **`j4-first-ever-visit.spec.ts` `toBeVisible()` on empty `<ul>`** — Playwright reports an empty `<ul role="list">` as "hidden" because its bounding box is 0×0 in the empty-state. Either assert `toHaveCount(0)` only (drop the `toBeVisible` line) or render a zero-height paragraph spacer. Pre-existing from Story 1.3.
+
+## Deferred from: code review of 1-7-keyboard-navigation-and-two-cursor-focus-model (2026-04-28)
+
+- Multi-step undo position semantics — undoing `d` after intervening `j`/`k`/edits restores at original index, which can surprise users; pattern inherited from Story 1.6
+- Roving tabindex lacks `role="listbox"`/`aria-activedescendant` (or `role="option"`/`aria-current`) — screen readers don't announce "row N of M selected"; NFR-A11y-5 enhancement for Story 1.8 a11y audit
+- No automated test for focus ring under `forced-colors`/high-contrast mode — AC#7 verification belongs in Story 1.12 visual-regression gate
+- Bundle-size NFR6 budget is self-reported with no automated CI gate — Story 1.12 territory
+- Default-focused-row Option B creates a phantom Tab target with no `data-focused="true"` indicator until first navigation — semantically surprising for AT; slot with NFR-A11y-5 work in Story 1.8
+- No `scrollIntoView` on `j`/`k` navigation; long lists let focus leave the viewport — UX enhancement; current MVP fits in viewport
+- Browser-quirk defensives unhandled: AltGr+Enter on European layouts, Numpad arrows via `event.code`, Safari dead-key compose timing, Shadow-DOM editables, bfcache restore before `onMount`, `event.key` undefined — defensive-only with no observed failures in target browser matrix
+- `focusCaptureLine`/`Cmd+Enter` clear row focus even when `captureInputRef` is null — leaves no DOM focus; CaptureLine is a permanent fixture in v1, revisit if it ever becomes conditional
+
 ## Deferred from: code review of 1-6-session-long-undo-stack (2026-04-28)
 
 - Unbounded undo stack growth — no size cap on `pushUndo`; session-scoped by design so practical concern only at thousands of operations; consider adding a max-entries eviction if memory profiling surfaces issues

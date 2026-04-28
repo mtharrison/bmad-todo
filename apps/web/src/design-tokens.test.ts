@@ -62,7 +62,7 @@ describe("WCAG AA contrast ratios", () => {
     });
 
     it("ink-muted (65% alpha composited) on paper >= 4.5:1", () => {
-      const muted = compositeAlpha(LIGHT.ink, 0xA6 / 255, LIGHT.paper);
+      const muted = compositeAlpha(LIGHT.ink, 0xa6 / 255, LIGHT.paper);
       const ratio = contrastRatio(muted, LIGHT.paper);
       expect(ratio).toBeGreaterThanOrEqual(4.5);
     });
@@ -88,6 +88,36 @@ describe("WCAG AA contrast ratios", () => {
     it("accent on paper >= 3:1", () => {
       const ratio = contrastRatio(DARK.accent, DARK.paper);
       expect(ratio).toBeGreaterThanOrEqual(3);
+    });
+  });
+
+  describe("high-contrast (prefers-contrast: more)", () => {
+    const LIGHT_HC = {
+      paper: hexToRgb("#F4EFE6"),
+      ink: hexToRgb("#000000"),
+      accent: hexToRgb("#7A2810"),
+    };
+    const DARK_HC = {
+      paper: hexToRgb("#1A1612"),
+      ink: hexToRgb("#FFFFFF"),
+      accent: hexToRgb("#86B5A2"),
+    };
+
+    it("light high-contrast ink on paper >= 7:1", () => {
+      const ratio = contrastRatio(LIGHT_HC.ink, LIGHT_HC.paper);
+      expect(ratio).toBeGreaterThanOrEqual(7);
+    });
+
+    it("dark high-contrast ink on paper >= 7:1", () => {
+      const ratio = contrastRatio(DARK_HC.ink, DARK_HC.paper);
+      expect(ratio).toBeGreaterThanOrEqual(7);
+    });
+
+    it("high-contrast accent on paper >= 4.5:1 in both themes", () => {
+      const lightRatio = contrastRatio(LIGHT_HC.accent, LIGHT_HC.paper);
+      const darkRatio = contrastRatio(DARK_HC.accent, DARK_HC.paper);
+      expect(lightRatio).toBeGreaterThanOrEqual(4.5);
+      expect(darkRatio).toBeGreaterThanOrEqual(4.5);
     });
   });
 });
@@ -150,6 +180,18 @@ describe("design tokens in globals.css", () => {
     expect(css).toContain("font-family: var(--font-body)");
     expect(css).toContain("font-size: var(--font-size-body)");
     expect(css).toContain("line-height: var(--line-height-body)");
+  });
+
+  it("declares prefers-contrast: more block with high-contrast ink", () => {
+    expect(css).toContain("prefers-contrast: more");
+    expect(css).toContain("--color-ink: #000000");
+    expect(css).toContain("--color-ink: #FFFFFF");
+  });
+
+  it("declares forced-colors: active block", () => {
+    expect(css).toContain("forced-colors: active");
+    expect(css).toContain("outline-color: Highlight");
+    expect(css).toContain("stroke: CanvasText");
   });
 });
 

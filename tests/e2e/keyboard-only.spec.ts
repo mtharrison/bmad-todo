@@ -77,9 +77,14 @@ test.describe("Keyboard-only journeys (NFR-A11y-3)", () => {
 
   test("typing j/k/x/u in capture line types letters, does not navigate", async ({ page }) => {
     await page.goto("/");
+    // Add a task first so a focusable row exists; if stickiness leaks, it would receive focus.
+    await page.keyboard.type("seed task");
+    await page.keyboard.press("Enter");
+
     await page.keyboard.type("jkxu");
     await expect(page.locator('input[aria-label="Add a task"]')).toHaveValue("jkxu");
-    await expect(page.locator("li")).toHaveCount(0);
+    // No row should have data-focused="true" while CaptureLine retained DOM focus (AC#5).
+    await expect(page.locator('li[data-focused="true"]')).toHaveCount(0);
   });
 
   test("j/k navigation moves the focus ring between rows", async ({ page }) => {

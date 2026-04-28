@@ -1,6 +1,6 @@
 # Story 1.7: Keyboard Navigation and Two-Cursor Focus Model
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -816,6 +816,33 @@ Claude Opus 4.7 (claude-opus-4-7[1m])
 - `pnpm test` — 170/170 unit tests passing across 14 test files.
 - `pnpm build` — passed; JS bundle 25.28 KB raw / **9.65 KB gzip** (baseline 9.26 KB → +0.39 KB; well under 50 KB NFR6 ceiling). CSS unchanged at 8.00 KB / 2.51 KB gzip.
 - `pnpm test:e2e` — deferred to CI (sandbox cannot launch Playwright). Spec committed at `tests/e2e/keyboard-only.spec.ts`.
+
+### Review Findings
+
+Code review of Story 1.7 — 2026-04-28. Three review layers (Blind Hunter, Edge Case Hunter, Acceptance Auditor) ran against the 25071f4..1203c5b diff.
+
+**Patches (7 — fixable now, unambiguous):**
+
+- [x] [Review][Patch] Add test asserting `document.activeElement === liRef` after `setEditingTask(null)` [apps/web/src/components/TaskRow.test.tsx] — Auditor: spec Task 6.4 prescribes this assertion; current "removes contenteditable" test only verifies attribute removal, not the AC#10 return-to-row DOM focus invariant.
+- [x] [Review][Patch] Add `if (event.repeat) return;` near top of App's keydown handler [apps/web/src/components/App.tsx:32] — Edge Case: held `u` floods the undo stack, held `d`/`x` rapidly mutate; per-press semantics are the intended model, OS auto-repeat is not.
+- [x] [Review][Patch] Add edit-mode guard to App's `d` case: refuse delete when `editingTaskId() === task.id` [apps/web/src/components/App.tsx:100-117] — Edge Case: deleting the row currently in edit-mode orphans `editingTaskId` and leaves a contenteditable span attached to a vanished task.
+- [x] [Review][Patch] Add edit-mode guard to App's `e` case: `if (editingTaskId() !== null && editingTaskId() !== task.id) return;` [apps/web/src/components/App.tsx:89-98] — Edge Case: TaskRow's `enterEditMode` has this guard but App writes `editingTaskId` directly, bypassing it; would let two rows enter edit-mode without committing the first.
+- [x] [Review][Patch] Add edit-mode guard to App's `x` case so toggling completion is refused while the focused row is being edited [apps/web/src/components/App.tsx:74-87] — Edge Case: AC#3 expects `x` against the focused row; with edit-mode active the contenteditable owns DOM focus anyway, but defensive parity prevents test-injected state from causing an uncommitted toggle.
+- [x] [Review][Patch] Add test for `k`/`ArrowUp` from `focusedRowIndex() === null` landing on row 0 [apps/web/src/components/App.test.tsx] — Blind Hunter: focus-store unit covers it but App-layer behavior (full keyboard model) is not asserted; AC#2's "first K from null" sub-rule is otherwise untested at the integration layer.
+- [x] [Review][Patch] Add e2e assertion that no `<li>` gains `data-focused="true"` while typing `jkxu` in the capture line [tests/e2e/keyboard-only.spec.ts:78-83] — Blind Hunter: current test only asserts input value and `li` count; AC#5 stickiness deserves an explicit "no row received focus" check.
+
+**Deferred (8 — real but not actionable now):**
+
+- [x] [Review][Defer] Multi-step undo position semantics: undoing `d` after intervening `j`/`k`/edits restores the task at the original index, which can surprise users — deferred, pre-existing pattern from Story 1.6
+- [x] [Review][Defer] Roving tabindex lacks `role="listbox"`/`aria-activedescendant` (or `role="option"`/`aria-current`) so screen readers don't announce "row N of M selected" — deferred, NFR-A11y-5 enhancement, slot in Story 1.8 a11y audit
+- [x] [Review][Defer] No automated test for focus ring under `forced-colors`/high-contrast mode — deferred, AC#7 verification belongs in Story 1.12 visual-regression gate
+- [x] [Review][Defer] Bundle-size NFR6 budget is self-reported with no automated CI gate — deferred, Story 1.12 territory
+- [x] [Review][Defer] Default-focused-row (Option B) creates a phantom Tab target with no `data-focused="true"` indicator until first navigation — accessible but semantically surprising for AT — deferred, slot with NFR-A11y-5 work in Story 1.8
+- [x] [Review][Defer] No `scrollIntoView` on `j`/`k` navigation; long lists let focus leave the viewport — deferred, scroll-into-view is a UX enhancement and current MVP fits in viewport
+- [x] [Review][Defer] Browser-quirk defensives unhandled: AltGr+Enter on European layouts, Numpad arrows via `event.code`, Safari dead-key compose timing, Shadow-DOM editables, bfcache restore before `onMount`, `event.key` undefined — deferred, defensive-only with no observed failures in target browser matrix
+- [x] [Review][Defer] `focusCaptureLine`/`Cmd+Enter` clear row focus even when `captureInputRef` is null (CaptureLine unmounted), leaving no DOM focus — deferred, CaptureLine is a permanent fixture in v1; revisit if it ever becomes conditional
+
+**Dismissed:** 33 noise/speculative findings (jsdom-vs-browser equivalences, justified Option B AC#8 deviation, three cosmetic Auditor wording deviations, pushUndo ordering misread, single-threaded JS race claims, Solid effect-scheduling speculations).
 
 ### Completion Notes List
 

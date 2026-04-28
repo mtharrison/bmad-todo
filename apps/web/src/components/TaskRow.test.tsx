@@ -176,6 +176,19 @@ describe("TaskRow", () => {
       expect(span.getAttribute("contenteditable")).toBeNull();
     });
 
+    it("setEditingTask(null) returns DOM focus to the li when row is focused (AC#10)", () => {
+      createTask("editable");
+      const task = tasks[0]!;
+      const { container } = render(() => <TaskRow task={task} index={0} />);
+      const li = container.querySelector("li")!;
+
+      setRowFocus(0);
+      setEditingTask(task.id);
+      setEditingTask(null);
+
+      expect(document.activeElement).toBe(li);
+    });
+
     it("pressing Enter in edit mode commits the text change", () => {
       createTask("original text");
       const task = tasks[0]!;

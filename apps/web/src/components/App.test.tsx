@@ -1,17 +1,19 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, cleanup } from "@solidjs/testing-library";
+import { render, cleanup, fireEvent } from "@solidjs/testing-library";
 import { App } from "./App";
 import { tasks, createTask, clearAllTasks } from "../store/task-store";
 import { undoStack, pushUndo, clearUndoStack } from "../store/undo-stack";
-import {
-  focusedRowIndex,
-  editingTaskId,
-  setRowFocus,
-  clearAllFocus,
-} from "../store/focus-store";
+import { focusedRowIndex, editingTaskId, setRowFocus, clearAllFocus } from "../store/focus-store";
+import { theme, setTheme } from "../store/theme-store";
 
 function dispatchKey(
-  init: { key: string; metaKey?: boolean; ctrlKey?: boolean; altKey?: boolean; isComposing?: boolean },
+  init: {
+    key: string;
+    metaKey?: boolean;
+    ctrlKey?: boolean;
+    altKey?: boolean;
+    isComposing?: boolean;
+  },
   target: EventTarget = window,
 ) {
   target.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, ...init }));
@@ -111,6 +113,25 @@ describe("App global keyboard handler", () => {
       expect(focusedRowIndex()).toBe(2);
       dispatchKey({ key: "j" });
       expect(focusedRowIndex()).toBe(2);
+    });
+
+    it("k from null with 3 tasks lands on 0 (AC#2 first-K-from-null)", () => {
+      createTask("a");
+      createTask("b");
+      createTask("c");
+      setupAndBlur();
+
+      dispatchKey({ key: "k" });
+      expect(focusedRowIndex()).toBe(0);
+    });
+
+    it("ArrowUp from null with tasks lands on 0", () => {
+      createTask("a");
+      createTask("b");
+      setupAndBlur();
+
+      dispatchKey({ key: "ArrowUp" });
+      expect(focusedRowIndex()).toBe(0);
     });
 
     it("k from 2 decrements to 0, clamps", () => {
@@ -382,6 +403,114 @@ describe("App global keyboard handler", () => {
       expect(input.value).toBe("buy oat");
       expect(input.selectionStart).toBe(3);
       expect(input.selectionEnd).toBe(3);
+    });
+  });
+
+  describe("theme toggle (Story 1.8)", () => {
+    beforeEach(() => {
+      localStorage.clear();
+      setTheme("light");
+      document.documentElement.setAttribute("data-theme", "light");
+    });
+
+    it("t keystroke toggles theme when no editable target is focused", () => {
+      const { container } = render(() => <App />);
+      const input = container.querySelector("input[type=text]") as HTMLInputElement;
+      input.blur();
+
+      dispatchKey({ key: "t" });
+
+      expect(theme()).toBe("dark");
+      expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
+    });
+
+    it("T (uppercase) also toggles", () => {
+      const { container } = render(() => <App />);
+      const input = container.querySelector("input[type=text]") as HTMLInputElement;
+      input.blur();
+
+      dispatchKey({ key: "T" });
+
+      expect(theme()).toBe("dark");
+      expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
+    });
+
+    it("t typed inside CaptureLine does NOT toggle (AC#9 stickiness)", () => {
+      const { container } = render(() => <App />);
+      const input = container.querySelector("input[type=text]") as HTMLInputElement;
+      input.focus();
+
+      dispatchKey({ key: "t" }, input);
+
+      expect(theme()).toBe("light");
+    });
+
+    it("Cmd+t does NOT toggle (browser shortcut preserved)", () => {
+      const { container } = render(() => <App />);
+      const input = container.querySelector("input[type=text]") as HTMLInputElement;
+      input.blur();
+
+      dispatchKey({ key: "t", metaKey: true });
+
+      expect(theme()).toBe("light");
+    });
+
+    it("Ctrl+t does NOT toggle", () => {
+      const { container } = render(() => <App />);
+      const input = container.querySelector("input[type=text]") as HTMLInputElement;
+      input.blur();
+
+      dispatchKey({ key: "t", ctrlKey: true });
+
+      expect(theme()).toBe("light");
+    });
+
+    it("renders a theme-toggle button with aria-label='Toggle theme'", () => {
+      const { container } = render(() => <App />);
+      const button = container.querySelector("button.theme-toggle") as HTMLButtonElement;
+      expect(button).not.toBeNull();
+      expect(button.getAttribute("aria-label")).toBe("Toggle theme");
+    });
+
+    it("clicking the button toggles theme and aria-pressed reflects state", () => {
+      const { container } = render(() => <App />);
+      const button = container.querySelector("button.theme-toggle") as HTMLButtonElement;
+
+      expect(button.getAttribute("aria-pressed")).toBe("false");
+
+      fireEvent.click(button);
+      expect(theme()).toBe("dark");
+      expect(button.getAttribute("aria-pressed")).toBe("true");
+
+      fireEvent.click(button);
+      expect(theme()).toBe("light");
+      expect(button.getAttribute("aria-pressed")).toBe("false");
+    });
+
+    it("button.click() does NOT change document.activeElement", () => {
+      const { container } = render(() => <App />);
+      const input = container.querySelector("input[type=text]") as HTMLInputElement;
+      const button = container.querySelector("button.theme-toggle") as HTMLButtonElement;
+      input.focus();
+      expect(document.activeElement).toBe(input);
+
+      button.click();
+
+      expect(document.activeElement).toBe(input);
+      expect(theme()).toBe("dark");
+    });
+
+    it("aria-pressed is 'false' in light, 'true' in dark", () => {
+      const { container } = render(() => <App />);
+      const button = container.querySelector("button.theme-toggle") as HTMLButtonElement;
+
+      expect(button.getAttribute("aria-pressed")).toBe("false");
+
+      setTheme("dark");
+      expect(button.getAttribute("aria-pressed")).toBe("true");
+
+      setTheme("light");
+      expect(button.getAttribute("aria-pressed")).toBe("false");
     });
   });
 

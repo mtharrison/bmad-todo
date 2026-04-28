@@ -171,3 +171,63 @@ main.app-main {
   cursor: text;
   caret-color: var(--color-accent);
 }
+
+.theme-toggle {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--color-rule);
+  border-radius: 50%;
+  color: var(--color-ink-muted);
+  font: inherit;
+  font-size: 0;
+  cursor: pointer;
+  clip-path: inset(50%);
+  transition: none;
+}
+
+.theme-toggle:focus-visible,
+.theme-toggle:hover {
+  clip-path: none;
+  font-size: 12px;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+}
+
+@media (prefers-contrast: more) {
+  :root,
+  [data-theme="light"] {
+    --color-ink: #000000;
+    --color-ink-muted: #1F1A14CC;
+    --color-rule: #1F1A14CC;
+    --color-accent: #7A2810;
+  }
+
+  [data-theme="dark"] {
+    --color-ink: #FFFFFF;
+    --color-ink-muted: #E8DFCECC;
+    --color-rule: #E8DFCECC;
+    --color-accent: #86B5A2;
+  }
+}
+
+@media (forced-colors: active) {
+  .capture-line:focus-visible,
+  .task-row:focus-visible,
+  .theme-toggle:focus-visible {
+    outline-color: Highlight;
+  }
+
+  .task-tick {
+    stroke: CanvasText;
+  }
+
+  .theme-toggle {
+    border-color: CanvasText;
+    color: CanvasText;
+  }
+}

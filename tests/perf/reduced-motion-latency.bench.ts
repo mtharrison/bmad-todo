@@ -66,31 +66,27 @@ test.describe("reduced-motion latency budgets", () => {
       await row.focus();
       await page.waitForTimeout(50);
 
-      const latency = await page.evaluate(async (index: number) => {
+      await page.evaluate((index: number) => {
         const rows = document.querySelectorAll<HTMLElement>(".task-list li");
         const target = rows[index]!;
-        const start = performance.now();
-
-        target.dispatchEvent(new KeyboardEvent("keydown", { key: "x", bubbles: true }));
-
-        return new Promise<number>((resolve) => {
+        (window as unknown as Record<string, unknown>).__PERF_START = performance.now();
+        (window as unknown as Record<string, unknown>).__PERF_RESULT = new Promise<number>((resolve) => {
           const observer = new MutationObserver(() => {
             if (target.getAttribute("data-completed") === "true") {
               observer.disconnect();
-              resolve(performance.now() - start);
+              resolve(performance.now() - ((window as unknown as Record<string, number>).__PERF_START));
             }
           });
-          observer.observe(target, {
-            attributes: true,
-            attributeFilter: ["data-completed"],
-          });
-
-          setTimeout(() => {
-            observer.disconnect();
-            resolve(-1);
-          }, 5000);
+          observer.observe(target, { attributes: true, attributeFilter: ["data-completed"] });
+          setTimeout(() => { observer.disconnect(); resolve(-1); }, 5000);
         });
       }, i);
+
+      await page.keyboard.press("x");
+
+      const latency = await page.evaluate(async () => {
+        return (window as unknown as Record<string, unknown>).__PERF_RESULT as Promise<number>;
+      });
 
       expect(latency).toBeGreaterThan(0);
       samples.push(latency);

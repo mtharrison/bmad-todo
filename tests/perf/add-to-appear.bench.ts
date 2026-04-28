@@ -15,39 +15,31 @@ test("p95 enter-to-task-visible latency is under 100ms", async ({ page }) => {
 
     const expectedCount = i + 1;
 
-    const latency = await page.evaluate(
-      async ({ count }: { count: number }) => {
-        const list = document.querySelector<HTMLElement>(".task-list")!;
-        const captureInput = document.querySelector<HTMLInputElement>(".capture-line")!;
-
-        const start = performance.now();
-        captureInput.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
-
-        return new Promise<number>((resolve) => {
-          const observer = new MutationObserver(() => {
-            if (list.querySelectorAll("li").length >= count) {
-              observer.disconnect();
-              resolve(performance.now() - start);
-            }
-          });
-          observer.observe(list, { childList: true, subtree: true });
-
-          setTimeout(() => {
+    await page.evaluate((count: number) => {
+      const list = document.querySelector<HTMLElement>(".task-list")!;
+      (window as unknown as Record<string, unknown>).__PERF_START = performance.now();
+      (window as unknown as Record<string, unknown>).__PERF_RESULT = new Promise<number>((resolve) => {
+        const observer = new MutationObserver(() => {
+          if (list.querySelectorAll("li").length >= count) {
             observer.disconnect();
-            resolve(-1);
-          }, 5000);
+            resolve(performance.now() - ((window as unknown as Record<string, number>).__PERF_START));
+          }
         });
-      },
-      { count: expectedCount },
-    );
+        observer.observe(list, { childList: true, subtree: true });
+        setTimeout(() => { observer.disconnect(); resolve(-1); }, 5000);
+      });
+    }, expectedCount);
 
-    if (latency < 0) {
-      await input.press("Enter");
-      await expect(page.locator(".task-list li")).toHaveCount(expectedCount);
-    }
+    await input.press("Enter");
+
+    const latency = await page.evaluate(async () => {
+      return (window as unknown as Record<string, unknown>).__PERF_RESULT as Promise<number>;
+    });
 
     if (latency > 0) {
       samples.push(latency);
+    } else {
+      await expect(page.locator(".task-list li")).toHaveCount(expectedCount);
     }
   }
 

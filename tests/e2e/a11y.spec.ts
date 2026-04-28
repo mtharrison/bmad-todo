@@ -72,7 +72,7 @@ for (const theme of THEMES) {
       const row = page.locator(".task-list li").first();
       await row.focus();
       await page.keyboard.press("e");
-      await expect(page.locator("input.task-edit, .task-edit input")).toBeVisible();
+      await expect(page.locator('.task-text[contenteditable="plaintext-only"]')).toBeVisible();
       const results = await axeScan(page);
       expect(results.violations).toEqual([]);
     });

@@ -21,6 +21,7 @@ export default defineConfig({
     {
       name: "perf",
       testDir: "./tests/perf",
+      testMatch: "**/*.bench.ts",
       use: { ...devices["Desktop Chrome"] },
     },
   ],

@@ -2,10 +2,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, fireEvent, cleanup } from "@solidjs/testing-library";
 import { CaptureLine } from "./CaptureLine";
 import * as taskStore from "../store/task-store";
+import { captureInputRef, clearAllFocus } from "../store/focus-store";
 
 describe("CaptureLine", () => {
   beforeEach(() => {
     taskStore.clearAllTasks();
+    clearAllFocus();
   });
 
   afterEach(() => {
@@ -98,5 +100,51 @@ describe("CaptureLine", () => {
     const input = container.querySelector("input")!;
 
     expect(document.activeElement).not.toBe(input);
+  });
+
+  it("Cmd+Enter while typing does NOT call createTask (App owns the shortcut)", () => {
+    vi.spyOn(window, "matchMedia").mockReturnValue({
+      matches: false,
+    } as MediaQueryList);
+
+    const spy = vi.spyOn(taskStore, "createTask");
+    const { container } = render(() => <CaptureLine />);
+    const input = container.querySelector("input")!;
+
+    input.value = "draft";
+    fireEvent.keyDown(input, { key: "Enter", metaKey: true });
+
+    expect(spy).not.toHaveBeenCalled();
+    expect(input.value).toBe("draft");
+    expect(taskStore.tasks.length).toBe(0);
+  });
+
+  it("Ctrl+Enter while typing also does NOT call createTask", () => {
+    vi.spyOn(window, "matchMedia").mockReturnValue({
+      matches: false,
+    } as MediaQueryList);
+
+    const spy = vi.spyOn(taskStore, "createTask");
+    const { container } = render(() => <CaptureLine />);
+    const input = container.querySelector("input")!;
+
+    input.value = "draft";
+    fireEvent.keyDown(input, { key: "Enter", ctrlKey: true });
+
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("registers the input ref with the focus-store on mount and clears on unmount", () => {
+    vi.spyOn(window, "matchMedia").mockReturnValue({
+      matches: false,
+    } as MediaQueryList);
+
+    const { container, unmount } = render(() => <CaptureLine />);
+    const input = container.querySelector("input")!;
+
+    expect(captureInputRef()).toBe(input);
+
+    unmount();
+    expect(captureInputRef()).toBeNull();
   });
 });

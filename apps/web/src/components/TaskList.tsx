@@ -5,7 +5,7 @@ import { TaskRow } from "./TaskRow";
 export function TaskList() {
   return (
     <ul role="list" class="task-list">
-      <For each={tasks}>{(task) => <TaskRow task={task} />}</For>
+      <For each={tasks}>{(task, index) => <TaskRow task={task} index={index()} />}</For>
     </ul>
   );
 }

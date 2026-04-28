@@ -1,17 +1,24 @@
-import { onMount } from "solid-js";
+import { onMount, onCleanup } from "solid-js";
 import { createTask } from "../store/task-store";
+import { setCaptureInputRef } from "../store/focus-store";
 
 export function CaptureLine() {
   let inputEl: HTMLInputElement | undefined;
 
   onMount(() => {
+    setCaptureInputRef(inputEl ?? null);
     // mobile: no auto-focus per UX spec
     if (window.matchMedia("(max-width: 639px)").matches) return;
     inputEl?.focus();
   });
 
+  onCleanup(() => {
+    setCaptureInputRef(null);
+  });
+
   function handleKeyDown(event: KeyboardEvent) {
     if (!inputEl) return;
+    if (event.metaKey || event.ctrlKey) return;
     if (event.isComposing) return;
     if (event.key === "Enter") {
       event.preventDefault();

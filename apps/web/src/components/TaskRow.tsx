@@ -1,4 +1,4 @@
-import { createSignal, createRenderEffect } from "solid-js";
+import { createRenderEffect, createEffect } from "solid-js";
 import { Show } from "solid-js";
 import type { ActiveTask } from "../store/task-store";
 import {
@@ -8,6 +8,12 @@ import {
   deleteTask,
   getTaskById,
 } from "../store/task-store";
+import {
+  editingTaskId,
+  setEditingTask,
+  focusedRowIndex,
+  setRowFocus,
+} from "../store/focus-store";
 import { pushUndo } from "../store/undo-stack";
 import { Tick } from "./Tick";
 
@@ -20,9 +26,10 @@ function placeCursorAtEnd(el: HTMLElement) {
   sel?.addRange(range);
 }
 
-export function TaskRow(props: { task: ActiveTask }) {
-  const [isEditing, setIsEditing] = createSignal(false);
+export function TaskRow(props: { task: ActiveTask; index: number }) {
+  const isEditing = () => editingTaskId() === props.task.id;
   let textRef: HTMLSpanElement | undefined;
+  let liRef: HTMLLIElement | undefined;
   let originalText = "";
 
   createRenderEffect(() => {
@@ -33,10 +40,17 @@ export function TaskRow(props: { task: ActiveTask }) {
     }
   });
 
+  createEffect(() => {
+    if (focusedRowIndex() === props.index && !isEditing() && liRef) {
+      liRef.focus();
+    }
+  });
+
   function enterEditMode() {
     if (isEditing()) return;
+    if (editingTaskId() !== null) return;
     originalText = props.task.text;
-    setIsEditing(true);
+    setEditingTask(props.task.id);
     queueMicrotask(() => {
       if (textRef) {
         textRef.focus();
@@ -52,7 +66,7 @@ export function TaskRow(props: { task: ActiveTask }) {
       const snapshot = getTaskById(props.task.id);
       const index = tasks.findIndex((t) => t.id === props.task.id);
       if (!snapshot || index === -1) {
-        setIsEditing(false);
+        setEditingTask(null);
         return;
       }
       deleteTask(props.task.id);
@@ -63,12 +77,12 @@ export function TaskRow(props: { task: ActiveTask }) {
       pushUndo({ inverseMutation: { type: "updateText", id: props.task.id, previousText } });
     }
 
-    setIsEditing(false);
+    setEditingTask(null);
   }
 
   function cancelEdit() {
     if (textRef) textRef.textContent = originalText;
-    setIsEditing(false);
+    setEditingTask(null);
   }
 
   function handleEditKeyDown(event: KeyboardEvent) {
@@ -105,35 +119,25 @@ export function TaskRow(props: { task: ActiveTask }) {
     pushUndo({ inverseMutation: { type: "setCompletedAt", id: props.task.id, previousCompletedAt } });
   }
 
-  function handleRowKeyDown(event: KeyboardEvent) {
+  function handleRowFocus() {
     if (isEditing()) return;
-    if (event.target !== event.currentTarget) return;
-    if (event.metaKey || event.ctrlKey || event.altKey) return;
-    if (event.key === "x" || event.key === "X") {
-      event.preventDefault();
-      const previousCompletedAt = props.task.completedAt;
-      toggleTaskCompleted(props.task.id);
-      pushUndo({ inverseMutation: { type: "setCompletedAt", id: props.task.id, previousCompletedAt } });
-    } else if (event.key === "e" || event.key === "E") {
-      event.preventDefault();
-      enterEditMode();
-    } else if (event.key === "d" || event.key === "D") {
-      event.preventDefault();
-      const snapshot = getTaskById(props.task.id);
-      const index = tasks.findIndex((t) => t.id === props.task.id);
-      if (!snapshot || index === -1) return;
-      deleteTask(props.task.id);
-      pushUndo({ inverseMutation: { type: "insert", task: snapshot, index } });
-    }
+    if (focusedRowIndex() !== props.index) setRowFocus(props.index);
   }
 
   return (
     <li
+      ref={liRef}
       class="task-row"
       data-completed={props.task.completedAt !== null ? "true" : "false"}
-      tabindex={0}
+      data-focused={focusedRowIndex() === props.index ? "true" : "false"}
+      tabindex={
+        focusedRowIndex() === props.index ||
+        (focusedRowIndex() === null && props.index === 0)
+          ? 0
+          : -1
+      }
       onClick={handleRowClick}
-      onKeyDown={handleRowKeyDown}
+      onFocus={handleRowFocus}
     >
       <input
         type="checkbox"

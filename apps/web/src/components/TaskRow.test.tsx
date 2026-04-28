@@ -1,13 +1,21 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { render, fireEvent, cleanup } from "@solidjs/testing-library";
 import { TaskRow } from "./TaskRow";
-import { tasks, createTask, clearAllTasks, toggleTaskCompleted } from "../store/task-store";
+import { tasks, createTask, clearAllTasks } from "../store/task-store";
 import { undoStack, clearUndoStack } from "../store/undo-stack";
+import {
+  focusedRowIndex,
+  setRowFocus,
+  setEditingTask,
+  clearAllFocus,
+  editingTaskId,
+} from "../store/focus-store";
 
 describe("TaskRow", () => {
   beforeEach(() => {
     clearAllTasks();
     clearUndoStack();
+    clearAllFocus();
   });
 
   afterEach(() => {
@@ -16,7 +24,7 @@ describe("TaskRow", () => {
 
   it("active task renders data-completed=false, one checkbox, zero svg", () => {
     const task = { id: "t1", text: "hello", createdAt: 0, completedAt: null };
-    const { container } = render(() => <TaskRow task={task} />);
+    const { container } = render(() => <TaskRow task={task} index={0} />);
     const li = container.querySelector("li")!;
     const input = container.querySelector("input[type=checkbox]")!;
 
@@ -28,7 +36,7 @@ describe("TaskRow", () => {
 
   it("completed task renders data-completed=true, checkbox with aria-checked, one svg", () => {
     const task = { id: "t1", text: "hello", createdAt: 0, completedAt: 1000 };
-    const { container } = render(() => <TaskRow task={task} />);
+    const { container } = render(() => <TaskRow task={task} index={0} />);
     const li = container.querySelector("li")!;
     const input = container.querySelector("input[type=checkbox]")!;
 
@@ -39,7 +47,7 @@ describe("TaskRow", () => {
 
   it("checkbox has aria-label 'Mark complete'", () => {
     const task = { id: "t1", text: "hello", createdAt: 0, completedAt: null };
-    const { container } = render(() => <TaskRow task={task} />);
+    const { container } = render(() => <TaskRow task={task} index={0} />);
     const input = container.querySelector("input[type=checkbox]")!;
 
     expect(input.getAttribute("aria-label")).toBe("Mark complete");
@@ -48,7 +56,7 @@ describe("TaskRow", () => {
   it("clicking li outside .task-text toggles completion via store", () => {
     createTask("walk dog");
     const task = tasks[0]!;
-    const { container } = render(() => <TaskRow task={task} />);
+    const { container } = render(() => <TaskRow task={task} index={0} />);
     const li = container.querySelector("li")!;
 
     fireEvent.click(li);
@@ -58,93 +66,120 @@ describe("TaskRow", () => {
   it("clicking inside .task-text does NOT toggle completion", () => {
     createTask("walk dog");
     const task = tasks[0]!;
-    const { container } = render(() => <TaskRow task={task} />);
+    const { container } = render(() => <TaskRow task={task} index={0} />);
     const span = container.querySelector(".task-text")!;
 
     fireEvent.click(span);
     expect(tasks[0]!.completedAt).toBeNull();
   });
 
-  it("pressing x while li is focused toggles state", () => {
-    createTask("walk dog");
-    const task = tasks[0]!;
-    const { container } = render(() => <TaskRow task={task} />);
-    const li = container.querySelector("li")!;
+  describe("roving tabindex", () => {
+    it("row at the focused index has tabindex=0 and data-focused=true", () => {
+      createTask("a");
+      const task = tasks[0]!;
+      setRowFocus(0);
+      const { container } = render(() => <TaskRow task={task} index={0} />);
+      const li = container.querySelector("li")!;
 
-    fireEvent.keyDown(li, { key: "x" });
-    expect(tasks[0]!.completedAt).toBeTypeOf("number");
+      expect(li.tabIndex).toBe(0);
+      expect(li.dataset.focused).toBe("true");
+    });
+
+    it("row at a non-focused index has tabindex=-1 and data-focused=false", () => {
+      createTask("a");
+      const task = tasks[0]!;
+      setRowFocus(0);
+      const { container } = render(() => <TaskRow task={task} index={1} />);
+      const li = container.querySelector("li")!;
+
+      expect(li.tabIndex).toBe(-1);
+      expect(li.dataset.focused).toBe("false");
+    });
+
+    it("when focusedRowIndex is null, row 0 has tabindex=0 (default-tab target) but data-focused=false", () => {
+      createTask("a");
+      const task = tasks[0]!;
+      const { container } = render(() => <TaskRow task={task} index={0} />);
+      const li = container.querySelector("li")!;
+
+      expect(focusedRowIndex()).toBeNull();
+      expect(li.tabIndex).toBe(0);
+      expect(li.dataset.focused).toBe("false");
+    });
+
+    it("when focusedRowIndex is null, non-zero rows have tabindex=-1", () => {
+      createTask("a");
+      const task = tasks[0]!;
+      const { container } = render(() => <TaskRow task={task} index={2} />);
+      const li = container.querySelector("li")!;
+
+      expect(li.tabIndex).toBe(-1);
+    });
+
+    it("changing setRowFocus reactively shifts tabindex/data-focused", () => {
+      createTask("a");
+      const task = tasks[0]!;
+      const { container } = render(() => <TaskRow task={task} index={1} />);
+      const li = container.querySelector("li")!;
+
+      expect(li.tabIndex).toBe(-1);
+      setRowFocus(1);
+      expect(li.tabIndex).toBe(0);
+      expect(li.dataset.focused).toBe("true");
+      setRowFocus(2);
+      expect(li.tabIndex).toBe(-1);
+      expect(li.dataset.focused).toBe("false");
+    });
+
+    it("DOM focus event syncs the focus-store to the row index", () => {
+      createTask("a");
+      const task = tasks[0]!;
+      const { container } = render(() => <TaskRow task={task} index={1} />);
+      const li = container.querySelector("li")!;
+
+      fireEvent.focus(li);
+      expect(focusedRowIndex()).toBe(1);
+    });
   });
 
-  it("pressing X (capital) also toggles state", () => {
-    createTask("walk dog");
-    const task = tasks[0]!;
-    const { container } = render(() => <TaskRow task={task} />);
-    const li = container.querySelector("li")!;
-
-    fireEvent.keyDown(li, { key: "X" });
-    expect(tasks[0]!.completedAt).toBeTypeOf("number");
-  });
-
-  it("pressing y is a no-op", () => {
-    createTask("walk dog");
-    const task = tasks[0]!;
-    const { container } = render(() => <TaskRow task={task} />);
-    const li = container.querySelector("li")!;
-
-    fireEvent.keyDown(li, { key: "y" });
-    expect(tasks[0]!.completedAt).toBeNull();
-  });
-
-  it("Cmd/Ctrl/Alt + x is a no-op (does not toggle)", () => {
-    createTask("walk dog");
-    const task = tasks[0]!;
-    const { container } = render(() => <TaskRow task={task} />);
-    const li = container.querySelector("li")!;
-
-    fireEvent.keyDown(li, { key: "x", metaKey: true });
-    expect(tasks[0]!.completedAt).toBeNull();
-    fireEvent.keyDown(li, { key: "x", ctrlKey: true });
-    expect(tasks[0]!.completedAt).toBeNull();
-    fireEvent.keyDown(li, { key: "x", altKey: true });
-    expect(tasks[0]!.completedAt).toBeNull();
-  });
-
-  it("keydown on descendant input does not trigger row handler", () => {
-    createTask("walk dog");
-    const task = tasks[0]!;
-    const { container } = render(() => <TaskRow task={task} />);
-    const input = container.querySelector("input[type=checkbox]")!;
-
-    fireEvent.keyDown(input, { key: "x" });
-    expect(tasks[0]!.completedAt).toBeNull();
-  });
-
-  describe("edit mode", () => {
+  describe("edit mode (store-driven)", () => {
     it("clicking .task-text sets contenteditable on the text span", () => {
       createTask("editable");
       const task = tasks[0]!;
-      const { container } = render(() => <TaskRow task={task} />);
+      const { container } = render(() => <TaskRow task={task} index={0} />);
       const span = container.querySelector(".task-text")!;
 
       fireEvent.click(span);
       expect(span.getAttribute("contenteditable")).toBe("plaintext-only");
+      expect(editingTaskId()).toBe(task.id);
     });
 
-    it("pressing E on focused li activates edit mode", () => {
+    it("setEditingTask(task.id) externally sets contenteditable on the row", () => {
       createTask("editable");
       const task = tasks[0]!;
-      const { container } = render(() => <TaskRow task={task} />);
-      const li = container.querySelector("li")!;
+      const { container } = render(() => <TaskRow task={task} index={0} />);
       const span = container.querySelector(".task-text")!;
 
-      fireEvent.keyDown(li, { key: "e" });
+      setEditingTask(task.id);
       expect(span.getAttribute("contenteditable")).toBe("plaintext-only");
+    });
+
+    it("setEditingTask(null) removes contenteditable", () => {
+      createTask("editable");
+      const task = tasks[0]!;
+      const { container } = render(() => <TaskRow task={task} index={0} />);
+      const span = container.querySelector(".task-text")!;
+
+      setEditingTask(task.id);
+      expect(span.getAttribute("contenteditable")).toBe("plaintext-only");
+      setEditingTask(null);
+      expect(span.getAttribute("contenteditable")).toBeNull();
     });
 
     it("pressing Enter in edit mode commits the text change", () => {
       createTask("original text");
       const task = tasks[0]!;
-      const { container } = render(() => <TaskRow task={task} />);
+      const { container } = render(() => <TaskRow task={task} index={0} />);
       const span = container.querySelector(".task-text")!;
 
       fireEvent.click(span);
@@ -158,7 +193,7 @@ describe("TaskRow", () => {
     it("pressing Escape in edit mode restores original text and leaves edit mode", () => {
       createTask("keep this");
       const task = tasks[0]!;
-      const { container } = render(() => <TaskRow task={task} />);
+      const { container } = render(() => <TaskRow task={task} index={0} />);
       const span = container.querySelector(".task-text")!;
 
       fireEvent.click(span);
@@ -173,7 +208,7 @@ describe("TaskRow", () => {
     it("committing whitespace-only text calls deleteTask", () => {
       createTask("to be deleted");
       const task = tasks[0]!;
-      const { container } = render(() => <TaskRow task={task} />);
+      const { container } = render(() => <TaskRow task={task} index={0} />);
       const span = container.querySelector(".task-text")!;
 
       fireEvent.click(span);
@@ -186,7 +221,7 @@ describe("TaskRow", () => {
     it("focusout in edit mode commits the text change", () => {
       createTask("original text");
       const task = tasks[0]!;
-      const { container } = render(() => <TaskRow task={task} />);
+      const { container } = render(() => <TaskRow task={task} index={0} />);
       const span = container.querySelector(".task-text")!;
 
       fireEvent.click(span);
@@ -200,7 +235,7 @@ describe("TaskRow", () => {
     it("committing same text as original does not call updateTaskText", () => {
       createTask("unchanged");
       const task = tasks[0]!;
-      const { container } = render(() => <TaskRow task={task} />);
+      const { container } = render(() => <TaskRow task={task} index={0} />);
       const span = container.querySelector(".task-text")!;
 
       fireEvent.click(span);
@@ -209,89 +244,28 @@ describe("TaskRow", () => {
       expect(tasks[0]!.text).toBe("unchanged");
     });
 
-    it("x/X does NOT toggle completion while in edit mode", () => {
-      createTask("editing");
-      const task = tasks[0]!;
-      const { container } = render(() => <TaskRow task={task} />);
-      const li = container.querySelector("li")!;
+    it("enterEditMode is a no-op while another task is already editing", () => {
+      createTask("first");
+      createTask("second");
+      // tasks are newest-first: tasks[0] = "second", tasks[1] = "first"
+      const taskA = tasks[0]!;
+      const taskB = tasks[1]!;
 
-      fireEvent.keyDown(li, { key: "e" });
-      fireEvent.keyDown(li, { key: "x" });
-      expect(tasks[0]!.completedAt).toBeNull();
-      fireEvent.keyDown(li, { key: "X" });
-      expect(tasks[0]!.completedAt).toBeNull();
-    });
+      setEditingTask(taskA.id);
+      const { container } = render(() => <TaskRow task={taskB} index={1} />);
+      const span = container.querySelector(".task-text")!;
 
-    it("d/D does NOT delete while in edit mode", () => {
-      createTask("editing");
-      const task = tasks[0]!;
-      const { container } = render(() => <TaskRow task={task} />);
-      const li = container.querySelector("li")!;
-
-      fireEvent.keyDown(li, { key: "e" });
-      fireEvent.keyDown(li, { key: "d" });
-      expect(tasks.length).toBe(1);
-      fireEvent.keyDown(li, { key: "D" });
-      expect(tasks.length).toBe(1);
+      fireEvent.click(span);
+      // taskB should NOT have entered edit (taskA already editing)
+      expect(editingTaskId()).toBe(taskA.id);
     });
   });
 
-  describe("delete by keystroke", () => {
-    it("pressing D on focused li removes the task", () => {
-      createTask("to delete");
-      const task = tasks[0]!;
-      const { container } = render(() => <TaskRow task={task} />);
-      const li = container.querySelector("li")!;
-
-      fireEvent.keyDown(li, { key: "D" });
-      expect(tasks.length).toBe(0);
-    });
-
-    it("pressing d (lowercase) also deletes", () => {
-      createTask("to delete");
-      const task = tasks[0]!;
-      const { container } = render(() => <TaskRow task={task} />);
-      const li = container.querySelector("li")!;
-
-      fireEvent.keyDown(li, { key: "d" });
-      expect(tasks.length).toBe(0);
-    });
-  });
-
-  describe("undo entry push", () => {
-    it("pressing X on active task pushes setCompletedAt with previousCompletedAt: null", () => {
-      createTask("task");
-      const task = tasks[0]!;
-      const { container } = render(() => <TaskRow task={task} />);
-      const li = container.querySelector("li")!;
-
-      fireEvent.keyDown(li, { key: "X" });
-      expect(undoStack.length).toBe(1);
-      expect(undoStack[0]!.inverseMutation.type).toBe("setCompletedAt");
-      const im = undoStack[0]!.inverseMutation as { type: "setCompletedAt"; id: string; previousCompletedAt: number | null };
-      expect(im.previousCompletedAt).toBeNull();
-    });
-
-    it("pressing X on completed task pushes setCompletedAt with original timestamp", () => {
-      createTask("task");
-      const task = tasks[0]!;
-      toggleTaskCompleted(task.id);
-      const ts = tasks[0]!.completedAt!;
-      clearUndoStack();
-
-      const { container } = render(() => <TaskRow task={task} />);
-      const li = container.querySelector("li")!;
-
-      fireEvent.keyDown(li, { key: "X" });
-      expect(undoStack.length).toBe(1);
-      const im = undoStack[0]!.inverseMutation as { type: "setCompletedAt"; id: string; previousCompletedAt: number | null };
-      expect(im.previousCompletedAt).toBe(ts);
-    });
-
+  describe("undo entry push (click + checkbox + edit pathways)", () => {
     it("clicking row outside .task-text pushes setCompletedAt undo entry", () => {
       createTask("task");
       const task = tasks[0]!;
-      const { container } = render(() => <TaskRow task={task} />);
+      const { container } = render(() => <TaskRow task={task} index={0} />);
       const li = container.querySelector("li")!;
 
       fireEvent.click(li);
@@ -302,7 +276,7 @@ describe("TaskRow", () => {
     it("checkbox onChange pushes exactly one undo entry (no double-fire)", () => {
       createTask("task");
       const task = tasks[0]!;
-      const { container } = render(() => <TaskRow task={task} />);
+      const { container } = render(() => <TaskRow task={task} index={0} />);
       const input = container.querySelector("input[type=checkbox]")!;
 
       fireEvent.change(input);
@@ -310,25 +284,10 @@ describe("TaskRow", () => {
       expect(undoStack[0]!.inverseMutation.type).toBe("setCompletedAt");
     });
 
-    it("pressing D pushes insert undo entry with snapshot clone", () => {
-      createTask("to delete");
-      const task = tasks[0]!;
-      const originalText = tasks[0]!.text;
-      const { container } = render(() => <TaskRow task={task} />);
-      const li = container.querySelector("li")!;
-
-      fireEvent.keyDown(li, { key: "D" });
-      expect(undoStack.length).toBe(1);
-      expect(undoStack[0]!.inverseMutation.type).toBe("insert");
-      const im = undoStack[0]!.inverseMutation as { type: "insert"; task: { text: string }; index: number };
-      expect(im.task.text).toBe(originalText);
-      expect(im.index).toBe(0);
-    });
-
     it("editing text via Enter pushes updateText undo entry", () => {
       createTask("original text");
       const task = tasks[0]!;
-      const { container } = render(() => <TaskRow task={task} />);
+      const { container } = render(() => <TaskRow task={task} index={0} />);
       const span = container.querySelector(".task-text")!;
 
       fireEvent.click(span);
@@ -337,14 +296,18 @@ describe("TaskRow", () => {
 
       expect(undoStack.length).toBe(1);
       expect(undoStack[0]!.inverseMutation.type).toBe("updateText");
-      const im = undoStack[0]!.inverseMutation as { type: "updateText"; id: string; previousText: string };
+      const im = undoStack[0]!.inverseMutation as {
+        type: "updateText";
+        id: string;
+        previousText: string;
+      };
       expect(im.previousText).toBe("original text");
     });
 
     it("editing to whitespace-only pushes insert undo with original text", () => {
       createTask("draft text");
       const task = tasks[0]!;
-      const { container } = render(() => <TaskRow task={task} />);
+      const { container } = render(() => <TaskRow task={task} index={0} />);
       const span = container.querySelector(".task-text")!;
 
       fireEvent.click(span);
@@ -354,14 +317,18 @@ describe("TaskRow", () => {
       expect(tasks.length).toBe(0);
       expect(undoStack.length).toBe(1);
       expect(undoStack[0]!.inverseMutation.type).toBe("insert");
-      const im = undoStack[0]!.inverseMutation as { type: "insert"; task: { text: string }; index: number };
+      const im = undoStack[0]!.inverseMutation as {
+        type: "insert";
+        task: { text: string };
+        index: number;
+      };
       expect(im.task.text).toBe("draft text");
     });
 
     it("pressing Escape during edit pushes NO undo entry", () => {
       createTask("keep this");
       const task = tasks[0]!;
-      const { container } = render(() => <TaskRow task={task} />);
+      const { container } = render(() => <TaskRow task={task} index={0} />);
       const span = container.querySelector(".task-text")!;
 
       fireEvent.click(span);
@@ -374,7 +341,7 @@ describe("TaskRow", () => {
     it("committing unchanged text pushes NO undo entry", () => {
       createTask("unchanged");
       const task = tasks[0]!;
-      const { container } = render(() => <TaskRow task={task} />);
+      const { container } = render(() => <TaskRow task={task} index={0} />);
       const span = container.querySelector(".task-text")!;
 
       fireEvent.click(span);

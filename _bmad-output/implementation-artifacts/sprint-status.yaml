@@ -51,7 +51,7 @@ development_status:
   1-4-task-completion-visual-state-and-tick-component: done
   1-5-task-edit-and-delete: done
   1-6-session-long-undo-stack: done
-  1-7-keyboard-navigation-and-two-cursor-focus-model: backlog
+  1-7-keyboard-navigation-and-two-cursor-focus-model: review
   1-8-theme-toggle-dark-mode-and-accessibility-tokens: backlog
   1-9-cross-session-persistence-and-offline-first-sync: backlog
   1-10-annunciator-and-failure-feedback-routing: backlog

@@ -9,12 +9,19 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
+    "@bmad-todo/shared": "workspace:*",
+    "@fastify/rate-limit": "^10.2.1",
+    "better-sqlite3": "^11.5.0",
     "fastify": "^5.3.3",
-    "@bmad-todo/shared": "workspace:*"
+    "fastify-type-provider-zod": "^4.0.0",
+    "kysely": "^0.27.4",
+    "pino": "^9.5.0",
+    "zod": "^3.24.4"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
     "@types/node": "^20.17.0",
-    "typescript": "^5.7.3",
-    "tsx": "^4.19.4"
+    "tsx": "^4.19.4",
+    "typescript": "^5.7.3"
   }
 }

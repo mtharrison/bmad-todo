@@ -12,8 +12,16 @@ import {
   setEditingTask,
   focusCaptureLine,
 } from "../store/focus-store";
-import { tasks, toggleTaskCompleted, deleteTask, getTaskById } from "../store/task-store";
+import {
+  tasks,
+  toggleTaskCompleted,
+  deleteTask,
+  getTaskById,
+  flushOutbox,
+  reconcileWithServer,
+} from "../store/task-store";
 import { theme, toggleTheme } from "../store/theme-store";
+import { setSyncState } from "../store/annunciator-store";
 
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -132,7 +140,23 @@ export function App() {
       }
     };
     window.addEventListener("keydown", handler);
-    onCleanup(() => window.removeEventListener("keydown", handler));
+
+    const onlineHandler = () => {
+      setSyncState("online");
+      void flushOutbox();
+      void reconcileWithServer();
+    };
+    const offlineHandler = () => setSyncState("offline");
+    window.addEventListener("online", onlineHandler);
+    window.addEventListener("offline", offlineHandler);
+
+    void reconcileWithServer();
+
+    onCleanup(() => {
+      window.removeEventListener("keydown", handler);
+      window.removeEventListener("online", onlineHandler);
+      window.removeEventListener("offline", offlineHandler);
+    });
   });
 
   return (

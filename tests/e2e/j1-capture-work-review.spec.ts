@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test-fixtures";
 
 test.describe("Journey 1: Capture work review", () => {
   test("adds tasks in newest-first order", async ({ page }) => {

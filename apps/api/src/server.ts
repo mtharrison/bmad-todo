@@ -1,22 +1,18 @@
-import Fastify from "fastify";
-import { healthRoutes } from "./routes/health.js";
+import { buildApp } from "./app.js";
+import { createDb } from "./db/kysely.js";
+import { runMigrations } from "./db/migrate.js";
+import { env } from "./env.js";
+import { log } from "./lib/log.js";
 
-const app = Fastify();
+const { kysely, sqlite } = createDb(env.DATABASE_URL);
+runMigrations(sqlite);
 
-await app.register(healthRoutes);
-
-const rawPort = process.env["PORT"] ?? "3000";
-const port = Number(rawPort);
-if (!Number.isInteger(port) || port < 1 || port > 65535) {
-  throw new Error(`Invalid PORT: "${rawPort}" — must be an integer 1–65535`);
-}
+const app = await buildApp({ kysely, rateLimit: true, logger: true });
 
 try {
-  await app.listen({ port, host: "0.0.0.0" });
+  await app.listen({ port: env.PORT, host: "0.0.0.0" });
+  log.info({ event: "server.listening", port: env.PORT });
 } catch (err) {
-  app.log.error(err);
+  log.error({ event: "server.start_failed", err });
   process.exit(1);
 }
-
-// eslint-disable-next-line no-console
-console.log(`Server listening on http://localhost:${port}`);

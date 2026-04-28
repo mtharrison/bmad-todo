@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test-fixtures";
 
 test.describe("Journey 7: Undo Completion", () => {
   test("undo of complete restores active state", async ({ page }) => {

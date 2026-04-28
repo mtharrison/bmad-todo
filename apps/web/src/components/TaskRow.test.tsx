@@ -23,7 +23,7 @@ describe("TaskRow", () => {
   });
 
   it("active task renders data-completed=false, one checkbox, zero svg", () => {
-    const task = { id: "t1", text: "hello", createdAt: 0, completedAt: null };
+    const task = { id: "t1", userNamespace: "default", text: "hello", createdAt: 0, updatedAt: 0, completedAt: null };
     const { container } = render(() => <TaskRow task={task} index={0} />);
     const li = container.querySelector("li")!;
     const input = container.querySelector("input[type=checkbox]")!;
@@ -35,7 +35,7 @@ describe("TaskRow", () => {
   });
 
   it("completed task renders data-completed=true, checkbox with aria-checked, one svg", () => {
-    const task = { id: "t1", text: "hello", createdAt: 0, completedAt: 1000 };
+    const task = { id: "t1", userNamespace: "default", text: "hello", createdAt: 0, updatedAt: 0, completedAt: 1000 };
     const { container } = render(() => <TaskRow task={task} index={0} />);
     const li = container.querySelector("li")!;
     const input = container.querySelector("input[type=checkbox]")!;
@@ -46,7 +46,7 @@ describe("TaskRow", () => {
   });
 
   it("checkbox has aria-label 'Mark complete'", () => {
-    const task = { id: "t1", text: "hello", createdAt: 0, completedAt: null };
+    const task = { id: "t1", userNamespace: "default", text: "hello", createdAt: 0, updatedAt: 0, completedAt: null };
     const { container } = render(() => <TaskRow task={task} index={0} />);
     const input = container.querySelector("input[type=checkbox]")!;
 

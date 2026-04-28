@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test-fixtures";
 
 test.describe("Journey 5: Inline edit", () => {
   test("click text, change, press Enter commits the edit", async ({

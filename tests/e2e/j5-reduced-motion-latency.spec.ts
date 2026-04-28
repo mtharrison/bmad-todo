@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test-fixtures";
 
 // Story 1.8 AC#5 — prefers-reduced-motion: reduce must collapse all transitions
 // involved in the strike-through commit so the keystroke-to-render path stays

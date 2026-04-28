@@ -24,6 +24,8 @@ export default [
     },
     rules: {
       "no-console": "error",
+      "no-redeclare": "off",
+      "no-undef": "off",
       "import/no-default-export": "error",
       "import/no-restricted-paths": [
         "error",
@@ -63,6 +65,18 @@ export default [
     files: ["tests/e2e/**/*.ts"],
     languageOptions: {
       globals: globals.browser,
+    },
+  },
+  {
+    files: ["tests/property/**/*.ts"],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.browser },
+    },
+  },
+  {
+    files: ["apps/web/src/sync/sw.ts"],
+    languageOptions: {
+      globals: { ...globals.serviceworker, ...globals.browser },
     },
   },
 ];

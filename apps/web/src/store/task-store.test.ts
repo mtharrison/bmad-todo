@@ -228,7 +228,7 @@ describe("task-store", () => {
   describe("insertTaskAtIndex", () => {
     it("inserts at index 0 (beginning)", () => {
       createTask("existing");
-      const newTask = { id: "ins-1", text: "inserted", createdAt: 1, completedAt: null };
+      const newTask = { id: "ins-1", userNamespace: "default", text: "inserted", createdAt: 1, updatedAt: 1, completedAt: null };
       insertTaskAtIndex(newTask, 0);
       expect(tasks.length).toBe(2);
       expect(tasks[0]!.text).toBe("inserted");
@@ -237,7 +237,7 @@ describe("task-store", () => {
 
     it("inserts at the end", () => {
       createTask("existing");
-      const newTask = { id: "ins-2", text: "at end", createdAt: 1, completedAt: null };
+      const newTask = { id: "ins-2", userNamespace: "default", text: "at end", createdAt: 1, updatedAt: 1, completedAt: null };
       insertTaskAtIndex(newTask, 1);
       expect(tasks.length).toBe(2);
       expect(tasks[0]!.text).toBe("existing");
@@ -247,7 +247,7 @@ describe("task-store", () => {
     it("inserts at a middle index", () => {
       createTask("c");
       createTask("a");
-      const newTask = { id: "ins-3", text: "b", createdAt: 1, completedAt: null };
+      const newTask = { id: "ins-3", userNamespace: "default", text: "b", createdAt: 1, updatedAt: 1, completedAt: null };
       insertTaskAtIndex(newTask, 1);
       expect(tasks.length).toBe(3);
       expect(tasks[0]!.text).toBe("a");

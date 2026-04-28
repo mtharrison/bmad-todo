@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test-fixtures";
 
 test.describe("Journey 1: Completion toggle", () => {
   test("click on row outside text toggles completion on and off", async ({

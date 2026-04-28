@@ -135,7 +135,7 @@ Must ship for v1 to be a complete product:
 
 Makes the product competitive:
 - Sensible single-suggestion autocomplete from history (stable, no mid-keystroke rewrite, dismissible by ignoring).
-- `/` to search/filter, `f` to focus single task, `?` shortcut overlay.
+- `/` to search/filter, `f` to focus single task.
 - User-rebindable shortcuts.
 - Long-press / `s` to snooze.
 - Recurring tasks via double-check or explicit syntax.
@@ -519,6 +519,7 @@ The Growth and Vision phases are defined in **Product Scope → Growth Features 
 - **FR33:** User can perform every MVP operation (add, complete, uncomplete, edit, delete, undo) using the keyboard alone.
 - **FR34:** User can perform the same operations via pointer or touch alternatives.
 - **FR35:** System never requires modal dialogs for primary task operations; edits and confirmations happen in-place.
+- **FR55:** User can press `?` to reveal a keyboard-shortcut overlay that lists every global shortcut and its action; the overlay is dismissed by `Escape` or by pressing `?` again. The trigger key, like other global shortcuts, is gated by the capture-line stickiness rule (`?` typed inside an editable target inserts the character and does NOT open the overlay). The overlay is the only on-screen affordance permitted to teach shortcuts; "Press `?` for help" persistent text on the screen, hover tooltips, and first-time-user walkthroughs remain forbidden (FR46).
 
 ### Theming & Accessibility
 

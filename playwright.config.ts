@@ -2,7 +2,10 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  fullyParallel: true,
+  // Tests share a single API server with persistent state. /admin/reset between
+  // tests works only when tests do not run concurrently.
+  fullyParallel: false,
+  workers: 1,
   forbidOnly: !!process.env["CI"],
   retries: process.env["CI"] ? 2 : 0,
   reporter: "html",

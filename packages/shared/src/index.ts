@@ -1,2 +1,2 @@
-export { TaskSchema } from "./schema.js";
-export type { Task } from "./schema.js";
+export * from "./schema.js";
+export * from "./sw-messages.js";

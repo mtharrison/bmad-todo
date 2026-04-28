@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test-fixtures";
 
 test.describe("Journey 6: Undo Edit", () => {
   test("undo restores original text after edit", async ({ page }) => {

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test-fixtures";
 
 test.describe("visual regression - blank screen", () => {
   test("light theme snapshot", async ({ page }) => {

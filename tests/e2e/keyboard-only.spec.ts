@@ -2,7 +2,7 @@
 // Do not introduce page.click(), page.tap(), page.hover(), page.mouse.*, or page.touchscreen.*.
 // Failure of any flow without a pointer fails the build (Story 1.7 AC#11).
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test-fixtures";
 
 test.describe("Keyboard-only journeys (NFR-A11y-3)", () => {
   test("J1 — add three tasks via keyboard alone", async ({ page }) => {

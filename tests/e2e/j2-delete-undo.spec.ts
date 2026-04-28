@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test-fixtures";
 
 test.describe("Journey 2: Delete + Undo", () => {
   test("pressing D on focused task row removes it from the list", async ({

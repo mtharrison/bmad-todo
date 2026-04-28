@@ -328,7 +328,7 @@ This single-MVP-epic shape is deliberate: the v1 thesis (*"the differentiator is
 
 Stories are sequenced by the architecture's implementation roadmap and the UX spec's six-phase plan: repository scaffold → tokens & theme bootstrap → capture loop → completion → reversibility → persistence/sync → annunciator wiring → CI gates → deploy → polish/a11y verification.
 
-**FRs covered:** FR1–FR54 (all 54).
+**FRs covered:** FR1–FR54 plus FR55 (shortcut overlay promoted into MVP).
 **NFRs covered:** NFR1–NFR40, NFR42–NFR44 (NFR41 Scale-1 deferred).
 **ARs covered:** AR1–AR27 (all).
 **UX-DRs covered:** UX-DR1–UX-DR28 (all).
@@ -337,7 +337,7 @@ Stories are sequenced by the architecture's implementation roadmap and the UX sp
 
 ### Epic 2: Growth — Daily-Driver Enhancements (post-MVP)
 
-**Goal.** Make bmad-todo competitive as a daily-driver tool beyond the Sam archetype. Adds the productivity surfaces deliberately deferred from MVP — without violating the Quiet Tool thesis. Concretely: multi-device sync (CRDT or operational-transform over the prepared `user_namespace` seam); authentication via OAuth/OIDC lighting up the Cloudflare-Access-prepared seam (no schema rewrite required); sensible single-suggestion autocomplete from history (stable, no mid-keystroke rewrite, dismissible by ignoring); `s` to snooze; recurring tasks via double-check or explicit syntax; `/` search and filter; `f` focus-single-task; `?` shortcut overlay; user-rebindable shortcuts; mobile-tuned interaction (full-row tap target, magnified surface); settings panel (preferences only — no damage-control toggles); inline timestamp evidence on completed tasks; ambient ageing of stale tasks (deferred from MVP because the right ageing curve benefits from real usage data); cross-session undo backed by the ≥30-day server-side soft-delete retention.
+**Goal.** Make bmad-todo competitive as a daily-driver tool beyond the Sam archetype. Adds the productivity surfaces deliberately deferred from MVP — without violating the Quiet Tool thesis. Concretely: multi-device sync (CRDT or operational-transform over the prepared `user_namespace` seam); authentication via OAuth/OIDC lighting up the Cloudflare-Access-prepared seam (no schema rewrite required); sensible single-suggestion autocomplete from history (stable, no mid-keystroke rewrite, dismissible by ignoring); `s` to snooze; recurring tasks via double-check or explicit syntax; `/` search and filter; `f` focus-single-task; user-rebindable shortcuts; mobile-tuned interaction (full-row tap target, magnified surface); settings panel (preferences only — no damage-control toggles); inline timestamp evidence on completed tasks; ambient ageing of stale tasks (deferred from MVP because the right ageing curve benefits from real usage data); cross-session undo backed by the ≥30-day server-side soft-delete retention.
 
 **Standalone:** builds on Epic 1's idempotency-key infrastructure, soft-delete retention, per-user namespace, and Cloudflare Access auth seam. Does not require Epic 3.
 
@@ -827,4 +827,51 @@ So that my task data is private, the app is accessible from any browser, and the
 **And** task text is never logged in plaintext server-side beyond what storage requires.
 **And** no third-party analytics, tracking pixels, advertising SDKs, or session-replay tooling is present in the deployed build.
 **And** the deployment pipeline is: CI gates pass (Story 1.12) → build → deploy; no manual steps beyond initial approval.
+
+### Story 1.14: Keyboard Shortcut Overlay (`?` Lookup Surface)
+
+As Sam,
+I want to press `?` to see every keyboard shortcut and its action,
+So that I can look up a shortcut on demand without leaving the keyboard, reading the README, or relying on a persistent on-screen help affordance that would soften the no-chrome stance.
+
+**Acceptance Criteria:**
+
+**Given** no editable target has DOM focus,
+**When** Sam presses `?`,
+**Then** a centered modal overlay appears listing every global shortcut (`n`, `j`/`k`, `ArrowDown`/`ArrowUp`, `x`, `e`, `d`, `u`, `t`, `Cmd+Enter`/`Ctrl+Enter`, `Escape`, `?`) paired with its action; the overlay is the only newly visible UI element; the rest of the screen remains visible (or dimmed via a low-contrast scrim consistent with theme tokens — no opaque blackout).
+
+**Given** the overlay is open,
+**When** Sam presses `Escape` or presses `?` again,
+**Then** the overlay closes and `document.activeElement` is restored to whatever held focus before the overlay opened (capture-line stickiness preserved per UX spec line 400).
+
+**Given** Sam is typing in the capture line or editing a task,
+**When** Sam presses `?`,
+**Then** the overlay does NOT open; the `?` character is inserted into the contenteditable/input as a literal character (gated by the same `isEditableTarget` check as all other Story 1.7 shortcuts).
+
+**Given** the overlay is open,
+**When** Sam presses any other shortcut key (`x`, `j`, `t`, etc.),
+**Then** the global handler does NOT fire that shortcut (the overlay traps shortcut handling); only `Escape` and `?` close the overlay; `Tab` moves focus within the overlay (focus trap).
+
+**Given** the overlay is rendered,
+**Then** it has `role="dialog"`, `aria-modal="true"`, and `aria-labelledby` referencing a heading inside the overlay; opening the overlay moves DOM focus to the dialog (or its first interactive element if any); closing the overlay restores focus per the prior AC.
+
+**Given** the overlay is rendered,
+**Then** every shortcut row uses semantic markup (a `<dl>` of `<dt>` keys / `<dd>` actions, or a `<table>`) so the list is consumable by assistive technology in reading order; the `<kbd>` element is used for each key glyph.
+
+**Given** the overlay is rendered under either theme,
+**Then** body text contrast on the overlay background meets WCAG 2.1 AA (≥4.5:1) and is verified by a contrast assertion in `design-tokens.test.ts`; under `prefers-contrast: more` the contrast meets the same ≥7:1 / ≥4.5:1 thresholds as the rest of the app.
+
+**Given** the overlay is rendered under `forced-colors: active`,
+**Then** the dialog uses system color tokens (`Canvas`, `CanvasText`, `Highlight` for any focusable element's focus ring) and remains fully legible; verified by a Playwright visual-regression snapshot.
+
+**Given** the overlay is rendered under `prefers-reduced-motion: reduce`,
+**Then** the open and close transitions are instant (`--motion-default` resolves to `0ms`); no animation runs.
+
+**And** there is no persistent on-screen text indicating the `?` shortcut. The trigger is undocumented in the UI; the README documents it. (Anti-pattern explicitly avoided per UX spec § Keyboard-Discoverability Pattern.)
+
+**And** the overlay is dismissible by pointer too: clicking outside the dialog (on the scrim) closes the overlay; the close-on-outside-click path does NOT change `document.activeElement` away from the prior focus holder (same constraint as the theme-toggle button per Story 1.8 AC#9–10).
+
+**And** opening the overlay never auto-opens at load, never auto-opens on first-ever visit, and never opens via any path other than the explicit `?` keystroke or pointer activation of the overlay's own (optional) `<button>` close affordance — there is no first-time-user auto-walkthrough (FR46).
+
+**And** anti-feature lints (NFR-Maint-3) extend to forbid: `tooltip`, `onboarding`, `walkthrough`, and any persistent "Press `?` for help" string in the rendered DOM.
 

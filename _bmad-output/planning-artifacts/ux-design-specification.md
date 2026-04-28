@@ -1182,24 +1182,22 @@ The two cursors coexist. Pressing `x` (with the focus ring on a task) toggles th
 
 ### Keyboard-Discoverability Pattern
 
-**When to use:** Helping the user learn the keyboard shortcuts without an overlay or tour.
+**When to use:** Helping the user learn the keyboard shortcuts without a tour or persistent on-screen help.
 
-**Pattern (v1):** No discoverability surface. The user discovers shortcuts progressively:
-- `enter` and `esc` are universal idioms — no learning needed.
-- `j` / `k` are vim's idiom; the persona (Sam) likely already uses them. Arrow keys are aliases for users who don't.
-- `x`, `u`, `e`, `n` are short, mnemonic, single-keystroke. The user discovers them by trying or by reading the README.
+**Pattern (v1):** Two complementary surfaces — progressive discovery for the keyboard-native user, plus a `?`-triggered overlay for explicit lookup:
 
-**Growth scope:** `?` reveals a short keyboard-shortcut overlay. Out of v1 because:
-- The audience is keyboard-native and doesn't need a cheat sheet.
-- A help overlay would be the only piece of "help UI" in the product, and its presence would soften the no-chrome stance.
-- The README is the documentation.
+- **Progressive discovery (default path).** The user discovers shortcuts by trying or by reading the README:
+  - `enter` and `esc` are universal idioms — no learning needed.
+  - `j` / `k` are vim's idiom; the persona (Sam) likely already uses them. Arrow keys are aliases for users who don't.
+  - `x`, `u`, `e`, `n`, `t` are short, mnemonic, single-keystroke.
+- **`?` shortcut overlay (lookup path).** Pressing `?` (when no editable target is focused) reveals a centered overlay listing every global shortcut and its action. Dismissed by `Escape` or by pressing `?` again. The overlay is the ONLY on-screen affordance permitted to teach shortcuts — it is invoked, not advertised.
 
-**Anti-patterns explicitly avoided:**
+**Anti-patterns still explicitly avoided:**
 - Tooltips on hover for keyboard hints.
-- "Press `?` for help" persistent text on the screen.
-- Initial overlay walkthrough.
+- "Press `?` for help" persistent text on the screen (the trigger is undocumented in the UI; it lives in the README and the overlay teaches itself once invoked).
+- Initial overlay walkthrough or first-time-user auto-open of the overlay.
 
-**Rationale:** PRD Vision (`?` shortcut overlay listed under Growth, not MVP); FR46; Step 9 "out-of-scope as variations."
+**Rationale:** Promoted into v1 (was Growth scope) because the lookup path is invocation-only and therefore preserves the no-chrome stance — the screen at rest still contains no help affordance. FR55 covers the requirement; FR46 (no onboarding tour / tooltip walkthrough / first-time-user instructional modal) remains binding.
 
 ### Pattern Discipline (CI-Enforced)
 

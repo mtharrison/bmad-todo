@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test-fixtures";
 
 test("web app loads with capture line focused", async ({ page }) => {
   await page.goto("/");

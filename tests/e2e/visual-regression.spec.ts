@@ -1,6 +1,7 @@
 import { test, expect } from "./test-fixtures";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const THEMES = ["light", "dark"] as const;
 const VIEWPORTS = {
@@ -9,7 +10,8 @@ const VIEWPORTS = {
   desktop: { width: 1280, height: 800 },
 } as const;
 
-const snapshotsDir = path.join(__dirname, "visual-regression.spec.ts-snapshots");
+const thisDir = path.dirname(fileURLToPath(import.meta.url));
+const snapshotsDir = path.join(thisDir, "visual-regression.spec.ts-snapshots");
 const platformSuffix = `chromium-${process.platform}`;
 const hasBaselines =
   fs.existsSync(snapshotsDir) &&

@@ -174,7 +174,7 @@ WCAG 2.1 AA compliant — tested with both automated tools and manual screen rea
     <td>
       <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker" />
       <img src="https://img.shields.io/badge/Fly.io-7B36ED?style=flat-square&logo=fly.io&logoColor=white" alt="Fly.io" />
-      <img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions" />
+      <img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions" /> (CI only)
     </td>
   </tr>
 </table>
@@ -205,7 +205,8 @@ bmad-todo/
 │   ├── e2e/                  # Playwright journeys, a11y, visual regression
 │   └── perf/                 # Performance benchmarks
 ├── 🔧 scripts/               # CI helpers (bundle check, anti-feature lint)
-├── 🐳 infra/                 # Dockerfile + fly.toml
+├── 🐳 infra/                 # Dockerfile
+├── ✈️  fly.toml               # Fly.io deployment config
 └── 📖 docs/                  # Anti-features, contributing, screen reader checklist
 ```
 

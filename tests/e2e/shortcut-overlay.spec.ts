@@ -23,6 +23,7 @@ test.describe("Keyboard Shortcut Overlay (Story 1.14)", () => {
     await page.goto("/");
     await page.keyboard.type("task one");
     await page.keyboard.press("Enter");
+    await expect(page.locator("li")).toHaveCount(1);
 
     await page.keyboard.press("Tab");
     const row = page.locator("li").first();
@@ -62,6 +63,7 @@ test.describe("Keyboard Shortcut Overlay (Story 1.14)", () => {
     await page.goto("/");
     await page.keyboard.type("test task");
     await page.keyboard.press("Enter");
+    await expect(page.locator("li")).toHaveCount(1);
 
     const input = page.locator('input[aria-label="Add a task"]');
     await input.blur();
@@ -84,6 +86,7 @@ test.describe("Keyboard Shortcut Overlay (Story 1.14)", () => {
     await page.goto("/");
     await page.keyboard.type("task one");
     await page.keyboard.press("Enter");
+    await expect(page.locator("li")).toHaveCount(1);
 
     await page.keyboard.press("Tab");
     const row = page.locator("li").first();

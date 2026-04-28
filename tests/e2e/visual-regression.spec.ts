@@ -1,4 +1,6 @@
 import { test, expect } from "./test-fixtures";
+import * as fs from "node:fs";
+import * as path from "node:path";
 
 const THEMES = ["light", "dark"] as const;
 const VIEWPORTS = {
@@ -7,7 +9,15 @@ const VIEWPORTS = {
   desktop: { width: 1280, height: 800 },
 } as const;
 
-test.describe("visual regression - blank screen", () => {
+const snapshotsDir = path.join(__dirname, "visual-regression.spec.ts-snapshots");
+const platformSuffix = `chromium-${process.platform}`;
+const hasBaselines =
+  fs.existsSync(snapshotsDir) &&
+  fs.readdirSync(snapshotsDir).some((f) => f.includes(platformSuffix));
+
+test.describe("visual regression - blank screen (screenshots)", () => {
+  test.skip(!hasBaselines, `No baselines for ${platformSuffix}`);
+
   test("light theme snapshot", async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.setItem("theme", "light");
@@ -103,22 +113,24 @@ test.describe("visual regression - blank screen", () => {
       maxDiffPixelRatio: 0.01,
     });
   });
+});
 
-  test("empty state contains only capture line and empty list", async ({ page }) => {
-    await page.goto("/");
-    await page.waitForLoadState("networkidle");
+test("empty state contains only capture line and empty list", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForLoadState("networkidle");
 
-    const rootChildren = page.locator("#root > *");
-    const rootChildCount = await rootChildren.count();
-    expect(rootChildCount).toBeLessThanOrEqual(1);
+  const rootChildren = page.locator("#root > *");
+  const rootChildCount = await rootChildren.count();
+  expect(rootChildCount).toBeLessThanOrEqual(1);
 
-    const images = page.locator("img, svg, picture, canvas");
-    const imageCount = await images.count();
-    expect(imageCount).toBe(0);
-  });
+  const images = page.locator("img, svg, picture, canvas");
+  const imageCount = await images.count();
+  expect(imageCount).toBe(0);
 });
 
 test.describe("visual regression - mobile viewport", () => {
+  test.skip(!hasBaselines, `No baselines for ${platformSuffix}`);
+
   for (const theme of THEMES) {
     test(`empty state — ${theme} theme (mobile)`, async ({ page }) => {
       await page.setViewportSize(VIEWPORTS.mobile);
@@ -136,6 +148,8 @@ test.describe("visual regression - mobile viewport", () => {
 });
 
 test.describe("visual regression - tablet viewport", () => {
+  test.skip(!hasBaselines, `No baselines for ${platformSuffix}`);
+
   for (const theme of THEMES) {
     test(`empty state — ${theme} theme (tablet)`, async ({ page }) => {
       await page.setViewportSize(VIEWPORTS.tablet);
@@ -153,6 +167,8 @@ test.describe("visual regression - tablet viewport", () => {
 });
 
 test.describe("visual regression - populated state", () => {
+  test.skip(!hasBaselines, `No baselines for ${platformSuffix}`);
+
   async function addTasks(page: import("@playwright/test").Page) {
     const input = page.locator(".capture-line");
     for (const text of ["Buy groceries", "Walk the dog", "Read a book"]) {
@@ -182,6 +198,8 @@ test.describe("visual regression - populated state", () => {
 });
 
 test.describe("visual regression - focused state", () => {
+  test.skip(!hasBaselines, `No baselines for ${platformSuffix}`);
+
   for (const [vpName, vpSize] of Object.entries(VIEWPORTS)) {
     for (const theme of THEMES) {
       test(`focused row — ${theme} theme (${vpName})`, async ({ page }) => {
@@ -208,6 +226,8 @@ test.describe("visual regression - focused state", () => {
 });
 
 test.describe("visual regression - completed state", () => {
+  test.skip(!hasBaselines, `No baselines for ${platformSuffix}`);
+
   for (const [vpName, vpSize] of Object.entries(VIEWPORTS)) {
     for (const theme of THEMES) {
       test(`completed task — ${theme} theme (${vpName})`, async ({ page }) => {
@@ -237,6 +257,8 @@ test.describe("visual regression - completed state", () => {
 });
 
 test.describe("visual regression - edit mode", () => {
+  test.skip(!hasBaselines, `No baselines for ${platformSuffix}`);
+
   for (const [vpName, vpSize] of Object.entries(VIEWPORTS)) {
     for (const theme of THEMES) {
       test(`edit mode — ${theme} theme (${vpName})`, async ({ page }) => {
@@ -264,6 +286,8 @@ test.describe("visual regression - edit mode", () => {
 });
 
 test.describe("visual regression - annunciator state (all viewports)", () => {
+  test.skip(!hasBaselines, `No baselines for ${platformSuffix}`);
+
   for (const [vpName, vpSize] of Object.entries(VIEWPORTS)) {
     for (const theme of THEMES) {
       test(`annunciator — ${theme} theme (${vpName})`, async ({ page, context }) => {

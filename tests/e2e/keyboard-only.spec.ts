@@ -10,8 +10,10 @@ test.describe("Keyboard-only journeys (NFR-A11y-3)", () => {
     // CaptureLine auto-focuses on desktop; type immediately.
     await page.keyboard.type("Buy oat milk");
     await page.keyboard.press("Enter");
+    await expect(page.locator("li")).toHaveCount(1);
     await page.keyboard.type("Walk the dog");
     await page.keyboard.press("Enter");
+    await expect(page.locator("li")).toHaveCount(2);
     await page.keyboard.type("Read for 30 minutes");
     await page.keyboard.press("Enter");
 
@@ -25,6 +27,7 @@ test.describe("Keyboard-only journeys (NFR-A11y-3)", () => {
     await page.goto("/");
     await page.keyboard.type("Buy bread");
     await page.keyboard.press("Enter");
+    await expect(page.locator("li")).toHaveCount(1);
 
     // Tab from the capture input lands on the first row (its tabindex=0 default).
     await page.keyboard.press("Tab");
@@ -40,6 +43,7 @@ test.describe("Keyboard-only journeys (NFR-A11y-3)", () => {
     await page.goto("/");
     await page.keyboard.type("Buy oat milk");
     await page.keyboard.press("Enter");
+    await expect(page.locator("li")).toHaveCount(1);
 
     await page.keyboard.press("Tab");
     await page.keyboard.press("e");
@@ -55,6 +59,7 @@ test.describe("Keyboard-only journeys (NFR-A11y-3)", () => {
     await page.goto("/");
     await page.keyboard.type("task one");
     await page.keyboard.press("Enter");
+    await expect(page.locator("li")).toHaveCount(1);
 
     await page.keyboard.press("Tab");
     await expect(page.locator("li").first()).toBeFocused();
@@ -67,6 +72,7 @@ test.describe("Keyboard-only journeys (NFR-A11y-3)", () => {
     await page.goto("/");
     await page.keyboard.type("task one");
     await page.keyboard.press("Enter");
+    await expect(page.locator("li")).toHaveCount(1);
 
     await page.keyboard.press("Tab");
     await expect(page.locator("li").first()).toBeFocused();
@@ -80,6 +86,7 @@ test.describe("Keyboard-only journeys (NFR-A11y-3)", () => {
     // Add a task first so a focusable row exists; if stickiness leaks, it would receive focus.
     await page.keyboard.type("seed task");
     await page.keyboard.press("Enter");
+    await expect(page.locator("li")).toHaveCount(1);
 
     await page.keyboard.type("jkxu");
     await expect(page.locator('input[aria-label="Add a task"]')).toHaveValue("jkxu");
@@ -91,10 +98,13 @@ test.describe("Keyboard-only journeys (NFR-A11y-3)", () => {
     await page.goto("/");
     await page.keyboard.type("first");
     await page.keyboard.press("Enter");
+    await expect(page.locator("li")).toHaveCount(1);
     await page.keyboard.type("second");
     await page.keyboard.press("Enter");
+    await expect(page.locator("li")).toHaveCount(2);
     await page.keyboard.type("third");
     await page.keyboard.press("Enter");
+    await expect(page.locator("li")).toHaveCount(3);
 
     // Tab into the list (lands on row 0 = "third", newest-first).
     await page.keyboard.press("Tab");
@@ -118,6 +128,7 @@ test.describe("Keyboard-only journeys (NFR-A11y-3)", () => {
     await page.goto("/");
     await page.keyboard.type("toggle me");
     await page.keyboard.press("Enter");
+    await expect(page.locator("li")).toHaveCount(1);
 
     await page.keyboard.press("Tab");
     await page.keyboard.press("x");

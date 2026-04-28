@@ -1,6 +1,6 @@
 # Story 1.11: Dev Mode Latency Display & Anti-Feature Contract
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -417,3 +417,5 @@ Claude Opus 4.6 (1M context)
 - docs/CONTRIBUTING.md
 
 ### Review Findings
+
+Clean review — all three layers passed (Blind Hunter, Edge Case Hunter, Acceptance Auditor). 18 findings raised, all dismissed as false positives or inapplicable theoretical concerns. 0 patches, 0 deferred, 0 decision-needed.

@@ -1,7 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  testDir: "./tests/e2e",
   // Tests share a single API server with persistent state. /admin/reset between
   // tests works only when tests do not run concurrently.
   fullyParallel: false,
@@ -16,6 +15,12 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
+      testDir: "./tests/e2e",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "perf",
+      testDir: "./tests/perf",
       use: { ...devices["Desktop Chrome"] },
     },
   ],

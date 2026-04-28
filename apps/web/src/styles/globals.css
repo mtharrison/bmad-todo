@@ -61,6 +61,11 @@
     --color-rule: #e8dfcecc;
     --color-accent: #86b5a2;
   }
+
+  .shortcut-overlay-key kbd {
+    background: var(--color-ink);
+    color: var(--color-paper);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -306,6 +311,95 @@ main.app-main {
   opacity: 0.6;
 }
 
+.shortcut-overlay-scrim {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--color-ink) 15%, transparent);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-theme="dark"] .shortcut-overlay-scrim {
+  background: color-mix(in srgb, var(--color-ink) 25%, transparent);
+}
+
+.shortcut-overlay-dialog {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  border: 1px solid var(--color-rule);
+  border-radius: 4px;
+  padding: 24px 32px;
+  max-width: 480px;
+  max-height: 80vh;
+  overflow-y: auto;
+  outline: 0;
+  position: relative;
+}
+
+.shortcut-overlay-dialog:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+.shortcut-overlay-title {
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  margin: 0 0 16px;
+}
+
+.shortcut-overlay-list {
+  margin: 0;
+  padding: 0;
+}
+
+.shortcut-overlay-row {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 4px 0;
+}
+
+.shortcut-overlay-key {
+  flex: 0 0 160px;
+  text-align: right;
+}
+
+.shortcut-overlay-key kbd {
+  background: var(--color-rule);
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.shortcut-overlay-action {
+  margin: 0;
+  flex: 1;
+}
+
+.shortcut-overlay-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: 0;
+  color: var(--color-ink-muted);
+  font: inherit;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.shortcut-overlay-close:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
 @media (forced-colors: active) {
   .capture-line:focus-visible,
   .task-row:focus-visible,
@@ -350,5 +444,32 @@ main.app-main {
 
   .dev-latency-value[data-over-budget="true"] {
     color: Highlight;
+  }
+
+  .shortcut-overlay-scrim {
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  .shortcut-overlay-dialog {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+  }
+
+  .shortcut-overlay-dialog:focus-visible {
+    outline-color: Highlight;
+  }
+
+  .shortcut-overlay-key kbd {
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .shortcut-overlay-close {
+    color: CanvasText;
+  }
+
+  .shortcut-overlay-close:focus-visible {
+    outline-color: Highlight;
   }
 }

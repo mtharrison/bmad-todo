@@ -6,6 +6,8 @@ import { IdempotencyRepo } from "./db/repos/idempotency-repo.js";
 import { taskRoutes } from "./routes/tasks.js";
 import { healthRoutes } from "./routes/health.js";
 import { registerAuth } from "./middleware/auth-jwt.js";
+import { registerHelmet } from "./middleware/helmet.js";
+import { registerStatic } from "./middleware/static.js";
 import { errorEnvelope, notFoundHandler } from "./middleware/error-envelope.js";
 import { registerRateLimit, type RateLimitOptions } from "./middleware/rate-limit.js";
 import { env } from "./env.js";
@@ -13,11 +15,17 @@ import { env } from "./env.js";
 export interface BuildAppOptions {
   kysely: Kysely<DB>;
   rateLimit?: boolean | RateLimitOptions;
+  helmet?: boolean;
+  staticRoot?: string | undefined;
   logger?: boolean;
 }
 
 export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> {
   const app = Fastify({ logger: opts.logger ?? false });
+
+  if (opts.helmet) {
+    await registerHelmet(app);
+  }
 
   registerAuth(app);
   if (opts.rateLimit) {
@@ -26,7 +34,6 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
   }
 
   app.setErrorHandler(errorEnvelope);
-  app.setNotFoundHandler(notFoundHandler);
 
   await app.register(healthRoutes);
   await app.register(async (scope) => {
@@ -45,6 +52,12 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
       await opts.kysely.deleteFrom("idempotency_keys").execute();
       return reply.status(204).send();
     });
+  }
+
+  if (opts.staticRoot) {
+    await registerStatic(app, opts.staticRoot);
+  } else {
+    app.setNotFoundHandler(notFoundHandler);
   }
 
   return app;

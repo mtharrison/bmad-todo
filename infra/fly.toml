@@ -1,11 +1,26 @@
-# Placeholder — configured in Story 1.13
 app = "bmad-todo"
 primary_region = "iad"
 
 [build]
+  dockerfile = "infra/Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  DATABASE_URL = "/data/bmad-todo.db"
+
+[mounts]
+  source = "data"
+  destination = "/data"
 
 [http_service]
   internal_port = 3000
   force_https = true
   auto_stop_machines = "stop"
   auto_start_machines = true
+
+  [[http_service.checks]]
+    interval = "15s"
+    timeout = "2s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/health"

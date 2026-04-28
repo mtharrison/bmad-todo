@@ -91,6 +91,24 @@ describe("WCAG AA contrast ratios", () => {
     });
   });
 
+  describe("kbd element (overlay shortcut keys)", () => {
+    it("light: ink on composited rule background >= 4.5:1", () => {
+      const ruleFg = hexToRgb("#1F1A14");
+      const ruleAlpha = 0x22 / 255;
+      const ruleBg = compositeAlpha(ruleFg, ruleAlpha, LIGHT.paper);
+      const ratio = contrastRatio(LIGHT.ink, ruleBg);
+      expect(ratio).toBeGreaterThanOrEqual(4.5);
+    });
+
+    it("dark: ink on composited rule background >= 4.5:1", () => {
+      const ruleFg = hexToRgb("#E8DFCE");
+      const ruleAlpha = 0x22 / 255;
+      const ruleBg = compositeAlpha(ruleFg, ruleAlpha, DARK.paper);
+      const ratio = contrastRatio(DARK.ink, ruleBg);
+      expect(ratio).toBeGreaterThanOrEqual(4.5);
+    });
+  });
+
   describe("high-contrast (prefers-contrast: more)", () => {
     const LIGHT_HC = {
       paper: hexToRgb("#F4EFE6"),
@@ -111,6 +129,13 @@ describe("WCAG AA contrast ratios", () => {
     it("dark high-contrast ink on paper >= 7:1", () => {
       const ratio = contrastRatio(DARK_HC.ink, DARK_HC.paper);
       expect(ratio).toBeGreaterThanOrEqual(7);
+    });
+
+    it("high-contrast kbd: paper text on ink background >= 7:1 (inverted for legibility)", () => {
+      const lightRatio = contrastRatio(LIGHT_HC.paper, LIGHT_HC.ink);
+      const darkRatio = contrastRatio(DARK_HC.paper, DARK_HC.ink);
+      expect(lightRatio).toBeGreaterThanOrEqual(7);
+      expect(darkRatio).toBeGreaterThanOrEqual(7);
     });
 
     it("high-contrast accent on paper >= 4.5:1 in both themes", () => {

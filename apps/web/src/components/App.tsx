@@ -2,6 +2,7 @@ import { onMount, onCleanup } from "solid-js";
 import { Annunciator } from "./Annunciator";
 import { CaptureLine } from "./CaptureLine";
 import { DevLatencyDisplay, setDevModeVisible, devModeVisible } from "./DevLatencyDisplay";
+import { ShortcutOverlay, overlayOpen, setOverlayOpen } from "./ShortcutOverlay";
 import { TaskList } from "./TaskList";
 import { applyUndo, pushUndo } from "../store/undo-stack";
 import {
@@ -35,12 +36,24 @@ function isEditableTarget(target: EventTarget | null): boolean {
 }
 
 export function App() {
+  let prevFocus: HTMLElement | null = null;
+
   onMount(() => {
     const handler = (event: KeyboardEvent) => {
       if (event.isComposing) return;
       // OS auto-repeat from a held key is not the intended interaction model:
       // held `u` would flood the undo stack, held `d`/`x` would mutate per repeat.
       if (event.repeat) return;
+
+      if (overlayOpen()) {
+        if (event.key === "Escape" || event.key === "?") {
+          event.preventDefault();
+          setOverlayOpen(false);
+          prevFocus?.focus();
+          prevFocus = null;
+        }
+        return;
+      }
 
       if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === "L") {
         event.preventDefault();
@@ -62,6 +75,15 @@ export function App() {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
 
       switch (event.key) {
+        case "?":
+          event.preventDefault();
+          prevFocus = document.activeElement as HTMLElement | null;
+          setOverlayOpen(true);
+          return;
+
+        case "Escape":
+          return;
+
         case "u":
         case "U":
           event.preventDefault();
@@ -176,6 +198,7 @@ export function App() {
       <TaskList />
       <DevLatencyDisplay />
       <Annunciator />
+      <ShortcutOverlay />
       <button
         type="button"
         class="theme-toggle"

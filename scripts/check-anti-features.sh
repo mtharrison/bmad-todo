@@ -18,6 +18,11 @@ FORBIDDEN_PATTERNS=(
   'Achievement'
   'Karma'
   '<ErrorBoundary'
+  'tooltip'
+  'onboarding'
+  'walkthrough'
+  'Press ? for help'
+  'Press ? for shortcuts'
 )
 
 # Patterns requiring portable word-boundary matching (handled with -w)

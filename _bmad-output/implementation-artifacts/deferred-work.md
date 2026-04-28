@@ -1,5 +1,10 @@
 # Deferred Work
 
+## Deferred from: code review of 1-13-deployment-security-headers-and-production-hardening (2026-04-28)
+
+- SPA fallback `notFoundHandler` prefix list is incomplete/fragile — hardcoded `/tasks`, `/health`, `/admin` won't cover future API routes. Consider adopting a `/api/` prefix convention or inverting the logic to match known SPA routes instead. [apps/api/src/middleware/static.ts:25]
+- Dockerfile `sed` rewrite of `packages/shared/package.json` is brittle — hardcoded patterns (`./src/index.ts`, `./src/schema.ts`, `./src/sw-messages.ts`) will silently fail if shared package exports change. Consider a build-time script or separate production `package.json`. [infra/Dockerfile:34]
+
 ## Deferred from: code review of 1-12-ci-performance-accessibility-and-visual-regression-gates (2026-04-28)
 
 - P95 with 10 samples is effectively the max — `check-to-strike` uses 10 samples; `Math.floor(10 * 0.95) = 9`, so "P95" is the single worst value. One outlier fails CI. Acceptable for v1 (budgets have wide margin; completion p95 measured at 2.2ms vs 50ms budget).

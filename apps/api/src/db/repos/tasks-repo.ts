@@ -51,8 +51,7 @@ export class TasksRepo {
       updated_at: number;
     } = { updated_at: Date.now() };
     if (patch.text !== undefined) updates.text = patch.text;
-    if (patch.completedAt !== undefined)
-      updates.completed_at = patch.completedAt;
+    if (patch.completedAt !== undefined) updates.completed_at = patch.completedAt;
     const row = await this.db
       .updateTable("tasks")
       .set(updates)

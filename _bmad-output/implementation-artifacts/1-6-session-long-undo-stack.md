@@ -101,7 +101,7 @@ so that mistakes are instantly reversible without fear.
       pushUndo({ inverseMutation: { type: "insert", task: snapshot, index } });
     }
     ```
-    Same snapshot-before-delete pattern as Task 3.5. The `snapshot.text` will be the *pre-edit* original text (because `getTaskById` reads from the store, which has not been mutated yet — the contenteditable holds the whitespace-only buffer locally), so undoing a whitespace-delete restores the task to its pre-edit state, not to whitespace. Verify this assumption in tests (Task 5.5).
+    Same snapshot-before-delete pattern as Task 3.5. The `snapshot.text` will be the _pre-edit_ original text (because `getTaskById` reads from the store, which has not been mutated yet — the contenteditable holds the whitespace-only buffer locally), so undoing a whitespace-delete restores the task to its pre-edit state, not to whitespace. Verify this assumption in tests (Task 5.5).
   - [x] 3.8 **Do NOT push undo for `cancelEdit`** — Escape during edit is not a destructive action; it discards the in-progress edit without mutating the store. No store mutation → no undo entry.
   - [x] 3.9 **Do NOT push undo on undo replay** — `applyInverseMutation` calls `updateTaskText`, `insertTaskAtIndex`, `setTaskCompletedAt`. None of those store functions push undo entries themselves. The push-on-action discipline is enforced ONLY at the user-action call sites in TaskRow / App. This keeps the architecture's "single `applyMutation` path" (architecture.md line 480) achievable in Story 1.9 without re-entrancy.
 
@@ -214,6 +214,7 @@ The architecture document is the source of truth where it disagrees with the epi
 Story 1.6 completes **Phase 4 (Reversibility)** in the architecture's implementation roadmap (UX spec § Implementation Roadmap items 10–12). Phase 4's three deliverables — undo stack, `<TaskRow>` edit variant, `u` keystroke — are split across 1.5 (edit variant + delete) and 1.6 (undo stack + `u` keystroke + wiring of all destructive ops).
 
 Out of scope this story (preserved from 1.5):
+
 - IndexedDB / outbox / service worker (Story 1.9).
 - Idempotency keys (Story 1.9).
 - Annunciator wiring (Story 1.10).
@@ -321,7 +322,7 @@ Apply the same shape in `handleRowClick` (the click-outside-text branch) and in 
 
 **Whitespace-delete undo subtlety (Task 3.7):**
 
-When the user enters edit mode and clears the text to whitespace, the contenteditable span holds the whitespace LOCALLY — the store still has the original text. `getTaskById(id)` reads from the store, so the snapshot's `text` is the original. `deleteTask` then removes the task. Pushing `{ type: "insert", task: snapshot, index }` records the original text. Undo restores the original. Verify in test 5.5 by editing "draft text" to "   ", committing, then undoing — task should reappear with "draft text" (NOT "   ").
+When the user enters edit mode and clears the text to whitespace, the contenteditable span holds the whitespace LOCALLY — the store still has the original text. `getTaskById(id)` reads from the store, so the snapshot's `text` is the original. `deleteTask` then removes the task. Pushing `{ type: "insert", task: snapshot, index }` records the original text. Undo restores the original. Verify in test 5.5 by editing "draft text" to " ", committing, then undoing — task should reappear with "draft text" (NOT " ").
 
 **Empty-stack `u` is a no-op (AC#5):**
 
@@ -330,6 +331,7 @@ When the user enters edit mode and clears the text to whitespace, the contentedi
 ### Interaction with Story 1.7 (Keyboard Navigation and Two-Cursor Focus Model)
 
 Story 1.7 will:
+
 1. Replace per-row `tabindex={0}` with **roving tabindex** on `<TaskList>`.
 2. Lift `x`/`e`/`d`/`u` handlers off `<TaskRow>` and into `<App>`'s global keyboard model.
 3. Add `j`/`k`/`ArrowDown`/`ArrowUp` for navigation.
@@ -341,12 +343,14 @@ This story (1.6) leaves the per-row keystroke handlers in place exactly as 1.5 l
 ### Interaction with Story 1.9 (Cross-Session Persistence and Offline-First Sync)
 
 Story 1.9 will introduce:
+
 1. `applyMutation(store, mutation)` — single entry point used identically for user actions and undo replays (architecture line 480).
 2. Outbox enqueue on every mutation (architecture line 578).
 3. Idempotency keys per mutation (architecture line 583).
 4. IndexedDB persistence + reconciliation.
 
 For 1.6, `applyInverseMutation` is the proto-`applyMutation` for undo replays. When 1.9 lands:
+
 - The user-action paths (`createTask`, `toggleTaskCompleted`, `updateTaskText`, `deleteTask`) gain outbox+idempotency wiring.
 - Undo replay paths (`insertTaskAtIndex`, `updateTaskText`, `setCompletedAt` via the inverse-mutation switch) ALSO gain outbox+idempotency wiring — because they go through the same `applyMutation` once it exists.
 - The push-on-action discipline at TaskRow's call sites stays — undo pushes still happen at the destructive call site, BEFORE the action propagates to the outbox.
@@ -361,14 +365,15 @@ If `applyInverseMutation` ever fails (e.g., trying to update a task that no long
 ### Interaction with Story 1.4 (Tick) and Story 1.5 (Edit/Delete) — preserve existing visual contract
 
 Undo never changes visual chrome:
+
 - Tick component is rendered when `completedAt !== null`. Undo of "complete" (sets `completedAt` to null) hides the tick reactively. No animation, no fade.
 - Strike-through CSS follows `data-completed`. Undo flips `data-completed` reactively. Sub-frame; honors `prefers-reduced-motion: reduce` (no transition defined → instant by default).
 - Bezier jitter (Tick) is seeded by task id. Undoing complete-then-complete-again on the same task produces the SAME tick path (same seed). This is correct per Story 1.4 AC#7's "stable across re-completions".
 
 ### Library / Framework Requirements
 
-| Package | Version | Source | Why |
-|---|---|---|---|
+| Package    | Version                    | Source   | Why                                   |
+| ---------- | -------------------------- | -------- | ------------------------------------- |
 | `solid-js` | already installed (^1.9.5) | existing | `createStore`, `onMount`, `onCleanup` |
 
 **No new dependencies in this story.** `KeyboardEvent`, `window.addEventListener`, and `Date.now()` are native browser APIs.
@@ -475,6 +480,7 @@ NFR9 (latency under reduced-motion) — undo has no animation, so reduced-motion
 Per UX spec line 1129: "Pattern: undo-as-the-confirmation. Destructive actions execute immediately with no confirmation prompt. The session-long undo stack is the safety net. `u` reverses the last destructive action with exact-state restoration." This story IS that safety net. The product's commitment to "no modal dialogs, no confirmations" (FR35) is only credible because undo exists. Do not weaken this story's scope.
 
 Specifically forbidden additions (would silently re-introduce anti-features):
+
 - "1 item restored" toast on undo (UX spec line 1140 — explicit anti-pattern).
 - Undo button in UI chrome (chrome violates the "blank canvas" thesis; only the cursor + tasks are visible).
 - Confirmation prompt before destructive action (`confirm(`, `<Modal>`, `<Dialog>` are CI-grep-forbidden).

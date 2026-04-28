@@ -1,9 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  _resetForTesting,
-  setSyncState,
-  syncState,
-} from "./annunciator-store";
+import { _resetForTesting, setSyncState, syncState } from "./annunciator-store";
 
 beforeEach(() => {
   vi.useFakeTimers();

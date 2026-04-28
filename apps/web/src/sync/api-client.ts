@@ -1,9 +1,4 @@
-import type {
-  CreateTaskInput,
-  ErrorEnvelope,
-  Task,
-  UpdateTaskInput,
-} from "@bmad-todo/shared";
+import type { CreateTaskInput, ErrorEnvelope, Task, UpdateTaskInput } from "@bmad-todo/shared";
 
 export class ApiError extends Error {
   constructor(
@@ -29,7 +24,14 @@ async function parseOrThrow(res: Response): Promise<unknown> {
     return null;
   }
   if (!res.ok) {
-    throw new ApiError(res.status, json as ErrorEnvelope);
+    const envelope =
+      typeof json === "object" &&
+      json !== null &&
+      "error" in json &&
+      typeof (json as Record<string, unknown>).error === "object"
+        ? (json as ErrorEnvelope)
+        : { error: { code: "ServerError" as const, message: `HTTP ${res.status}` } };
+    throw new ApiError(res.status, envelope);
   }
   return json;
 }
@@ -39,10 +41,7 @@ export async function fetchTasks(): Promise<Task[]> {
   return (await parseOrThrow(res)) as Task[];
 }
 
-export async function postTask(
-  input: CreateTaskInput,
-  idempotencyKey: string,
-): Promise<Task> {
+export async function postTask(input: CreateTaskInput, idempotencyKey: string): Promise<Task> {
   const res = await fetch("/tasks", {
     method: "POST",
     headers: {
@@ -70,10 +69,7 @@ export async function patchTask(
   return (await parseOrThrow(res)) as Task;
 }
 
-export async function deleteTaskRequest(
-  id: string,
-  idempotencyKey: string,
-): Promise<void> {
+export async function deleteTaskRequest(id: string, idempotencyKey: string): Promise<void> {
   const res = await fetch(`/tasks/${encodeURIComponent(id)}`, {
     method: "DELETE",
     headers: { "Idempotency-Key": idempotencyKey },

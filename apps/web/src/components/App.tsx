@@ -143,8 +143,7 @@ export function App() {
 
     const onlineHandler = () => {
       setSyncState("online");
-      void flushOutbox();
-      void reconcileWithServer();
+      void flushOutbox().then(() => reconcileWithServer());
     };
     const offlineHandler = () => setSyncState("offline");
     window.addEventListener("online", onlineHandler);

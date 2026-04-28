@@ -37,6 +37,7 @@ so that I can use the app comfortably in any lighting condition and with any ass
 - [x] Task 1: Create `apps/web/src/store/theme-store.ts` (AC: #1, #2, #3, #9, #10)
   - [x] 1.1 New file `apps/web/src/store/theme-store.ts`. Use `createSignal` (per architecture.md line 280: "`createSignal` for individual reactive values (e.g., theme, focused-row index)" — same pattern as `focus-store.ts`).
   - [x] 1.2 Define and export the theme signal as a getter only (mirroring `focus-store.ts` encapsulation):
+
     ```ts
     import { createSignal } from "solid-js";
     import { resolveTheme, applyTheme } from "../theme-bootstrap";
@@ -47,13 +48,19 @@ so that I can use the app comfortably in any lighting condition and with any ass
 
     export const theme = themeSignal;
     ```
+
     Initialize the signal by calling `resolveTheme()` from existing `theme-bootstrap.ts` so the JS-side signal matches the inline-head script's choice on first mount (avoids divergence between `<html data-theme>` and `theme()`).
+
   - [x] 1.3 Export `setTheme(next: Theme)`:
     ```ts
     export function setTheme(next: Theme): void {
       setThemeInternal(next);
-      applyTheme(next);                       // updates <html data-theme>
-      try { localStorage.setItem("theme", next); } catch { /* private mode etc. — silent */ }
+      applyTheme(next); // updates <html data-theme>
+      try {
+        localStorage.setItem("theme", next);
+      } catch {
+        /* private mode etc. — silent */
+      }
     }
     ```
     The `try/catch` mirrors the inline bootstrap script's defensive read at `index.html:11-14` (Safari private mode can throw on `localStorage.setItem`).
@@ -104,6 +111,7 @@ so that I can use the app comfortably in any lighting condition and with any ass
 
 - [x] Task 4: Style the theme-toggle in `globals.css` — visually suppressed, revealed on focus/hover (AC: #1, #10)
   - [x] 4.1 Add to `apps/web/src/styles/globals.css` (after the `.task-checkbox` block around line 156):
+
     ```css
     .theme-toggle {
       position: fixed;
@@ -117,7 +125,7 @@ so that I can use the app comfortably in any lighting condition and with any ass
       border-radius: 50%;
       color: var(--color-ink-muted);
       font: inherit;
-      font-size: 0;             /* hide text label visually; a11y tree still has aria-label */
+      font-size: 0; /* hide text label visually; a11y tree still has aria-label */
       cursor: pointer;
       clip-path: inset(50%);
       transition: none;
@@ -131,30 +139,34 @@ so that I can use the app comfortably in any lighting condition and with any ass
       outline-offset: 4px;
     }
     ```
+
     The fixed-position bottom-left placement avoids competing with the bottom-right `<Annunciator>` (Story 1.10, UX-DR13). 44×44px tap target satisfies NFR-A11y-7. `clip-path: inset(50%)` is the same idiom as the task checkbox so the visual-suppression-at-rest pattern is consistent.
+
   - [x] 4.2 Verify with the empty-state visual-regression snapshot (Story 1.2 AC#8): the snapshot test at `tests/e2e/visual-regression.spec.ts:30-43` asserts `rootChildCount <= 1` (the `<main>`) and `imageCount === 0`. The new toggle button is inside `<main>` (so child count unchanged) and uses no `<img>`/`<svg>`/`<picture>`/`<canvas>` (so image count unchanged). Confirm both still pass — re-baseline `blank-light.png` and `blank-dark.png` ONLY if pixel diff exceeds the 1% `maxDiffPixelRatio` threshold.
   - [x] 4.3 The clip-path-hidden button stays in the tab order (matches deferred-work note from Story 1.4 about phantom tab stops, but here it is intentional — the button is a primary affordance, not decorative). Verify under VoiceOver that the button announces "Toggle theme, button, not pressed/pressed" correctly when reached via VoiceOver navigation.
 
 - [x] Task 5: Add `prefers-contrast: more` CSS path (AC: #6)
   - [x] 5.1 Add to `globals.css` AFTER the existing `[data-theme="dark"]` block and BEFORE the `prefers-reduced-motion` block:
+
     ```css
     @media (prefers-contrast: more) {
       :root,
       [data-theme="light"] {
         --color-ink: #000000;
-        --color-ink-muted: #1F1A14CC;     /* full ink-muted opacity bumped to 80% */
-        --color-rule: #1F1A14CC;
-        --color-accent: #7A2810;          /* darker, more saturated rust */
+        --color-ink-muted: #1f1a14cc; /* full ink-muted opacity bumped to 80% */
+        --color-rule: #1f1a14cc;
+        --color-accent: #7a2810; /* darker, more saturated rust */
       }
 
       [data-theme="dark"] {
-        --color-ink: #FFFFFF;
-        --color-ink-muted: #E8DFCECC;
-        --color-rule: #E8DFCECC;
-        --color-accent: #86B5A2;          /* brighter, more saturated verdigris */
+        --color-ink: #ffffff;
+        --color-ink-muted: #e8dfcecc;
+        --color-rule: #e8dfcecc;
+        --color-accent: #86b5a2; /* brighter, more saturated verdigris */
       }
     }
     ```
+
   - [x] 5.2 Add three contrast assertions to `apps/web/src/design-tokens.test.ts` (extend the existing `WCAG AA contrast ratios` describe blocks with a `high-contrast (prefers-contrast: more)` block):
     - Light high-contrast: `#000000` ink on `#F4EFE6` paper ≥7:1 (target AAA where geometry allows; max black-on-paper ratio).
     - Dark high-contrast: `#FFFFFF` ink on `#1A1612` paper ≥7:1.
@@ -163,6 +175,7 @@ so that I can use the app comfortably in any lighting condition and with any ass
 
 - [x] Task 6: Add `forced-colors: active` CSS path (AC: #7)
   - [x] 6.1 Add to `globals.css` AFTER the `prefers-contrast: more` block:
+
     ```css
     @media (forced-colors: active) {
       .capture-line:focus-visible,
@@ -181,7 +194,9 @@ so that I can use the app comfortably in any lighting condition and with any ass
       }
     }
     ```
+
     Per architecture.md / UX spec line 1004-1005: "Outline (not box-shadow) — survives high-contrast mode" — the existing `:focus-visible` outlines already use `outline` (verified at `globals.css:106-110, 128-132`), so this story's contribution is the **system-color override** for ring color and the tick stroke.
+
   - [x] 6.2 Do NOT add `outline-style: solid` redundantly — the existing rules already specify it. Only override `outline-color` to the `Highlight` system token.
   - [x] 6.3 Tick (`.task-tick`) needs `stroke: CanvasText` because under `forced-colors`, the user-defined `var(--color-accent)` may be coerced and end up invisible against the forced background. Forcing `CanvasText` guarantees the tick is visible. (Per UX spec line 1004 the focus ring already survives; tick is the additional element this story hardens.)
 
@@ -196,7 +211,7 @@ so that I can use the app comfortably in any lighting condition and with any ass
     localStorage.clear();
     document.documentElement.removeAttribute("data-theme");
     vi.spyOn(window, "matchMedia").mockReturnValue({ matches: false } as MediaQueryList);
-    vi.resetModules();    // forces the module to re-init the signal from current localStorage/matchMedia
+    vi.resetModules(); // forces the module to re-init the signal from current localStorage/matchMedia
     ```
     Note on `vi.resetModules()`: the theme-store initializes its signal at module-load time via `resolveTheme()`. To test "first load" scenarios, the test must reset the module registry before each test and re-import `theme-store`. Use dynamic `await import("./theme-store")` inside each test for isolation.
   - [x] 8.2 Tests:
@@ -237,10 +252,11 @@ so that I can use the app comfortably in any lighting condition and with any ass
 
 - [x] Task 12: Playwright E2E — mobile tap-target test (AC: #8)
   - [x] 12.1 Create `tests/e2e/j8-mobile-tap-target.spec.ts` (new journey-style spec, mirroring existing `j*-*.spec.ts` naming):
+
     ```ts
     import { test, expect } from "@playwright/test";
 
-    test.use({ viewport: { width: 375, height: 667 } });   // iPhone SE-class
+    test.use({ viewport: { width: 375, height: 667 } }); // iPhone SE-class
 
     test.describe("mobile tap-target routing", () => {
       test("task row is at least 44×44px and tap routing splits text vs row", async ({ page }) => {
@@ -260,13 +276,14 @@ so that I can use the app comfortably in any lighting condition and with any ass
         await page.keyboard.press("Escape");
 
         // Tap outside text (in the right-hand empty area) → toggle complete
-        const outsideX = box!.x + box!.width - 8;       // 8px from right edge — outside short text
+        const outsideX = box!.x + box!.width - 8; // 8px from right edge — outside short text
         const insideY = box!.y + box!.height / 2;
-        await page.mouse.click(outsideX, insideY);      // page.mouse on mobile viewport simulates tap
+        await page.mouse.click(outsideX, insideY); // page.mouse on mobile viewport simulates tap
         await expect(row).toHaveAttribute("data-completed", "true");
       });
     });
     ```
+
   - [x] 12.2 The spec uses `page.mouse.click()` for the "outside text" tap because `page.tap()` requires a touchscreen-enabled context. If `playwright.config.ts` projects later add mobile-touch projects, switch to `.tap()`. For now, the click event fires the same `handleRowClick` path on the same DOM target, so the assertion is valid.
 
 - [x] Task 13: Existing test regression check (AC: all)
@@ -294,6 +311,7 @@ so that I can use the app comfortably in any lighting condition and with any ass
 ### CRITICAL: Architecture vs Epics Discrepancies (Inherited from prior stories)
 
 **The architecture document is the source of truth.** Persistent corrections:
+
 1. **Framework**: SolidJS, NOT React. All component code uses Solid's JSX, signals, and `createEffect`/`createRenderEffect`/`onMount`/`onCleanup`.
 2. **Directory**: `apps/api`, NOT `apps/server`.
 3. **Database**: SQLite, NOT PostgreSQL (irrelevant for this frontend-only story).
@@ -301,24 +319,29 @@ so that I can use the app comfortably in any lighting condition and with any ass
 ### Architecture Compliance
 
 **Token discipline (UX-DR1, AR3, architecture.md "Strict-token mode"):**
+
 - The 5-token-per-theme palette (`paper`, `ink`, `ink-muted`, `rule`, `accent`) is the entire color system. The new `prefers-contrast: more` block introduces NO new colors — it only saturates / darkens existing tokens.
 - The new `forced-colors: active` block uses ONLY system-color keywords (`Highlight`, `CanvasText`, `Canvas`) per the W3C CSS forced-colors spec — these are the only colors permitted under forced-colors mode.
 - Tailwind's default palette is disabled via `--color-*: initial` at `globals.css:10` (already in place from Story 1.2). Do not introduce hard-coded RGB hex outside the `@theme` block and the new media-query overrides.
 
 **Module boundaries (architecture.md "Module boundaries (frontend)"):**
+
 - `theme-store.ts` lives in `apps/web/src/store/`. May import from `../theme-bootstrap` (sibling at the `src/` root), `solid-js`, and other `store/` modules. MUST NOT import from `components/` or `sync/`. Enforced by `eslint.config.js:30-39`.
 - `App.tsx` (a component) imports `theme`, `toggleTheme` from `../store/theme-store` — components → store is a permitted direction.
 - `theme-bootstrap.ts` (at `src/` root, not in `store/` or `components/`) is shared infrastructure used by both the inline-head script (compiled inline into `index.html`) AND the runtime store. Do not duplicate its logic; re-export from `theme-store` only what the store needs.
 
 **Reactivity primitives (architecture.md line 280):**
+
 - Use `createSignal` for the theme value (single scalar). `createStore` is over-kill for one boolean-ish value.
 - Solid's `aria-pressed={theme() === "dark" ? "true" : "false"}` is fine-grained reactive; the attribute updates without a component re-render.
 
 **Capture-line stickiness invariant (UX spec line 400, Story 1.7 AC#5, AC#9 here):**
+
 - All single-letter shortcuts (`x`, `u`, `n`, `j`, `k`, `e`, `d`, and now `t`) are gated by the `isEditableTarget` guard in `App.tsx:44`. When CaptureLine or any contenteditable owns DOM focus, single letters are typed as characters and the global handler returns early.
 - The `toggleTheme()` function MUST NOT call `.focus()` on any element. This is the second half of stickiness — even when the user clicks the focusable button, the toggle action does not steal focus from wherever it was.
 
 **Tap-target invariant (NFR-A11y-7, UX-DR25):**
+
 - TaskRow already has `min-height: 44px` (`globals.css:123`); the row spans full container width. Story 1.8 ADDS a Playwright assertion at mobile viewport — no production-code change is required for the row itself.
 - The new `.theme-toggle` element is sized `44×44px` explicitly so it ALSO satisfies NFR-A11y-7.
 
@@ -331,11 +354,13 @@ so that I can use the app comfortably in any lighting condition and with any ass
 ### File Structure Requirements
 
 **New files:**
+
 - `apps/web/src/store/theme-store.ts` (new — Task 1)
 - `apps/web/src/store/theme-store.test.ts` (new — Task 8)
 - `tests/e2e/j8-mobile-tap-target.spec.ts` (new — Task 12)
 
 **Modified files:**
+
 - `apps/web/src/components/App.tsx` (Tasks 2, 3)
 - `apps/web/src/components/App.test.tsx` (Task 9)
 - `apps/web/src/styles/globals.css` (Tasks 4, 5, 6)
@@ -343,6 +368,7 @@ so that I can use the app comfortably in any lighting condition and with any ass
 - `tests/e2e/visual-regression.spec.ts` (Task 11)
 
 **Snapshots to add (Task 11):**
+
 - `tests/e2e/visual-regression.spec.ts-snapshots/blank-light-high-contrast-chromium-darwin.png`
 - `tests/e2e/visual-regression.spec.ts-snapshots/blank-dark-high-contrast-chromium-darwin.png`
 - `tests/e2e/visual-regression.spec.ts-snapshots/blank-forced-colors-chromium-darwin.png`
@@ -350,16 +376,19 @@ so that I can use the app comfortably in any lighting condition and with any ass
 ### Testing Standards
 
 **Co-location (architecture.md "Test colocation rules"):**
+
 - Unit tests live next to source: `theme-store.test.ts` next to `theme-store.ts`. App tests at `App.test.tsx` next to `App.tsx`.
 - E2E tests in `tests/e2e/`: visual-regression extensions stay in `visual-regression.spec.ts`; new mobile-tap-target spec is its own `j8-*.spec.ts` file.
 
 **Test framework discipline:**
+
 - **Vitest + jsdom** for unit tests (`vitest.config.ts` already configured).
 - **Solid Testing Library** for component tests (`render(() => <App />)` pattern from Story 1.7).
 - **Playwright + Chromium** for E2E (existing `playwright.config.ts`).
 - **Property-based tests** (`fast-check`) — NOT REQUIRED for this story. The reversibility / sync invariants don't apply to theme; Story 1.6 already covers undo correctness. Theme is stateless from the undo perspective.
 
 **CI gates that must pass:**
+
 - `lint` — `pnpm lint` (no `console.log`, no default exports outside whitelist, `import/no-restricted-paths` clean).
 - `format` — `pnpm format` (Prettier).
 - `typecheck` — `pnpm typecheck` (strict TS, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`).
@@ -371,18 +400,22 @@ so that I can use the app comfortably in any lighting condition and with any ass
 ### Previous Story Intelligence
 
 **From Story 1.7 (Keyboard Navigation, just completed — `review` status, not yet `done`):**
+
 - The `App.tsx` global keydown handler is the canonical owner of all single-letter shortcuts. Add new shortcuts as `case "t": case "T":` blocks; do NOT add row-level handlers (Story 1.7 deliberately removed those — see deferred-work.md and Story 1.7 Task 3.10).
 - `isEditableTarget(event.target)` at `App.tsx:21-27` is the single guard for capture-line stickiness; reuse it, do not duplicate.
 - The `Cmd+Enter` branch at `App.tsx:36-40` runs BEFORE the editable-target guard because `Cmd+Enter` works EVEN when the capture line is focused. The new `T` shortcut is NOT in that special class — it lands in the regular switch after both guards.
 - `clearAllFocus()` is exported from `focus-store.ts:55-59` and used in `beforeEach` for tests. Reuse the pattern.
 
 **From Story 1.6 (Undo Stack):**
+
 - `pushUndo` is the gateway for any reversible action. Theme toggle is NOT a destructive operation per FR12 ("completion, completion-reversal, edit, deletion") — explicitly out of undo scope. Do NOT push an undo entry on theme toggle. (If product wanted theme-undo, it would be a separate FR; the current FR12 enumerates exactly four reversible op types.)
 
 **From Story 1.4 (Tick / Completion):**
+
 - The `.task-row[data-completed="true"]` styling (`globals.css:134-137`) handles strike-through + opacity at rest. Under `prefers-contrast: more` and `forced-colors: active`, the strike-through and the new tick `stroke: CanvasText` together communicate completion redundantly (color + decoration). No additional code required.
 
 **From Story 1.2 (Tokens & Theme Bootstrap — most relevant):**
+
 - `theme-bootstrap.ts:1-11` exports `resolveTheme()` and `applyTheme()`. The new `theme-store.ts` reuses both — DO NOT duplicate the localStorage read or the matchMedia probe.
 - The inline-head script in `index.html:8-23` is the source of truth for FOUC avoidance; it runs synchronously before any module script. The new `theme-store.ts` does NOT need to write `data-theme` on first load — the inline script already did that. The store's `setTheme` writes `data-theme` ONLY on toggle (i.e., AFTER first paint).
 - The 5-token contrast tests at `design-tokens.test.ts:57-93` already cover AC#4 of THIS story. Re-running them in CI is sufficient regression coverage; do not duplicate the assertions in `theme-store.test.ts`.
@@ -391,38 +424,43 @@ so that I can use the app comfortably in any lighting condition and with any ass
 ### Latest Tech Information
 
 **Playwright `emulateMedia` for `prefers-contrast` (verify before Task 11):**
+
 - Playwright v1.43+ supports `await page.emulateMedia({ contrast: "more" | "no-preference" })` — released April 2024. Check the project's installed version with `pnpm list @playwright/test --filter ...` or read `package.json` directly. If lower, upgrade with `pnpm add -D @playwright/test@latest -w` (root) or fall back to the `addStyleTag` workaround documented in Task 11.2.
 
 **Solid 1.9 reactive attribute pattern:**
+
 - `aria-pressed={theme() === "dark" ? "true" : "false"}` produces a fine-grained reactive attribute. Solid does NOT re-render the `<button>` element when `theme()` changes — only the attribute is patched. This is the canonical pattern; do not wrap in `<Show>` or memoize unnecessarily.
 
 **CSS system colors under `forced-colors: active`:**
+
 - The CSS Color Adjust spec (CSS Working Group, last updated 2024) defines the active set of system colors that `forced-colors: active` recognizes: `Canvas`, `CanvasText`, `LinkText`, `VisitedText`, `ActiveText`, `ButtonFace`, `ButtonText`, `ButtonBorder`, `Field`, `FieldText`, `Highlight`, `HighlightText`, `SelectedItem`, `SelectedItemText`, `Mark`, `MarkText`, `GrayText`, `AccentColor`, `AccentColorText`. The story uses `Highlight` (focus ring), `CanvasText` (tick stroke + button border/text), and implicitly `Canvas` for the page background (browser-applied automatically). All three are stable across Windows High Contrast themes.
 
 ### Project Structure Notes
 
 **Alignment with unified project structure (architecture.md "Complete Project Directory Structure"):**
+
 - `theme-store.ts` placement matches the planned `apps/web/src/store/theme-store.ts` listed at architecture.md line 647.
 - The story does NOT introduce a new component — it adds a `<button>` element inside the existing `<App>` component. The 7-component cap (UX Step 11) is preserved (technically `<App>` is one of the seven; the toggle is a child element, not a separate component).
 - `<DevLatencyDisplay>` (UX-DR16, FR44) is OUT OF SCOPE for this story — it lands in Story 1.11 along with the anti-feature contract document.
 - `<Annunciator>` (UX-DR13) is OUT OF SCOPE — Story 1.10. The fixed-position bottom-LEFT placement of the theme toggle in this story is a deliberate counterpart to Annunciator's bottom-RIGHT placement, so they will not visually collide once Story 1.10 lands.
 
 **Detected conflicts or variances:**
+
 - **None blocking.** The PRD AC for Story 1.8 says "keyboard-accessible; T key OR focusable button" — this story implements BOTH (defensive interpretation, satisfies both keyboard-only users without prior knowledge of the shortcut, and pointer/touch users on mobile).
 - **Variance from UX spec line 1167** ("User-initiated theme override (a future settings surface, post-MVP)"): the UX spec deferred a visible UI to post-MVP. The PRD AC FOR THIS STORY requires it in v1. The PRD takes precedence (it is the requirements document; the UX spec is the design exploration). The visually-suppressed-but-focusable button is the minimal v1 implementation that honors both: PRD's "focusable button" requirement + UX spec's "no chrome at rest" discipline.
 
 ### References
 
-- Source acceptance criteria: [_bmad-output/planning-artifacts/epics.md#Story-1.8](../../_bmad-output/planning-artifacts/epics.md) (lines 613-648)
-- PRD requirements: [_bmad-output/planning-artifacts/prd.md](../../_bmad-output/planning-artifacts/prd.md) — FR36 (two themes), FR37 (OS default), FR38 (override), FR39 (persist), FR40 (WCAG AA), FR41 (reduced motion), NFR-A11y-2 (contrast), NFR-A11y-7 (44×44 tap target)
-- UX design: [_bmad-output/planning-artifacts/ux-design-specification.md](../../_bmad-output/planning-artifacts/ux-design-specification.md) — UX-DR1 (theme tokens), UX-DR3 (motion tokens), UX-DR4 (theme bootstrap), UX-DR15 (focus ring outline-not-box-shadow), UX-DR22 (contrast verification), UX-DR23 (prefers-contrast: more), UX-DR24 (forced-colors), UX-DR25 (mobile tap target)
-- Architecture: [_bmad-output/planning-artifacts/architecture.md](../../_bmad-output/planning-artifacts/architecture.md) — line 280 (reactivity primitives), line 647 (theme-store.ts location), lines 411-417 (module boundaries), line 802 (FR36-43 → theme-bootstrap + theme-store + globals.css)
+- Source acceptance criteria: [\_bmad-output/planning-artifacts/epics.md#Story-1.8](../../_bmad-output/planning-artifacts/epics.md) (lines 613-648)
+- PRD requirements: [\_bmad-output/planning-artifacts/prd.md](../../_bmad-output/planning-artifacts/prd.md) — FR36 (two themes), FR37 (OS default), FR38 (override), FR39 (persist), FR40 (WCAG AA), FR41 (reduced motion), NFR-A11y-2 (contrast), NFR-A11y-7 (44×44 tap target)
+- UX design: [\_bmad-output/planning-artifacts/ux-design-specification.md](../../_bmad-output/planning-artifacts/ux-design-specification.md) — UX-DR1 (theme tokens), UX-DR3 (motion tokens), UX-DR4 (theme bootstrap), UX-DR15 (focus ring outline-not-box-shadow), UX-DR22 (contrast verification), UX-DR23 (prefers-contrast: more), UX-DR24 (forced-colors), UX-DR25 (mobile tap target)
+- Architecture: [\_bmad-output/planning-artifacts/architecture.md](../../_bmad-output/planning-artifacts/architecture.md) — line 280 (reactivity primitives), line 647 (theme-store.ts location), lines 411-417 (module boundaries), line 802 (FR36-43 → theme-bootstrap + theme-store + globals.css)
 - Existing infrastructure (DO NOT duplicate):
   - Theme tokens: `apps/web/src/styles/globals.css` (lines 9-53)
   - Theme bootstrap: `apps/web/src/theme-bootstrap.ts`, `apps/web/index.html` (lines 8-23)
   - Contrast tests: `apps/web/src/design-tokens.test.ts` (lines 57-93)
   - Visual regression baselines: `tests/e2e/visual-regression.spec.ts-snapshots/`
-- Previous story: [_bmad-output/implementation-artifacts/1-7-keyboard-navigation-and-two-cursor-focus-model.md](./1-7-keyboard-navigation-and-two-cursor-focus-model.md) (status `review`; the global keyboard handler pattern this story extends)
+- Previous story: [\_bmad-output/implementation-artifacts/1-7-keyboard-navigation-and-two-cursor-focus-model.md](./1-7-keyboard-navigation-and-two-cursor-focus-model.md) (status `review`; the global keyboard handler pattern this story extends)
 - Anti-feature contract: [scripts/check-anti-features.sh](../../scripts/check-anti-features.sh) (forbidden patterns to avoid)
 
 ## Dev Agent Record
@@ -449,6 +487,7 @@ claude-opus-4-7[1m]
 ### File List
 
 **Added:**
+
 - `apps/web/src/store/theme-store.ts`
 - `apps/web/src/store/theme-store.test.ts`
 - `tests/e2e/j8-mobile-tap-target.spec.ts`
@@ -458,6 +497,7 @@ claude-opus-4-7[1m]
 - `vitest.setup.ts`
 
 **Modified:**
+
 - `apps/web/src/components/App.tsx`
 - `apps/web/src/components/App.test.tsx`
 - `apps/web/src/styles/globals.css`
@@ -470,6 +510,6 @@ claude-opus-4-7[1m]
 
 ## Change Log
 
-| Date       | Change                                                                                                                                                                                                                |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Date       | Change                                                                                                                                                                                                               |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-04-28 | Story 1.8 implementation: theme-store, T/t shortcut, visually-suppressed toggle button, prefers-contrast and forced-colors CSS, contrast tests, mobile tap-target E2E, high-contrast/forced-colors visual baselines. |

@@ -1,24 +1,12 @@
 import "fake-indexeddb/auto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Mutation } from "@bmad-todo/shared";
-import {
-  drain,
-  enqueue,
-  getOutboxSize,
-  setSyncObserver,
-} from "./outbox";
-import {
-  _resetForTesting,
-  getAllOutboxEntries,
-  getAllTasks,
-} from "./idb";
+import { drain, enqueue, getOutboxSize, setSyncObserver } from "./outbox";
+import { _resetForTesting, getAllOutboxEntries, getAllTasks } from "./idb";
 
 function jsonResponse(status: number, body: unknown): Response {
   const headers = new Headers({ "content-type": "application/json" });
-  return new Response(
-    status === 204 ? null : JSON.stringify(body ?? null),
-    { status, headers },
-  );
+  return new Response(status === 204 ? null : JSON.stringify(body ?? null), { status, headers });
 }
 
 function createMutation(id: string, text = "task"): Mutation {
@@ -65,8 +53,7 @@ describe("sync/outbox", () => {
   it("FIFO order across mixed types", async () => {
     const calls: string[] = [];
     vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
-      const url =
-        typeof input === "string" ? input : (input as Request).url;
+      const url = typeof input === "string" ? input : (input as Request).url;
       calls.push(url);
       if (url === "/tasks") {
         return jsonResponse(201, serverTaskFor("a", "first"));
@@ -94,15 +81,11 @@ describe("sync/outbox", () => {
   });
 
   it("2xx removes entry and updates cache", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      jsonResponse(201, serverTaskFor("a", "x")),
-    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse(201, serverTaskFor("a", "x")));
     await enqueue(createMutation("a", "x"));
     await drain();
     expect(await getOutboxSize()).toBe(0);
-    expect(await getAllTasks()).toEqual([
-      expect.objectContaining({ id: "a", text: "x" }),
-    ]);
+    expect(await getAllTasks()).toEqual([expect.objectContaining({ id: "a", text: "x" })]);
   });
 
   it("4xx drops entry and continues", async () => {
@@ -135,9 +118,7 @@ describe("sync/outbox", () => {
     await drain();
     expect(states).toContain("offline");
 
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      jsonResponse(201, serverTaskFor("a", "x")),
-    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse(201, serverTaskFor("a", "x")));
     // Force the entry's nextAttemptAt into the past so drain proceeds.
     const list = await getAllOutboxEntries();
     if (list.length === 1) {

@@ -30,7 +30,7 @@ So that every subsequent story is built on a known, reproducible foundation with
   - [x] 1.3 Create `.nvmrc` pinning Node >= 20 LTS
   - [x] 1.4 Create `.npmrc` with pnpm config (auto-install-peers, etc.)
   - [x] 1.5 Create root `tsconfig.base.json` with `strict: true`, `noUncheckedIndexedAccess: true`, `exactOptionalPropertyTypes: true`
-  - [x] 1.6 Create `.gitignore` (node_modules, dist, data/, *.db, .env, etc.)
+  - [x] 1.6 Create `.gitignore` (node_modules, dist, data/, \*.db, .env, etc.)
   - [x] 1.7 Create `.editorconfig`
 - [x] Task 2: Scaffold `apps/web` via create-solid (AC: #1)
   - [x] 2.1 Run `pnpm create solid` with the `ts` template (plain SolidJS + Vite + TypeScript, NOT SolidStart)
@@ -96,6 +96,7 @@ The epics acceptance criteria contain errors that conflict with the architecture
 ### Architecture Compliance
 
 **Monorepo layout** (AR2):
+
 ```
 bmad-todo/
 ├── apps/
@@ -123,6 +124,7 @@ bmad-todo/
 **Tailwind v4** (AR3): Use `@tailwindcss/vite` plugin (not PostCSS). Strict-token mode via custom `@theme` blocks. For this story, just install and configure the plugin with a minimal `@theme` placeholder — full token design is Story 1.2.
 
 **ESLint rules** (AR20):
+
 - `import/no-restricted-paths`: enforce `components -> store -> sync` (no reverse imports). Placeholder config now; exact paths finalized as components are created.
 - `no-default-export`: all exports must be named
 - `no-console`: error everywhere except Vite dev bootstrap file
@@ -132,21 +134,22 @@ bmad-todo/
 
 ### Technical Stack (with versions to install)
 
-| Technology | Package | Purpose |
-|---|---|---|
-| SolidJS | `solid-js` | Frontend framework (~7KB runtime) |
-| Vite | `vite` + `vite-plugin-solid` | Build tool + HMR |
-| Tailwind v4 | `tailwindcss` + `@tailwindcss/vite` | Utility CSS (strict-token mode) |
-| TypeScript | `typescript` | Type safety (strict mode) |
-| Fastify | `fastify` | Backend HTTP framework |
-| Zod | `zod` | Runtime validation + type inference |
-| Vitest | `vitest` | Unit + property-based tests |
-| Playwright | `@playwright/test` | E2E + a11y + visual regression |
-| pnpm | (global) | Package manager + workspace support |
-| ESLint | `eslint` + plugins | Linting |
-| Prettier | `prettier` | Code formatting |
+| Technology  | Package                             | Purpose                             |
+| ----------- | ----------------------------------- | ----------------------------------- |
+| SolidJS     | `solid-js`                          | Frontend framework (~7KB runtime)   |
+| Vite        | `vite` + `vite-plugin-solid`        | Build tool + HMR                    |
+| Tailwind v4 | `tailwindcss` + `@tailwindcss/vite` | Utility CSS (strict-token mode)     |
+| TypeScript  | `typescript`                        | Type safety (strict mode)           |
+| Fastify     | `fastify`                           | Backend HTTP framework              |
+| Zod         | `zod`                               | Runtime validation + type inference |
+| Vitest      | `vitest`                            | Unit + property-based tests         |
+| Playwright  | `@playwright/test`                  | E2E + a11y + visual regression      |
+| pnpm        | (global)                            | Package manager + workspace support |
+| ESLint      | `eslint` + plugins                  | Linting                             |
+| Prettier    | `prettier`                          | Code formatting                     |
 
 **Do NOT install yet (later stories):**
+
 - `better-sqlite3`, `kysely` (Story 1.9 — persistence)
 - `fast-check` (Story 1.6 — property tests)
 - `vite-plugin-pwa`, `workbox-*` (Story 1.9 — service worker)
@@ -180,9 +183,9 @@ GitHub Actions workflow (`.github/workflows/ci.yml`):
 
 ```yaml
 # Jobs for this story (skeleton — more gates added in later stories):
-lint:        # ESLint + Prettier check
-typecheck:   # tsc --noEmit across workspace
-test:        # vitest run
+lint: # ESLint + Prettier check
+typecheck: # tsc --noEmit across workspace
+test: # vitest run
 bundle-budget: # scripts/check-bundle-size.ts against apps/web/dist/
 ```
 
@@ -191,6 +194,7 @@ Future stories will add: `e2e-and-a11y`, `latency-budget`, `audit`, `stress-sync
 ### Anti-Feature Contract (scripts/check-anti-features.sh)
 
 The codebase grep must block these patterns (AR18):
+
 ```
 toast(, Snackbar, Toaster, Skeleton, Spinner, confirm(, alert(,
 <Modal, <Dialog, Streak, Achievement, XP, Karma
@@ -213,6 +217,7 @@ And Solid's `<ErrorBoundary>` (errors must route to annunciator, not boundary).
 ### Module Boundary Rules
 
 Even though most modules are empty stubs in this story, configure the ESLint `import/no-restricted-paths` rule now:
+
 - `components/` may import from `store/` — NOT from `sync/`
 - `store/` may import from `sync/` — NOT from `components/`
 - `sync/` may NOT import from `components/` or `store/`
@@ -238,6 +243,7 @@ Even though most modules are empty stubs in this story, configure the ESLint `im
 ## Dev Agent Record
 
 ### Agent Model Used
+
 Claude Opus 4.6 (1M context)
 
 ### Debug Log References
@@ -311,6 +317,7 @@ Claude Opus 4.6 (1M context)
 ### Review Findings
 
 **Patch (fix these):**
+
 - [x] [Review][Patch] Add `concurrently` to dev script — replace & backgrounding with labeled output and crash propagation [package.json]
 - [x] [Review][Patch] Narrow ESLint `ignores` pattern — `**/*.config.*` is too broad; only ignore `eslint.config.js` itself [eslint.config.js]
 - [x] [Review][Patch] Add `eslint-plugin-import` + `no-restricted-paths` rule placeholder — components→store→sync boundary as specified in Dev Notes [eslint.config.js]
@@ -334,6 +341,7 @@ Claude Opus 4.6 (1M context)
 - [x] [Review][Patch] Playwright webServer has no readiness timeout — slow CI start may time out at 60s default [tests/e2e/playwright.config.ts]
 
 **Deferred (pre-existing, not actionable now):**
+
 - [x] [Review][Defer] Vite proxy target hardcoded to localhost:3000 [apps/web/vite.config.ts] — deferred, pre-existing; environment-configurable proxy is future work
 - [x] [Review][Defer] TaskSchema missing updatedAt/order fields [packages/shared/src/schema.ts] — deferred, pre-existing; schema design for later stories
 - [x] [Review][Defer] GET /health has no dependency checks [apps/api/src/routes/health.ts] — deferred, pre-existing; appropriate scope for scaffold story

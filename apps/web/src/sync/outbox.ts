@@ -1,11 +1,6 @@
 import type { Mutation, SyncState, Task } from "@bmad-todo/shared";
 import { generateId } from "../lib/ids";
-import {
-  ApiError,
-  deleteTaskRequest,
-  patchTask,
-  postTask,
-} from "./api-client";
+import { ApiError, deleteTaskRequest, patchTask, postTask } from "./api-client";
 import {
   deleteOutboxEntry,
   getAllOutboxEntries,
@@ -47,10 +42,7 @@ async function dispatchEntry(entry: OutboxEntry): Promise<Task | null> {
   const m = entry.mutation;
   switch (m.type) {
     case "create":
-      return postTask(
-        { id: m.id, text: m.text, createdAt: m.createdAt },
-        m.idempotencyKey,
-      );
+      return postTask({ id: m.id, text: m.text, createdAt: m.createdAt }, m.idempotencyKey);
     case "update": {
       const patch: { text?: string; completedAt?: number | null } = {};
       if (m.text !== undefined) patch.text = m.text;
@@ -69,9 +61,21 @@ export interface DrainResult {
   remaining: number;
 }
 
+let draining = false;
+
 export async function drain(): Promise<DrainResult> {
+  if (draining) return { applied: 0, rejected: 0, remaining: -1 };
+  draining = true;
+  try {
+    return await drainInternal();
+  } finally {
+    draining = false;
+  }
+}
+
+async function drainInternal(): Promise<DrainResult> {
   const entries = await getAllOutboxEntries();
-  entries.sort((a, b) => (a.queuedAt - b.queuedAt) || (a.id < b.id ? -1 : 1));
+  entries.sort((a, b) => a.queuedAt - b.queuedAt || (a.id < b.id ? -1 : 1));
 
   let applied = 0;
   let rejected = 0;
@@ -79,8 +83,7 @@ export async function drain(): Promise<DrainResult> {
 
   for (const entry of entries) {
     if (entry.nextAttemptAt && entry.nextAttemptAt > now) {
-      // Honor the backoff window — halt drain at the first not-yet-due entry.
-      break;
+      continue;
     }
     try {
       const serverTask = await dispatchEntry(entry);
@@ -88,8 +91,7 @@ export async function drain(): Promise<DrainResult> {
       if (serverTask) await putTask(serverTask);
       applied += 1;
     } catch (err) {
-      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
-        // Permanent failure — drop entry and continue with the queue.
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500 && err.status !== 429) {
         await deleteOutboxEntry(entry.id);
         rejected += 1;
         emit("error");

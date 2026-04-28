@@ -56,11 +56,7 @@ export async function deleteOutboxEntry(id: string): Promise<void> {
 export async function clearAll(): Promise<void> {
   const d = await db();
   const tx = d.transaction(["tasks", "outbox"], "readwrite");
-  await Promise.all([
-    tx.objectStore("tasks").clear(),
-    tx.objectStore("outbox").clear(),
-    tx.done,
-  ]);
+  await Promise.all([tx.objectStore("tasks").clear(), tx.objectStore("outbox").clear(), tx.done]);
 }
 
 export async function _resetForTesting(): Promise<void> {

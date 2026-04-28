@@ -36,12 +36,13 @@
 
 generated: 2026-04-27
 last_updated: 2026-04-28
+# 2026-04-28: 1-9 done after code review (12 patches applied, 9 deferred, 10 dismissed)
+# 2026-04-28: 1-10 moved to ready-for-dev (story context created)
 # 2026-04-28: 1-9 review (implementation complete, all 17 tasks; 253 unit/integration/property tests pass; e2e failure list matches deferred-work.md)
 # 2026-04-28: 1-9 in-progress (dev started)
 # 2026-04-28: 1-9 moved to ready-for-dev (story context created)
 # 2026-04-28: 1-8 moved to done after code review (7 patches applied, 4 deferred)
 # 2026-04-28: 1-14 keyboard shortcut overlay added — promoted from Epic 2 (Growth) into Epic 1 MVP per FR55
-
 
 project: bmad-todo
 
@@ -60,8 +61,8 @@ development_status:
   1-6-session-long-undo-stack: done
   1-7-keyboard-navigation-and-two-cursor-focus-model: done
   1-8-theme-toggle-dark-mode-and-accessibility-tokens: done
-  1-9-cross-session-persistence-and-offline-first-sync: review
-  1-10-annunciator-and-failure-feedback-routing: backlog
+  1-9-cross-session-persistence-and-offline-first-sync: done
+  1-10-annunciator-and-failure-feedback-routing: ready-for-dev
   1-11-dev-mode-latency-display-and-anti-feature-contract: backlog
   1-12-ci-performance-accessibility-and-visual-regression-gates: backlog
   1-13-deployment-security-headers-and-production-hardening: backlog

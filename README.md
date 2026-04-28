@@ -5,6 +5,7 @@ A deliberately minimal, character-rich personal todo app. Speed and simplicity o
 **Thesis:** A todo app that feels faster than thought, with personality expressed through typography and animation — not through gamification, modals, or feature bloat.
 
 **Latency budgets:**
+
 - Input → render: < 16ms (single frame)
 - Action → persist: < 100ms
 - Cold start → interactive: < 500ms
@@ -20,15 +21,15 @@ A deliberately minimal, character-rich personal todo app. Speed and simplicity o
 
 ## Workspace Scripts
 
-| Script | Description |
-|---|---|
-| `pnpm dev` | Start both API and web dev servers |
-| `pnpm build` | Build all workspace packages |
-| `pnpm test` | Run Vitest unit tests |
-| `pnpm test:e2e` | Run Playwright E2E tests |
+| Script           | Description                               |
+| ---------------- | ----------------------------------------- |
+| `pnpm dev`       | Start both API and web dev servers        |
+| `pnpm build`     | Build all workspace packages              |
+| `pnpm test`      | Run Vitest unit tests                     |
+| `pnpm test:e2e`  | Run Playwright E2E tests                  |
 | `pnpm typecheck` | TypeScript type checking across workspace |
-| `pnpm lint` | Run ESLint |
-| `pnpm format` | Check Prettier formatting |
+| `pnpm lint`      | Run ESLint                                |
+| `pnpm format`    | Check Prettier formatting                 |
 
 ## Project Structure
 

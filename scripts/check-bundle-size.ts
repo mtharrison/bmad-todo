@@ -57,7 +57,9 @@ console.log(`Total assets (gzipped): ${totalKb.toFixed(2)} KB / ${TOTAL_BUDGET_K
 
 if (initialKb > INITIAL_BUDGET_KB) {
   // eslint-disable-next-line no-console
-  console.error(`\nBUDGET EXCEEDED: Initial JS bundle ${initialKb.toFixed(2)} KB > ${INITIAL_BUDGET_KB} KB`);
+  console.error(
+    `\nBUDGET EXCEEDED: Initial JS bundle ${initialKb.toFixed(2)} KB > ${INITIAL_BUDGET_KB} KB`,
+  );
   process.exit(1);
 }
 

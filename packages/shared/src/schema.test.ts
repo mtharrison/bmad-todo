@@ -95,17 +95,11 @@ describe("Mutation", () => {
   });
 
   it("validates delete", () => {
-    expect(
-      Mutation.safeParse({ type: "delete", id: "x", idempotencyKey: "k" })
-        .success,
-    ).toBe(true);
+    expect(Mutation.safeParse({ type: "delete", id: "x", idempotencyKey: "k" }).success).toBe(true);
   });
 
   it("rejects unknown type", () => {
-    expect(
-      Mutation.safeParse({ type: "drop", id: "x", idempotencyKey: "k" })
-        .success,
-    ).toBe(false);
+    expect(Mutation.safeParse({ type: "drop", id: "x", idempotencyKey: "k" }).success).toBe(false);
   });
 });
 

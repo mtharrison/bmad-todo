@@ -15,9 +15,7 @@ test.describe("AC#5 — prefers-reduced-motion latency budget", () => {
     await page.waitForLoadState("networkidle");
 
     const motionDefault = await page.evaluate(() =>
-      getComputedStyle(document.documentElement)
-        .getPropertyValue("--motion-default")
-        .trim(),
+      getComputedStyle(document.documentElement).getPropertyValue("--motion-default").trim(),
     );
     expect(motionDefault).toBe("0ms");
 
@@ -32,10 +30,9 @@ test.describe("AC#5 — prefers-reduced-motion latency budget", () => {
       });
     });
     for (const t of transitions) {
-      expect(
-        t.duration,
-        `${t.selector} declares non-zero transition under reduced-motion`,
-      ).toBe("0s");
+      expect(t.duration, `${t.selector} declares non-zero transition under reduced-motion`).toBe(
+        "0s",
+      );
     }
 
     await page.locator(".capture-line").fill("settle me");
@@ -46,9 +43,7 @@ test.describe("AC#5 — prefers-reduced-motion latency budget", () => {
       if (!li) throw new Error("expected a .task-row to exist");
       li.focus();
       const start = performance.now();
-      window.dispatchEvent(
-        new KeyboardEvent("keydown", { key: "x", bubbles: true }),
-      );
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "x", bubbles: true }));
       const elapsed = performance.now() - start;
       return { elapsed, completed: li.getAttribute("data-completed") };
     });

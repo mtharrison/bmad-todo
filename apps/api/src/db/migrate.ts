@@ -28,9 +28,7 @@ export function runMigrations(
     .filter((f) => f.endsWith(".sql"))
     .sort();
 
-  const insert = sqlite.prepare(
-    "INSERT INTO migrations (filename, applied_at) VALUES (?, ?)",
-  );
+  const insert = sqlite.prepare("INSERT INTO migrations (filename, applied_at) VALUES (?, ?)");
   for (const file of files) {
     if (applied.has(file)) continue;
     const sql = readFileSync(join(migrationsDir, file), "utf8");

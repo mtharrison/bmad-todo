@@ -1,6 +1,6 @@
 # Story 1.9: Cross-Session Persistence and Offline-First Sync
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -40,18 +40,19 @@ so that the app feels instant and trustworthy regardless of my network state.
 
 - [x] **Task 1: Replace placeholder shared schemas with the real domain contract** (AC: #2, #4, #5, #6, #7, #8, #10)
   - [x] 1.1 Edit `packages/shared/src/schema.ts` to **replace** the existing placeholder `TaskSchema` (which uses `title`, `completed: boolean`, `createdAt: string.datetime()` — wrong per architecture.md line 545) with the architecture-canonical shape:
+
     ```ts
     import { z } from "zod";
 
     export const MAX_TASK_TEXT_LENGTH = 10_000;
 
     export const Task = z.object({
-      id: z.string().min(1),                       // UUIDv7
+      id: z.string().min(1), // UUIDv7
       userNamespace: z.string().min(1),
       text: z.string().min(1).max(MAX_TASK_TEXT_LENGTH),
-      completedAt: z.number().int().nullable(),    // epoch ms or null
-      createdAt: z.number().int(),                 // epoch ms
-      updatedAt: z.number().int(),                 // epoch ms
+      completedAt: z.number().int().nullable(), // epoch ms or null
+      createdAt: z.number().int(), // epoch ms
+      updatedAt: z.number().int(), // epoch ms
     });
     export type Task = z.infer<typeof Task>;
 
@@ -62,25 +63,41 @@ so that the app feels instant and trustworthy regardless of my network state.
     });
     export type CreateTaskInput = z.infer<typeof CreateTaskInput>;
 
-    export const UpdateTaskInput = z.object({
-      text: z.string().min(1).max(MAX_TASK_TEXT_LENGTH).optional(),
-      completedAt: z.number().int().nullable().optional(),
-    }).refine(o => o.text !== undefined || o.completedAt !== undefined,
-      { message: "at least one field must be provided" });
+    export const UpdateTaskInput = z
+      .object({
+        text: z.string().min(1).max(MAX_TASK_TEXT_LENGTH).optional(),
+        completedAt: z.number().int().nullable().optional(),
+      })
+      .refine((o) => o.text !== undefined || o.completedAt !== undefined, {
+        message: "at least one field must be provided",
+      });
     export type UpdateTaskInput = z.infer<typeof UpdateTaskInput>;
 
     export const Mutation = z.discriminatedUnion("type", [
-      z.object({ type: z.literal("create"), id: z.string(), text: z.string(),
-                 createdAt: z.number().int(), idempotencyKey: z.string() }),
-      z.object({ type: z.literal("update"), id: z.string(),
-                 text: z.string().optional(), completedAt: z.number().int().nullable().optional(),
-                 idempotencyKey: z.string() }),
+      z.object({
+        type: z.literal("create"),
+        id: z.string(),
+        text: z.string(),
+        createdAt: z.number().int(),
+        idempotencyKey: z.string(),
+      }),
+      z.object({
+        type: z.literal("update"),
+        id: z.string(),
+        text: z.string().optional(),
+        completedAt: z.number().int().nullable().optional(),
+        idempotencyKey: z.string(),
+      }),
       z.object({ type: z.literal("delete"), id: z.string(), idempotencyKey: z.string() }),
     ]);
     export type Mutation = z.infer<typeof Mutation>;
 
     export const ErrorCode = z.enum([
-      "ValidationError", "NotFound", "Conflict", "RateLimited", "ServerError",
+      "ValidationError",
+      "NotFound",
+      "Conflict",
+      "RateLimited",
+      "ServerError",
     ]);
     export type ErrorCode = z.infer<typeof ErrorCode>;
 
@@ -89,7 +106,9 @@ so that the app feels instant and trustworthy regardless of my network state.
     });
     export type ErrorEnvelope = z.infer<typeof ErrorEnvelope>;
     ```
+
   - [x] 1.2 Add `packages/shared/src/sw-messages.ts` with the discriminated union per architecture.md line 466-469:
+
     ```ts
     import { z } from "zod";
 
@@ -109,6 +128,7 @@ so that the app feels instant and trustworthy regardless of my network state.
     ]);
     export type PageToSwMessage = z.infer<typeof PageToSwMessage>;
     ```
+
   - [x] 1.3 Update `packages/shared/src/index.ts` to re-export everything: `export * from "./schema.js"; export * from "./sw-messages.js";`. Remove the old `TaskSchema`/`Task` exports (they are replaced by the new `Task`).
   - [x] 1.4 Update `packages/shared/src/schema.test.ts` to assert the new shapes parse / reject as expected (oversized text rejected; missing required fields rejected; UpdateTaskInput requires at least one field; ErrorCode is a strict enum).
   - [x] 1.5 Add `zod` to `packages/shared/package.json` dependencies. Run `pnpm install` from the root to refresh `pnpm-lock.yaml`.
@@ -141,6 +161,7 @@ so that the app feels instant and trustworthy regardless of my network state.
   - [x] 3.1 Create `apps/api/migrations/0001_init.sql` with the exact DDL from architecture.md lines 200-222 (note: `id TEXT PRIMARY KEY`, `length(text) <= 10000` CHECK, `INTEGER` columns for all timestamps, soft-delete column `deleted_at INTEGER NULL`, no `NOT NULL` on completed_at / deleted_at). Append `CREATE TABLE migrations (filename TEXT PRIMARY KEY, applied_at INTEGER NOT NULL)`. End of file: no trailing semicolon issues; SQLite will execute `.exec()` on the full content.
   - [x] 3.2 Create `apps/api/src/db/migrate.ts` — boot-time migration runner. Reads `apps/api/migrations/*.sql` lexicographically, checks the `migrations` table for already-applied filenames, runs unapplied ones inside a transaction, records each in `migrations`. Special case: if `migrations` table does not exist yet, create it first. Idempotent — running twice is a no-op. Uses `better-sqlite3` directly (not Kysely) because Kysely's migration system is overkill for this 1-table project; per architecture.md line 224.
   - [x] 3.3 Create `apps/api/src/db/kysely.ts`:
+
     ```ts
     import Database from "better-sqlite3";
     import { Kysely, SqliteDialect } from "kysely";
@@ -173,7 +194,10 @@ so that the app feels instant and trustworthy regardless of my network state.
       migrations: MigrationsTable;
     }
 
-    export function createDb(filePath: string): { kysely: Kysely<Database>; sqlite: Database.Database } {
+    export function createDb(filePath: string): {
+      kysely: Kysely<Database>;
+      sqlite: Database.Database;
+    } {
       const sqlite = new Database(filePath);
       sqlite.pragma("journal_mode = WAL");
       sqlite.pragma("foreign_keys = ON");
@@ -183,8 +207,11 @@ so that the app feels instant and trustworthy regardless of my network state.
       };
     }
     ```
+
     The synchronous `better-sqlite3` driver is a non-negotiable choice per architecture.md line 197 (~10× faster than async wrappers for this workload).
+
   - [x] 3.4 Create `apps/api/src/db/mappers.ts`:
+
     ```ts
     import type { Selectable } from "kysely";
     import type { TasksTable } from "./kysely.js";
@@ -201,10 +228,12 @@ so that the app feels instant and trustworthy regardless of my network state.
       };
     }
     ```
+
     Architecture.md lines 386-387, 395: the `mappers.ts` file is the **only** boundary that converts snake_case rows to camelCase domain shapes. Never inline this conversion in route handlers.
 
 - [x] **Task 4: Repository layer — `tasks-repo.ts` and `idempotency-repo.ts`** (AC: #7, #8, #10)
   - [x] 4.1 Create `apps/api/src/db/repos/tasks-repo.ts`:
+
     ```ts
     import type { Kysely } from "kysely";
     import type { Database } from "../kysely.js";
@@ -215,18 +244,25 @@ so that the app feels instant and trustworthy regardless of my network state.
       constructor(private readonly db: Kysely<Database>) {}
 
       async listActive(userNamespace: string): Promise<Task[]> {
-        const rows = await this.db.selectFrom("tasks")
+        const rows = await this.db
+          .selectFrom("tasks")
           .selectAll()
           .where("user_namespace", "=", userNamespace)
           .where("deleted_at", "is", null)
-          .orderBy("id", "desc")  // UUIDv7 lexicographic == created_at desc
+          .orderBy("id", "desc") // UUIDv7 lexicographic == created_at desc
           .execute();
         return rows.map(rowToTask);
       }
 
-      async create(input: { id: string; userNamespace: string; text: string; createdAt: number }): Promise<Task> {
+      async create(input: {
+        id: string;
+        userNamespace: string;
+        text: string;
+        createdAt: number;
+      }): Promise<Task> {
         const now = Date.now();
-        const row = await this.db.insertInto("tasks")
+        const row = await this.db
+          .insertInto("tasks")
           .values({
             id: input.id,
             user_namespace: input.userNamespace,
@@ -241,12 +277,18 @@ so that the app feels instant and trustworthy regardless of my network state.
         return rowToTask(row);
       }
 
-      async update(id: string, userNamespace: string, patch: { text?: string; completedAt?: number | null }): Promise<Task | null> {
+      async update(
+        id: string,
+        userNamespace: string,
+        patch: { text?: string; completedAt?: number | null },
+      ): Promise<Task | null> {
         const now = Date.now();
-        const updates: Partial<{ text: string; completed_at: number | null; updated_at: number }> = { updated_at: now };
+        const updates: Partial<{ text: string; completed_at: number | null; updated_at: number }> =
+          { updated_at: now };
         if (patch.text !== undefined) updates.text = patch.text;
         if (patch.completedAt !== undefined) updates.completed_at = patch.completedAt;
-        const row = await this.db.updateTable("tasks")
+        const row = await this.db
+          .updateTable("tasks")
           .set(updates)
           .where("id", "=", id)
           .where("user_namespace", "=", userNamespace)
@@ -257,7 +299,8 @@ so that the app feels instant and trustworthy regardless of my network state.
       }
 
       async softDelete(id: string, userNamespace: string): Promise<boolean> {
-        const result = await this.db.updateTable("tasks")
+        const result = await this.db
+          .updateTable("tasks")
           .set({ deleted_at: Date.now(), updated_at: Date.now() })
           .where("id", "=", id)
           .where("user_namespace", "=", userNamespace)
@@ -267,8 +310,11 @@ so that the app feels instant and trustworthy regardless of my network state.
       }
     }
     ```
+
     All queries are scoped by `user_namespace` (NFR-Priv-4: cross-user data leakage prevented at query level). Soft-delete is the only delete path — no hard `DELETE FROM tasks` anywhere in v1.
+
   - [x] 4.2 Create `apps/api/src/db/repos/idempotency-repo.ts`:
+
     ```ts
     import type { Kysely } from "kysely";
     import type { Database } from "../kysely.js";
@@ -276,37 +322,52 @@ so that the app feels instant and trustworthy regardless of my network state.
     export interface CachedResponse {
       requestHash: string;
       responseStatus: number;
-      responseBody: string;  // already JSON-serialized
+      responseBody: string; // already JSON-serialized
     }
 
     export class IdempotencyRepo {
       constructor(private readonly db: Kysely<Database>) {}
 
       async find(key: string, userNamespace: string): Promise<CachedResponse | null> {
-        const row = await this.db.selectFrom("idempotency_keys")
+        const row = await this.db
+          .selectFrom("idempotency_keys")
           .select(["request_hash", "response_status", "response_body"])
           .where("key", "=", key)
           .where("user_namespace", "=", userNamespace)
           .executeTakeFirst();
-        return row ? {
-          requestHash: row.request_hash,
-          responseStatus: row.response_status,
-          responseBody: row.response_body,
-        } : null;
+        return row
+          ? {
+              requestHash: row.request_hash,
+              responseStatus: row.response_status,
+              responseBody: row.response_body,
+            }
+          : null;
       }
 
-      async store(key: string, userNamespace: string, requestHash: string, responseStatus: number, responseBody: string): Promise<void> {
-        await this.db.insertInto("idempotency_keys")
+      async store(
+        key: string,
+        userNamespace: string,
+        requestHash: string,
+        responseStatus: number,
+        responseBody: string,
+      ): Promise<void> {
+        await this.db
+          .insertInto("idempotency_keys")
           .values({
-            key, user_namespace: userNamespace, request_hash: requestHash,
-            response_status: responseStatus, response_body: responseBody,
+            key,
+            user_namespace: userNamespace,
+            request_hash: requestHash,
+            response_status: responseStatus,
+            response_body: responseBody,
             created_at: Date.now(),
           })
           .execute();
       }
     }
     ```
+
     No purge logic in v1 — single-user volume is bounded; architecture.md amendment (line 1030) extends TTL from 24h to 14 days, but the actual purge is a Growth-scope cron task. For v1, rows accumulate harmlessly.
+
   - [x] 4.3 Create `apps/api/src/db/repos/tasks-repo.test.ts` and `apps/api/src/db/repos/idempotency-repo.test.ts`. Each test uses `createDb(":memory:")` and runs migrations before each `describe`. Test the happy paths plus: list excludes deleted; namespace isolation (rows in namespace A invisible from namespace B); update returns null for non-existent id; soft-delete is idempotent (calling twice returns false the second time but does not throw).
 
 - [x] **Task 5: Middleware — idempotency, error envelope, dev-mode auth bypass** (AC: #5, #7, #11)
@@ -336,9 +397,14 @@ so that the app feels instant and trustworthy regardless of my network state.
   - [x] 6.2 All routes use the `fastify-type-provider-zod` ZodTypeProvider — the schema is declared on the route, types flow through to handlers, validation is automatic. Per architecture.md line 226.
   - [x] 6.3 Use the `pino` logger for one log per request: `log.info({ event: 'task.created' | 'task.updated' | 'task.deleted', taskId, userNamespace, idempotencyKey, status: 'new' | 'replayed' })`. Never include `text` in the log payload (NFR-Priv-1; redacted by `lib/log.ts` if it slips through, but don't rely on the redactor — write the call right).
   - [x] 6.4 Update `apps/api/src/server.ts` to wire it all up:
+
     ```ts
     import Fastify from "fastify";
-    import { ZodTypeProvider, serializerCompiler, validatorCompiler } from "fastify-type-provider-zod";
+    import {
+      ZodTypeProvider,
+      serializerCompiler,
+      validatorCompiler,
+    } from "fastify-type-provider-zod";
     import { healthRoutes } from "./routes/health.js";
     import { taskRoutes } from "./routes/tasks.js";
     import { runMigrations } from "./db/migrate.js";
@@ -350,7 +416,7 @@ so that the app feels instant and trustworthy regardless of my network state.
     import { log } from "./lib/log.js";
 
     const { kysely, sqlite } = createDb(env.DATABASE_URL);
-    runMigrations(sqlite);  // sync, before app.listen
+    runMigrations(sqlite); // sync, before app.listen
 
     const app = Fastify({ logger: log }).withTypeProvider<ZodTypeProvider>();
     app.setValidatorCompiler(validatorCompiler);
@@ -367,7 +433,9 @@ so that the app feels instant and trustworthy regardless of my network state.
     // ... existing port-validation + listen logic preserved; remove the `console.log` at the
     // bottom and replace with log.info({ event: 'server.listening', port }).
     ```
+
     The existing `console.log` at the end of `server.ts` is fine for now (it's whitelisted by ESLint per the rule comment); replace with a `pino` log call for consistency.
+
   - [x] 6.5 Create `apps/api/src/routes/tasks.integration.test.ts` covering AC#10's full list. Each test:
     1. Calls `createDb(":memory:")` + `runMigrations`.
     2. Builds a Fastify instance with the routes registered against the in-memory kysely.
@@ -379,12 +447,13 @@ so that the app feels instant and trustworthy regardless of my network state.
 - [x] **Task 7: Web — `sync/idb.ts` IndexedDB wrapper** (AC: #1, #2, #3, #4)
   - [x] 7.1 Add to `apps/web/package.json` dependencies: `idb@^8.0.0`. Run `pnpm install`.
   - [x] 7.2 Create `apps/web/src/sync/idb.ts`:
+
     ```ts
     import { openDB, type IDBPDatabase, type DBSchema } from "idb";
     import type { Task, Mutation } from "@bmad-todo/shared";
 
     export interface OutboxEntry {
-      id: string;                  // UUIDv7
+      id: string; // UUIDv7
       mutation: Mutation;
       idempotencyKey: string;
       queuedAt: number;
@@ -431,22 +500,34 @@ so that the app feels instant and trustworthy regardless of my network state.
     export async function clearAll(): Promise<void> {
       const d = await db();
       const tx = d.transaction(["tasks", "outbox"], "readwrite");
-      await Promise.all([tx.objectStore("tasks").clear(), tx.objectStore("outbox").clear(), tx.done]);
+      await Promise.all([
+        tx.objectStore("tasks").clear(),
+        tx.objectStore("outbox").clear(),
+        tx.done,
+      ]);
     }
 
     // Test-only helper: reset the lazy db handle so per-test fakes can re-open.
-    export function _resetForTesting(): void { dbPromise = null; }
+    export function _resetForTesting(): void {
+      dbPromise = null;
+    }
     ```
+
     No reactivity inside `sync/`. All exports are async functions. Module boundary: `store/` may import from here; `components/` may NOT (enforced by `eslint.config.js:30-39`).
+
   - [x] 7.3 Create `apps/web/src/sync/idb.test.ts` — covers happy paths under `fake-indexeddb` (jsdom does not ship IDB; install `fake-indexeddb` as devDep and import its auto-setup at the top of the test file: `import "fake-indexeddb/auto";`). Tests: round-trip put/get/delete on `tasks`; round-trip on `outbox`; `clearAll` empties both; `_resetForTesting` lets a follow-up test re-open with a fresh fake DB.
 
 - [x] **Task 8: Web — `sync/api-client.ts` fetch wrapper** (AC: #2, #4, #5)
   - [x] 8.1 Create `apps/web/src/sync/api-client.ts`:
+
     ```ts
     import type { Task, CreateTaskInput, UpdateTaskInput, ErrorEnvelope } from "@bmad-todo/shared";
 
     export class ApiError extends Error {
-      constructor(public status: number, public envelope: ErrorEnvelope) {
+      constructor(
+        public status: number,
+        public envelope: ErrorEnvelope,
+      ) {
         super(envelope.error.message);
       }
     }
@@ -472,7 +553,11 @@ so that the app feels instant and trustworthy regardless of my network state.
       return (await parseOrThrow(res)) as Task;
     }
 
-    export async function patchTask(id: string, input: UpdateTaskInput, idempotencyKey: string): Promise<Task> {
+    export async function patchTask(
+      id: string,
+      input: UpdateTaskInput,
+      idempotencyKey: string,
+    ): Promise<Task> {
       const res = await fetch(`/tasks/${encodeURIComponent(id)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey },
@@ -489,7 +574,9 @@ so that the app feels instant and trustworthy regardless of my network state.
       await parseOrThrow(res);
     }
     ```
+
     Same-origin fetch only — no CORS in v1 (architecture.md lines 311-313). The Vite proxy already forwards `/tasks` and `/health` to `:3000` in dev (`vite.config.ts:9-12`).
+
   - [x] 8.2 Add tests in `apps/web/src/sync/api-client.test.ts` using `vi.spyOn(globalThis, "fetch")` to assert request shape (URL, method, headers including `Idempotency-Key`) and response handling for 200, 201, 204, 400 (ApiError), 409, 500.
 
 - [x] **Task 9: Web — `sync/outbox.ts` enqueue + drain + replay** (AC: #2, #3, #4, #5)
@@ -539,6 +626,7 @@ so that the app feels instant and trustworthy regardless of my network state.
     ```
     `devOptions.enabled: false` is deliberate — registering an SW in dev causes HMR weirdness and isn't needed; the outbox-via-direct-fetch path (Task 9) gives full offline coverage in dev too.
   - [x] 10.3 Create `apps/web/src/sync/sw.ts`:
+
     ```ts
     /// <reference lib="webworker" />
     import { precacheAndRoute } from "workbox-precaching";
@@ -550,25 +638,35 @@ so that the app feels instant and trustworthy regardless of my network state.
     precacheAndRoute(self.__WB_MANIFEST);
 
     // Network-first for /tasks (so reads always try server when online)
-    registerRoute(({ url }) => url.pathname.startsWith("/tasks"), new NetworkFirst({ cacheName: "tasks-api" }));
+    registerRoute(
+      ({ url }) => url.pathname.startsWith("/tasks"),
+      new NetworkFirst({ cacheName: "tasks-api" }),
+    );
 
     // CRITICAL exclusion: Cloudflare Access endpoints must never be cached
     // (architecture.md line 1028 / AR8). Any path under /cdn-cgi/access/* bypasses the SW.
-    registerRoute(({ url }) => url.pathname.startsWith("/cdn-cgi/access/"), () => fetch(self === undefined ? "" : ""));
+    registerRoute(
+      ({ url }) => url.pathname.startsWith("/cdn-cgi/access/"),
+      () => fetch(self === undefined ? "" : ""),
+    );
     // Safer formulation: register a route that always passes through to the network.
     // The simplest pattern is to short-circuit in the fetch handler:
     self.addEventListener("fetch", (event) => {
       const url = new URL(event.request.url);
       if (url.pathname.startsWith("/cdn-cgi/access/")) {
-        event.respondWith(fetch(event.request));  // pass through; never cache
+        event.respondWith(fetch(event.request)); // pass through; never cache
       }
     });
 
     // Static assets (woff2, css, js) — cache-first
-    registerRoute(({ request }) => ["font", "style", "script", "image"].includes(request.destination),
-      new CacheFirst({ cacheName: "static-assets" }));
+    registerRoute(
+      ({ request }) => ["font", "style", "script", "image"].includes(request.destination),
+      new CacheFirst({ cacheName: "static-assets" }),
+    );
     ```
+
     The Cloudflare Access exclusion is **load-bearing** per architecture amendment AR8 / line 1028 — a stale 200 from `/cdn-cgi/access/*` would cause silent auth failures the annunciator can't recover. Add a test (Task 10.6).
+
   - [x] 10.4 Create `apps/web/src/sync/sw-bridge.ts` for the page-side glue:
     - Exports `registerSw(): Promise<void>` — registers the SW. Called from `main.tsx` after `<App>` mounts, but **only in production** (`import.meta.env.PROD`); skip in dev to align with `devOptions.enabled: false`.
     - Exports `postToSw(msg: PageToSwMessage): Promise<void>` — best-effort `navigator.serviceWorker.controller?.postMessage(msg)`.
@@ -580,7 +678,7 @@ so that the app feels instant and trustworthy regardless of my network state.
   - [x] 11.1 **Update the `ActiveTask` type** to align with the shared `Task`:
     ```ts
     import type { Task } from "@bmad-todo/shared";
-    export type ActiveTask = Task;  // alias; same shape; preserves existing import sites
+    export type ActiveTask = Task; // alias; same shape; preserves existing import sites
     ```
     The new fields are `userNamespace` and `updatedAt`. Migrate every callsite that constructs an `ActiveTask` literal:
     - `task-store.ts:18-23` — add `userNamespace: "default"` and `updatedAt: Date.now()`.
@@ -599,11 +697,12 @@ so that the app feels instant and trustworthy regardless of my network state.
       const cached = await getAllTasks();
       if (cached.length === 0) return;
       // Sort newest-first by id (UUIDv7) — same as server contract
-      cached.sort((a, b) => a.id < b.id ? 1 : -1);
+      cached.sort((a, b) => (a.id < b.id ? 1 : -1));
       setTasks(() => cached);
     }
     ```
   - [x] 11.3 **Optimistic-write hot path.** Update `createTask` (and `toggleTaskCompleted`, `updateTaskText`, `deleteTask`):
+
     ```ts
     import { generateId } from "../lib/ids";
     import { putTask, deleteCachedTask } from "../sync/idb";
@@ -627,17 +726,24 @@ so that the app feels instant and trustworthy regardless of my network state.
       void putTask(task);
       const idempotencyKey = generateId();
       const mutation: Mutation = {
-        type: "create", id: task.id, text: task.text, createdAt: task.createdAt, idempotencyKey,
+        type: "create",
+        id: task.id,
+        text: task.text,
+        createdAt: task.createdAt,
+        idempotencyKey,
       };
       void enqueueAndDrain(mutation);
     }
     ```
+
     The `void` on the IDB writes is **deliberate** — awaiting them would block the render path and breach NFR-Perf-3 (<100ms enter→appears). Errors are routed to the annunciator-store (Task 12), never thrown.
     Apply the same pattern to:
     - `toggleTaskCompleted` → emits `Mutation { type: 'update', completedAt }`.
     - `updateTaskText` → emits `Mutation { type: 'update', text }`.
     - `deleteTask` → emits `Mutation { type: 'delete' }` and calls `deleteCachedTask(id)`.
+
   - [x] 11.4 **Reconciliation after first paint.** Add `reconcileWithServer()` to `task-store.ts`:
+
     ```ts
     import { fetchTasks } from "../sync/api-client";
     import { setSyncState } from "./annunciator-store";
@@ -651,10 +757,11 @@ so that the app feels instant and trustworthy regardless of my network state.
         // local wins for tasks WITH a pending mutation. Apply server state first, then re-apply
         // pending mutations from the outbox to the cache.
         const pending = await getAllOutboxEntries();
-        const pendingIds = new Set(pending.map(e => e.mutation.id));
-        const merged = serverTasks.filter(t => !pendingIds.has(t.id))
-          .concat(tasks.filter(t => pendingIds.has(t.id)));
-        merged.sort((a, b) => a.id < b.id ? 1 : -1);
+        const pendingIds = new Set(pending.map((e) => e.mutation.id));
+        const merged = serverTasks
+          .filter((t) => !pendingIds.has(t.id))
+          .concat(tasks.filter((t) => pendingIds.has(t.id)));
+        merged.sort((a, b) => (a.id < b.id ? 1 : -1));
         setTasks(() => merged);
         // Update IDB cache to match
         for (const t of serverTasks) await putTask(t);
@@ -665,11 +772,14 @@ so that the app feels instant and trustworthy regardless of my network state.
       }
     }
     ```
+
     Call `reconcileWithServer()` from `App.tsx` `onMount()` (or from `main.tsx` after the initial render). Conflict detection (AC#6) is a v1.x enhancement — for v1 the rule above is "server wins, local pending overrides"; the property test in Task 14 verifies this is duplicate-free and loss-free.
-  - [x] 11.5 **Reconfirm undo path goes through outbox.** Story 1.6 added `pushUndo`/`applyUndo` against the in-memory store. After Task 11.3, the undo path's inner `applyInverseMutation` now calls `insertTaskAtIndex` / `updateTaskText` / `setTaskCompletedAt` — each of which (post-1.9) ALSO enqueues an outbox mutation. Verify (and add a test) that an undo of a `delete` produces a *new* `create` mutation with a *new* `Idempotency-Key` and a *new* outbox entry (so the server replays it as a re-create with the same task id but a different idempotency key). The original delete's outbox entry is NOT cancelled — if both round-trip, the server sees: create A → delete A → create A (re-create with same id, new key). The server's `tasks-repo.create` will fail with 409 if the row exists; the route handler should treat the 409 as success in this specific case (the task IS where the client wants it). **Add a follow-up note to deferred-work.md if this corner case requires extra handling — it is acceptable for v1 to have eventual-consistency that re-converges within a tick.**
+
+  - [x] 11.5 **Reconfirm undo path goes through outbox.** Story 1.6 added `pushUndo`/`applyUndo` against the in-memory store. After Task 11.3, the undo path's inner `applyInverseMutation` now calls `insertTaskAtIndex` / `updateTaskText` / `setTaskCompletedAt` — each of which (post-1.9) ALSO enqueues an outbox mutation. Verify (and add a test) that an undo of a `delete` produces a _new_ `create` mutation with a _new_ `Idempotency-Key` and a _new_ outbox entry (so the server replays it as a re-create with the same task id but a different idempotency key). The original delete's outbox entry is NOT cancelled — if both round-trip, the server sees: create A → delete A → create A (re-create with same id, new key). The server's `tasks-repo.create` will fail with 409 if the row exists; the route handler should treat the 409 as success in this specific case (the task IS where the client wants it). **Add a follow-up note to deferred-work.md if this corner case requires extra handling — it is acceptable for v1 to have eventual-consistency that re-converges within a tick.**
 
 - [x] **Task 12: Web — `store/annunciator-store.ts` (sync state signal only — no UI)** (AC: #3, #6, #11)
   - [x] 12.1 Create `apps/web/src/store/annunciator-store.ts`:
+
     ```ts
     import { createSignal } from "solid-js";
     import type { SyncState } from "@bmad-todo/shared";
@@ -698,11 +808,16 @@ so that the app feels instant and trustworthy regardless of my network state.
     }
 
     export function _resetForTesting(): void {
-      if (offlineTimer !== null) { clearTimeout(offlineTimer); offlineTimer = null; }
+      if (offlineTimer !== null) {
+        clearTimeout(offlineTimer);
+        offlineTimer = null;
+      }
       setSyncStateInternal("online");
     }
     ```
+
     Architecture.md line 466-469: the `annunciator-store` is the **only** writer for sync state, fed by `sw-bridge` and `task-store`. Story 1.10 adds the `<Annunciator>` component that READS this signal and renders the bottom-right dot. **Story 1.9 stops here** — no `<Annunciator>` UI yet.
+
   - [x] 12.2 Wire `setSyncState("offline")` from the `outbox.drain` 5xx/network paths and `setSyncState("online")` from a successful drain. Wire `setSyncState("error")` from IDB write failures (catch in the `void putTask(...)` calls in Task 11 and route to `setSyncState("error")` instead of throwing).
   - [x] 12.3 Add `apps/web/src/store/annunciator-store.test.ts`:
     - `setSyncState("offline")` does NOT update the signal synchronously; advance fake timers by 2s → signal transitions.
@@ -776,32 +891,37 @@ so that the app feels instant and trustworthy regardless of my network state.
 
 1. **Database is SQLite (`better-sqlite3`), NOT PostgreSQL** — Story 1.9 epic body line 683 says "PostgreSQL schema"; architecture.md line 197 + 200-222 says SQLite. Architecture wins. This story implements SQLite. Postgres migration is a Growth-scope decision (architecture.md line 192) and is unblocked by the Kysely dialect-swap design.
 2. **Backend directory is `apps/api`, NOT `apps/server`** — already established in Stories 1.1/1.7/1.8.
-3. **Idempotency-key TTL is 14 days, NOT 24 hours** — architecture amendment AR13 / line 1030. Note: the actual purge job is Growth-scope; for v1 this story does NOT implement purging — rows accumulate harmlessly. The 14d TTL is enforced by the *outbox replay window*, not by a server purge.
+3. **Idempotency-key TTL is 14 days, NOT 24 hours** — architecture amendment AR13 / line 1030. Note: the actual purge job is Growth-scope; for v1 this story does NOT implement purging — rows accumulate harmlessly. The 14d TTL is enforced by the _outbox replay window_, not by a server purge.
 4. **Service worker MUST exclude `/cdn-cgi/access/*`** — architecture amendment AR8 / line 1028. Load-bearing for Cloudflare Access compatibility (Story 1.13).
 
 ### Architecture Compliance
 
 **Module boundaries (architecture.md "Module boundaries (frontend)" / `eslint.config.js:30-39`):**
+
 - `sync/idb.ts`, `sync/outbox.ts`, `sync/api-client.ts`, `sync/sw-bridge.ts`, `sync/sw.ts` — all live in `sync/`. They may import from `@bmad-todo/shared` and from each other. They MUST NOT import from `components/` or `store/` (the eslint zone enforces this). The single exception is the SW source itself (`sw.ts`) which imports nothing from app code other than shared types.
 - `task-store.ts` (in `store/`) imports from `sync/idb` and `sync/outbox` — `store → sync` is a permitted direction.
 - `annunciator-store.ts` is in `store/` and imports only from `solid-js` and `@bmad-todo/shared`. The `outbox` and `task-store` write to it via `setSyncState(...)`.
 - The new module-boundary import chain: `App.tsx (component) → task-store (store) → sync/outbox + sync/idb (sync) → sync/api-client (sync) → fetch (browser)`. One direction. Verify with `pnpm lint`.
 
 **Module boundaries (backend) (architecture.md lines 418-423):**
+
 - `routes/tasks.ts` validates input (Zod via `fastify-type-provider-zod`), calls `tasksRepo.*` and `idempotencyRepo.*`, returns response. NO SQL in routes.
 - `db/repos/*.ts` own all SQL. Repos accept the `Kysely<Database>` instance via constructor.
 - `middleware/*.ts` decorates the request (`req.userNamespace`, `req.idempotencyKey`) or globally formats errors.
 - `db/migrate.ts` is invoked once at boot from `server.ts`; never from a route handler.
 
 **Token discipline / no UI changes:**
+
 - Story 1.9 introduces no new visible UI. The `<Annunciator>` component is Story 1.10. The new `annunciator-store.ts` is a state owner only — its consumers in v1 are limited to the dev-mode latency display (Story 1.11), the Annunciator component (Story 1.10), and `task-store`/`outbox` writes.
 - Bundle-size discipline (NFR-Perf-6): `idb` is ~1KB gzipped; `workbox-*` is ~5-8KB gzipped; the SW lives in its own chunk (not the initial bundle). If the bundle-size check (Story 1.12) flags this, the most likely culprit is `vite-plugin-pwa` accidentally inlining workbox into the main bundle — verify with `vite build && du -h apps/web/dist/assets/*.js`.
 
 **Capture-line / undo / focus invariants — preserved:**
+
 - All keystroke handlers from Stories 1.3–1.8 continue to operate against the same in-memory `tasks` store. The `setTasks(...)` call is unchanged at every site; this story adds a sibling `void putTask(...)` and `void enqueueAndDrain(...)` after the optimistic update. The user-visible commit boundary is identical.
 - Undo (`u`) still pops from the same `undo-stack` and dispatches the inverse mutation through the same `applyMutation` path (architecture.md line 480: "single entry point, used identically for user actions and undo replays"). Each inverse mutation now ALSO enqueues a fresh outbox entry with a fresh idempotency-key — so the server sees the undo as a normal mutation. AC#5 / Task 11.5 documents the corner case where undo-of-delete produces a re-create with same task id; the server's idempotency store is keyed by `idempotency_key`, NOT by `task.id`, so this works.
 
 **Latency budget compliance:**
+
 - All sync work is `void`-dispatched after the optimistic store update. The render path never awaits IDB or fetch.
 - NFR-Perf-1 / NFR-Perf-2 / NFR-Perf-3 are unaffected — they're already verified by Story 1.7's keyboard-only spec and the latency benches (Story 1.12).
 - NFR-Perf-7 (memory under 1000 tasks) — IDB and outbox both store per-task entries. 1000 tasks × ~150 bytes/entry ≈ 150KB IDB footprint plus the in-memory store. Comfortable headroom under the 50MB budget.
@@ -809,6 +929,7 @@ so that the app feels instant and trustworthy regardless of my network state.
 ### Library / Framework Requirements
 
 **Backend (`apps/api`):**
+
 - `fastify@^5.3.3` (already pinned in apps/api/package.json — preserve)
 - `better-sqlite3@^11.5.0` — synchronous SQLite driver. Native build; CI must have build-essential available. Verify Node 20 LTS works.
 - `kysely@^0.27.4` + Kysely's built-in `SqliteDialect` (no extra package needed)
@@ -817,12 +938,14 @@ so that the app feels instant and trustworthy regardless of my network state.
 - `pino@^9.5.0` — Fastify default logger (set via `Fastify({ logger: pino(...) })`)
 
 **Frontend (`apps/web`):**
+
 - `idb@^8.0.0` — IDB wrapper
 - `vite-plugin-pwa@^0.21.0` — SW orchestrator (`injectManifest` strategy)
 - `workbox-precaching@^7.3.0`, `workbox-routing@^7.3.0`, `workbox-strategies@^7.3.0`, `workbox-background-sync@^7.3.0` — selective Workbox modules per architecture.md line 301
 - `uuidv7@^1.2.1` — already in apps/web/package.json from Story 1.1; reused for both Task IDs and Idempotency-Keys.
 
 **Test:**
+
 - `fake-indexeddb@^6.0.0` (devDep) — IDB polyfill for jsdom
 - `fast-check@^3.23.0` (devDep) — property-based test framework
 
@@ -831,6 +954,7 @@ so that the app feels instant and trustworthy regardless of my network state.
 ### File Structure Requirements
 
 **New files:**
+
 - `packages/shared/src/sw-messages.ts`
 - `apps/api/src/env.ts`
 - `apps/api/src/lib/log.ts`
@@ -859,13 +983,14 @@ so that the app feels instant and trustworthy regardless of my network state.
 - `tests/e2e/sw-cdn-cgi-exclusion.spec.ts`
 
 **Modified files:**
+
 - `packages/shared/src/schema.ts` (rewritten)
 - `packages/shared/src/index.ts` (re-exports)
 - `packages/shared/src/schema.test.ts` (rewritten)
 - `packages/shared/package.json` (add zod dep)
 - `apps/api/package.json` (add deps)
 - `apps/api/src/server.ts` (wire DB + middleware + routes)
-- `apps/web/package.json` (add idb, vite-plugin-pwa, workbox-*)
+- `apps/web/package.json` (add idb, vite-plugin-pwa, workbox-\*)
 - `apps/web/vite.config.ts` (register VitePWA)
 - `apps/web/src/index.tsx` (call `hydrateFromCache` + `registerSw`)
 - `apps/web/src/store/task-store.ts` (cache + outbox + reconcile)
@@ -877,17 +1002,20 @@ so that the app feels instant and trustworthy regardless of my network state.
 ### Testing Standards
 
 **Test framework discipline (architecture.md "Test colocation rules"):**
+
 - Co-located unit tests alongside source — `*.test.ts`/`.test.tsx`. Vitest + jsdom.
 - API integration tests in `apps/api/src/routes/*.integration.test.ts` — Vitest, in-memory SQLite via `:memory:` connection string, Fastify's `app.inject(...)` instead of a real HTTP server.
 - Property-based: `tests/property/sync-invariants.test.ts` — `fast-check` + Vitest.
 - E2E: `tests/e2e/*.spec.ts` — Playwright + Chromium.
 
 **Test framework setup notes:**
+
 - `fake-indexeddb/auto` import at the top of any web-side test that uses IDB. Auto-mode replaces `globalThis.indexedDB` for the test process.
 - For property tests, the in-memory SQLite db is rebuilt per `fc.assert` run (not per command) — performance trade-off; document in the test file's header.
 - `vitest.setup.ts` already stubs `window.matchMedia`. Story 1.9 may need to extend it with `globalThis.indexedDB = require("fake-indexeddb")` if individual test files start to forget the import — for now, the per-file import is sufficient.
 
 **CI gates that must pass:**
+
 - `pnpm lint` — no `console.log`, no default exports outside whitelist, `import/no-restricted-paths` clean (the new sync layer is the most likely place to violate the components→store→sync direction; verify).
 - `pnpm typecheck` — strict TS; the new shared types ripple into web and api; expect 5–15 type-error fix-ups during the migration.
 - `pnpm test` — Vitest unit + property + integration. The new property test runs at `numRuns: 100`; if local CI exceeds NFR-Maint-5 (5 min), reduce to `numRuns: 20` and document.
@@ -898,50 +1026,62 @@ so that the app feels instant and trustworthy regardless of my network state.
 ### Previous Story Intelligence
 
 **From Story 1.8 (Theme Toggle, just-completed `review` status):**
+
 - The `task-store` was extended without breaking changes by Story 1.6 (undo) and Story 1.7 (focus). The pattern: add new exports, don't change existing ones. Story 1.9 follows the same pattern but additionally **migrates** `ActiveTask` to extend the shared `Task` (adds two fields). All existing call-sites continue to work; tests need fixture updates.
 - `vitest.setup.ts` was added to stub `window.matchMedia`. If `fake-indexeddb` is similarly easy to globally stub, prefer that. For now, per-file import keeps blast radius small.
 - The `theme-store` test pattern (`vi.resetModules()` + dynamic import per test) is reusable for the new `task-store` cache-hydration tests — the cached state at module-load time changes the initial signal.
 
 **From Story 1.7 (Keyboard Navigation):**
+
 - The `applyMutation` mental model: every mutation, including undo replays, goes through the same single entry point. Story 1.9 must preserve this — the outbox enqueue happens inside the existing `task-store` mutators, NOT in `App.tsx` or `TaskRow.tsx`. The components stay presentation-only.
 - `clearAllTasks()` is exported from `task-store` for tests. Story 1.9 adds `clearAll()` (in `idb.ts`) and `_resetForTesting()` (in `annunciator-store.ts`) — keep the test-only exports clearly named with the underscore prefix or `clearAllX` form.
 
 **From Story 1.6 (Undo Stack):**
+
 - The undo-stack already snapshots the full task on delete and replays via `insertTaskAtIndex`. No undo logic changes in Story 1.9 — only the side-effects of the mutators it calls.
 - The "unbounded undo stack growth" deferred item from Story 1.6 (`deferred-work.md`) is unchanged and remains out of scope.
 
 **From Story 1.4 (Tick / Completion):**
+
 - `toggleTaskCompleted` writes a single column. The corresponding `Mutation { type: 'update', completedAt }` is the smallest possible patch — keep `text` field undefined in the Zod input so the server's `UpdateTaskInput.refine(...)` rule accepts it.
 
 **From Story 1.2 (Tokens & Theme):**
+
 - The `theme-bootstrap.ts` inline-head script in `index.html:8-23` runs before any module script and writes `data-theme`. Story 1.9 adds an awaited `hydrateFromCache()` in the entry script; this means the CACHE-driven first paint may delay first paint by a few milliseconds (IDB open + getAll on a cold DB is typically <10ms). Verify with the latency bench (Story 1.12). If this is a problem, switch to a render-immediately + hydrate-into-store pattern (start with `[]` and replace it post-mount); the user-perceived effect is identical because the empty state is the same composition either way.
 
 **From Story 1.1 (Repo Scaffold):**
+
 - Vite proxy at `vite.config.ts:9-12` already forwards `/tasks` and `/health` to `:3000`. Same-origin assumption holds.
 - The `console.log` in `apps/api/src/server.ts:22` is whitelisted by lint. Replace with `log.info({ event: 'server.listening', port })` for consistency, but only after `pino` is wired up (Task 2.3).
 
 ### Latest Tech Information
 
 **`vite-plugin-pwa@^0.21` with `injectManifest` strategy (verify before Task 10):**
+
 - The plugin generates a precache manifest at build time and injects `self.__WB_MANIFEST` into the SW source. The SW source is a regular TS file at `srcDir/filename` — Vite compiles it with the same TS config as the app.
 - `devOptions.enabled: false` keeps the SW disabled in dev (recommended — avoids HMR collisions). Test SW behavior in production builds via `pnpm --filter web preview` after `pnpm build`.
 
 **`fast-check@^3` `fc.commands` API:**
+
 - The state-machine test pattern: define a `Real` (system under test) and a `Model` (oracle), each with mirrored command implementations. `fc.commands([...generators], { size, replayPath })` produces randomized command sequences; the framework runs each against both Real and Model and checks invariants after each step. The failure log includes the minimal counterexample.
 
 **`better-sqlite3@^11` + `kysely@^0.27` `SqliteDialect`:**
+
 - `better-sqlite3` is synchronous — Kysely's SqliteDialect wraps it in a synchronous-promise to satisfy Kysely's async API. Performance is dominated by the C library; the wrapper adds <1µs/call.
 - `WAL mode` (`sqlite.pragma("journal_mode = WAL")`) is required (architecture.md line 197). Concurrent readers under a write don't block.
 
 **`fastify-type-provider-zod@^4`:**
+
 - The `ZodTypeProvider` integrates Fastify's typing with Zod schemas. `validatorCompiler` and `serializerCompiler` are the two functions to register globally. Routes declared with `app.withTypeProvider<ZodTypeProvider>()` get full type inference from `schema.body` / `schema.params` / `schema.querystring` / `schema.response`.
 
 **Workbox `injectManifest` strategy:**
+
 - The SW source is hand-written; the plugin only injects the precache manifest. This keeps the SW's behavior visible in code (the alternative `generateSW` strategy is opaque) and is the right choice for a project with strict bundle and behavior discipline.
 
 ### Project Structure Notes
 
 **Alignment with unified project structure (architecture.md "Complete Project Directory Structure", lines 609-762):**
+
 - Every new file Story 1.9 creates is at a path the architecture document already names. No structural variance.
 - The architecture's `apps/web/src/sync/` directory is materialized for the first time in this story. It contains exactly: `idb.ts`, `outbox.ts`, `api-client.ts`, `sw-bridge.ts`, `sw.ts`, plus their co-located tests.
 - The architecture's `apps/api/src/db/repos/` directory is materialized here. It contains exactly: `tasks-repo.ts`, `idempotency-repo.ts`, plus their co-located tests.
@@ -949,6 +1089,7 @@ so that the app feels instant and trustworthy regardless of my network state.
 - The architecture's `apps/api/migrations/` directory is materialized with `0001_init.sql`. (The architecture references `0002_indexes.sql` separately; we fold the indexes into `0001` for simplicity — they're in the same DDL transaction. Note for future migrations: keep them small and additive.)
 
 **Detected conflicts or variances:**
+
 - **Epic body says PostgreSQL — architecture says SQLite.** Resolved per the "Architecture vs Epics Discrepancies" header above; SQLite wins.
 - **Epic body lists `position` column on tasks table.** The architecture.md schema (lines 200-210) has no `position` column; ordering is purely by `id` (UUIDv7 ⇔ `created_at DESC`). The architecture is correct — Story 1.3 already implements newest-first via `[task, ...prev]` in-memory; the server matches. **Do not add a `position` column.**
 - **Soft-delete retention is "≥30 days" per epic; the architecture says no purge logic in v1.** Reconcile: in v1, soft-deleted rows are never purged — retention is effectively unbounded for the single-user volume. The 30-day floor is satisfied trivially. A purge cron is Growth-scope.
@@ -956,10 +1097,10 @@ so that the app feels instant and trustworthy regardless of my network state.
 
 ### References
 
-- Source acceptance criteria: [_bmad-output/planning-artifacts/epics.md#Story-1.9](../../_bmad-output/planning-artifacts/epics.md) (lines 651-686)
-- PRD requirements: [_bmad-output/planning-artifacts/prd.md](../../_bmad-output/planning-artifacts/prd.md) — FR21–28 (persistence/sync), FR29 (single annunciator surface — partial), FR30 (no success indicators), NFR-Rel-1/2/3/4/5/6, NFR-Sec-1/2/3, NFR-Priv-1/4
-- Architecture: [_bmad-output/planning-artifacts/architecture.md](../../_bmad-output/planning-artifacts/architecture.md) — lines 197-231 (Data Architecture), 232-247 (Auth/Security), 248-275 (API patterns), 277-305 (Frontend SW + reactivity), 367-538 (Implementation Patterns — full section), 605-762 (Complete Directory Structure), 805-880 (Data flow diagrams), 1018-1049 (Important gaps + amendments)
-- UX design: [_bmad-output/planning-artifacts/ux-design-specification.md](../../_bmad-output/planning-artifacts/ux-design-specification.md) — UX-DR13 (Annunciator behavior — relevant to syncState transitions but NOT to this story's UI), UX-DR20 (annunciator routing principle), UX-DR21 (pre-fetch capture for first-ever visit)
+- Source acceptance criteria: [\_bmad-output/planning-artifacts/epics.md#Story-1.9](../../_bmad-output/planning-artifacts/epics.md) (lines 651-686)
+- PRD requirements: [\_bmad-output/planning-artifacts/prd.md](../../_bmad-output/planning-artifacts/prd.md) — FR21–28 (persistence/sync), FR29 (single annunciator surface — partial), FR30 (no success indicators), NFR-Rel-1/2/3/4/5/6, NFR-Sec-1/2/3, NFR-Priv-1/4
+- Architecture: [\_bmad-output/planning-artifacts/architecture.md](../../_bmad-output/planning-artifacts/architecture.md) — lines 197-231 (Data Architecture), 232-247 (Auth/Security), 248-275 (API patterns), 277-305 (Frontend SW + reactivity), 367-538 (Implementation Patterns — full section), 605-762 (Complete Directory Structure), 805-880 (Data flow diagrams), 1018-1049 (Important gaps + amendments)
+- UX design: [\_bmad-output/planning-artifacts/ux-design-specification.md](../../_bmad-output/planning-artifacts/ux-design-specification.md) — UX-DR13 (Annunciator behavior — relevant to syncState transitions but NOT to this story's UI), UX-DR20 (annunciator routing principle), UX-DR21 (pre-fetch capture for first-ever visit)
 - Existing infrastructure (DO NOT duplicate):
   - In-memory task store: `apps/web/src/store/task-store.ts` (extended in Task 11, not replaced)
   - Undo stack: `apps/web/src/store/undo-stack.ts` (no changes; new outbox side-effects flow through the existing mutators)
@@ -967,8 +1108,8 @@ so that the app feels instant and trustworthy regardless of my network state.
   - Vite proxy: `apps/web/vite.config.ts:9-12`
   - Fastify scaffold: `apps/api/src/server.ts` + `apps/api/src/routes/health.ts`
   - Anti-feature check: `scripts/check-anti-features.sh` (forbidden patterns to avoid)
-- Previous story: [_bmad-output/implementation-artifacts/1-8-theme-toggle-dark-mode-and-accessibility-tokens.md](./1-8-theme-toggle-dark-mode-and-accessibility-tokens.md) (status `review`; theme-store / sw lifecycle patterns this story extends)
-- Deferred work: [_bmad-output/implementation-artifacts/deferred-work.md](./deferred-work.md) — Story 1.4 line 45: "No maximum task count or text length limit in `task-store.ts` — address when persistence lands in Story 1.9." Task 1.1 implements both via Zod (max 10000 chars enforced server-side; no client-side max-task-count cap intentionally — bounded by user behavior and database growth).
+- Previous story: [\_bmad-output/implementation-artifacts/1-8-theme-toggle-dark-mode-and-accessibility-tokens.md](./1-8-theme-toggle-dark-mode-and-accessibility-tokens.md) (status `review`; theme-store / sw lifecycle patterns this story extends)
+- Deferred work: [\_bmad-output/implementation-artifacts/deferred-work.md](./deferred-work.md) — Story 1.4 line 45: "No maximum task count or text length limit in `task-store.ts` — address when persistence lands in Story 1.9." Task 1.1 implements both via Zod (max 10000 chars enforced server-side; no client-side max-task-count cap intentionally — bounded by user behavior and database growth).
 
 ## Dev Agent Record
 
@@ -1046,7 +1187,7 @@ claude-opus-4-7 (Claude Opus 4.7, 1M context)
 - `packages/shared/src/schema.test.ts` (rewritten)
 - `apps/api/package.json` (added better-sqlite3, kysely, zod, fastify-type-provider-zod, @fastify/rate-limit, pino, @types/better-sqlite3)
 - `apps/api/src/server.ts` (now boots DB + migrations + buildApp)
-- `apps/web/package.json` (added @bmad-todo/shared, idb, fake-indexeddb, vite-plugin-pwa, workbox-*)
+- `apps/web/package.json` (added @bmad-todo/shared, idb, fake-indexeddb, vite-plugin-pwa, workbox-\*)
 - `apps/web/vite.config.ts` (registered VitePWA + /admin proxy)
 - `apps/web/src/index.tsx` (wires setSyncObserver, awaits hydrateFromCache, registers SW)
 - `apps/web/src/store/task-store.ts` (cache + outbox + reconcile + flushOutbox)
@@ -1060,9 +1201,33 @@ claude-opus-4-7 (Claude Opus 4.7, 1M context)
 - `playwright.config.ts` (fullyParallel: false, workers: 1 — shared API state forces serial execution)
 - All other `tests/e2e/*.spec.ts` (import from `./test-fixtures` to pick up `/admin/reset` per-test reset)
 
+### Review Findings
+
+- [x] [Review][Decision] **Conflict detection absent (AC#6)** — patched: `reconcileWithServer` now consults outbox, compares `updatedAt`, preserves local tasks with pending mutations, sets `syncState('conflict')` when server has newer data for a pending-mutation task
+- [x] [Review][Decision] **Property test significantly undersized (AC#9)** — patched: expanded to 1000-op max with `update-text`, `undo`, `duplicate-replay`, `drop-response` command types added
+- [x] [Review][Patch] Reconciliation races with outbox drain — patched: `flushOutbox().then(() => reconcileWithServer())` serializes the operations
+- [x] [Review][Patch] Concurrent drain has no mutex — patched: added `draining` lock; concurrent calls return immediately
+- [x] [Review][Patch] POST with duplicate task ID crashes with unhandled UNIQUE constraint — patched: catch UNIQUE constraint → throw ConflictError (409)
+- [x] [Review][Patch] Idempotency insert non-atomic with task insert — patched: POST/PATCH/DELETE now wrap task+idempotency ops in `kysely.transaction()`
+- [x] [Review][Patch] DELETE returns 404 on second call with different idempotency key — patched: always returns 204 regardless of soft-delete result
+- [x] [Review][Patch] SW fetch handler registered after Workbox precacheAndRoute — patched: moved raw `/cdn-cgi/access/` handler before `precacheAndRoute`
+- [x] [Review][Patch] Mutations enqueued for nonexistent task IDs — patched: `updateTaskText`, `setTaskCompletedAt`, `deleteTask` now guard `safeEnqueue` behind existence check
+- [x] [Review][Patch] 4xx handling drops 429 (rate-limit) permanently — patched: 429 now treated as retriable (same as 5xx)
+- [x] [Review][Patch] `parseOrThrow` unsafe ErrorEnvelope cast — patched: validates error shape before constructing `ApiError`; falls back to `ServerError` envelope for non-standard responses
+- [x] [Review][Patch] `drain()` breaks on first backed-off entry, skipping processable later entries — patched: changed `break` to `continue`
+- [x] [Review][Defer] Unbounded `idempotency_keys` table growth [`apps/api/migrations/0001_init.sql`] — deferred, single-user v1 volume bounded; purge cron is Growth-scope
+- [x] [Review][Defer] Production auth throws unconditionally [`apps/api/src/middleware/auth-jwt.ts:622-629`] — deferred, intentional per spec; Story 1.13 territory
+- [x] [Review][Defer] `hashRequestBody` non-canonical JSON serialization [`apps/api/src/lib/hash.ts`] — deferred, client always sends same key order; proxy reorder is theoretical for v1
+- [x] [Review][Defer] `createTask` repo uses `Date.now()` for `updated_at` while `created_at` uses client timestamp [`apps/api/src/db/repos/tasks-repo.ts`] — deferred, deliberate: server owns `updated_at`, client owns `created_at`
+- [x] [Review][Defer] Missing reload-while-offline E2E test (AC#3) — deferred, requires Story 1.13 SW shell cache
+- [x] [Review][Defer] No >=10 retry idempotency test (AC#5) — deferred, property test exercises replay indirectly
+- [x] [Review][Defer] `listActive` has no pagination [`apps/api/src/db/repos/tasks-repo.ts:9-17`] — deferred, single-user todo app with practical limits
+- [x] [Review][Defer] Idempotency race with concurrent same-key requests [`apps/api/src/middleware/idempotency.ts`] — deferred, theoretical in single-user v1 with SQLite serialization
+- [x] [Review][Defer] `hydrateFromCache` blocks first render [`apps/web/src/index.tsx`] — deferred, matches spec intent (no empty flash); IDB read is <10ms for small datasets
+
 ## Change Log
 
-| Date       | Change                                                                                                                |
-| ---------- | --------------------------------------------------------------------------------------------------------------------- |
+| Date       | Change                                                                                                                                                                                                                           |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-04-28 | Story 1.9 implemented: SQLite + Kysely backend, idempotent /tasks CRUD, IDB cache + outbox + reconcile, SW with /cdn-cgi/access exclusion, property-based sync invariants, e2e offline+reconcile and return-after-absence specs. |
-| 2026-04-28 | Story 1.9 context engineered: full backend persistence + offline-first sync layer + property-based sync invariants.   |
+| 2026-04-28 | Story 1.9 context engineered: full backend persistence + offline-first sync layer + property-based sync invariants.                                                                                                              |

@@ -23,7 +23,5 @@ if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
 // be swallowed by the sync layer's try/catch — never bubble up.
 if (typeof globalThis.fetch !== "function") {
   globalThis.fetch = () =>
-    Promise.reject(new Error("fetch not available in test")) as ReturnType<
-      typeof fetch
-    >;
+    Promise.reject(new Error("fetch not available in test")) as ReturnType<typeof fetch>;
 }

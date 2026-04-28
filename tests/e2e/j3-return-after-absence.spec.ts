@@ -1,9 +1,7 @@
 import { test, expect } from "./test-fixtures";
 
 test.describe("Journey 3: Return after absence", () => {
-  test("cached tasks render before any /tasks network request lands", async ({
-    page,
-  }) => {
+  test("cached tasks render before any /tasks network request lands", async ({ page }) => {
     await page.goto("/");
     const captureInput = page.locator('input[aria-label="Add a task"]');
     const items = page.locator('ul[role="list"] li');

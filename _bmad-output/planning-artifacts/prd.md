@@ -1,11 +1,27 @@
 ---
-stepsCompleted: ['step-01-init', 'step-02-discovery', 'step-02b-vision', 'step-02c-executive-summary', 'step-03-success', 'step-04-journeys', 'step-05-domain-skipped', 'step-06-innovation', 'step-07-project-type', 'step-08-scoping', 'step-09-functional', 'step-10-nonfunctional', 'step-11-polish', 'step-12-complete']
+stepsCompleted:
+  [
+    "step-01-init",
+    "step-02-discovery",
+    "step-02b-vision",
+    "step-02c-executive-summary",
+    "step-03-success",
+    "step-04-journeys",
+    "step-05-domain-skipped",
+    "step-06-innovation",
+    "step-07-project-type",
+    "step-08-scoping",
+    "step-09-functional",
+    "step-10-nonfunctional",
+    "step-11-polish",
+    "step-12-complete",
+  ]
 workflowComplete: true
-completedAt: '2026-04-27'
-releaseMode: 'phased'
+completedAt: "2026-04-27"
+releaseMode: "phased"
 inputDocuments:
-  - 'docs/Product Requirement Document (PRD) for the Todo App.md'
-  - '_bmad-output/brainstorming/brainstorming-session-2026-04-27-1709.md'
+  - "docs/Product Requirement Document (PRD) for the Todo App.md"
+  - "_bmad-output/brainstorming/brainstorming-session-2026-04-27-1709.md"
 documentCounts:
   briefs: 0
   research: 0
@@ -16,8 +32,8 @@ classification:
   domain: general
   complexity: low
   projectContext: greenfield
-  notes: 'Domain is low-complexity (personal productivity), but engineering discipline is elevated — tested latency budgets, cache-aggressive sync, property-based tests on destructive operations. Treat as greenfield with heightened non-functional rigor.'
-workflowType: 'prd'
+  notes: "Domain is low-complexity (personal productivity), but engineering discipline is elevated — tested latency budgets, cache-aggressive sync, property-based tests on destructive operations. Treat as greenfield with heightened non-functional rigor."
+workflowType: "prd"
 ---
 
 # Product Requirements Document - bmad-todo
@@ -56,6 +72,7 @@ An explicit anti-feature list is part of the contract: no XP, streaks, or gamifi
 ### User Success
 
 A user is successful when the product disappears into the action. Specifically:
+
 - **Zero-onboarding fluency.** A first-time user adds, completes, and reviews a task without tour, tooltips, or help text. The UI teaches itself.
 - **Capture-at-thought.** From intent to typed character is under one second: focused cursor is always ready; no field to click into; global `cmd+enter` from any tab works.
 - **Uninterrupted flow on completion.** Pressing `x` (or clicking the task) marks done with sub-100ms perceived feedback and no blocking animation. The next action is immediately available.
@@ -66,7 +83,8 @@ A user is successful when the product disappears into the action. Specifically:
 ### Project Success
 
 This is a craft/portfolio project; project (not business) success metrics:
-- **The thesis ships, observably.** A screenshot of v1 is recognizable as *not* a generic todo app on first glance, validated by ≥3 outside design-literate reviewers without leading prompts.
+
+- **The thesis ships, observably.** A screenshot of v1 is recognizable as _not_ a generic todo app on first glance, validated by ≥3 outside design-literate reviewers without leading prompts.
 - **Latency claims are publicly verifiable.** README states the three latency budgets; CI enforces them as build failures; dev-mode shows live keystroke→render latency.
 - **The anti-feature list is observably honored.** Independent inspection confirms zero XP, streaks, leaderboards, nags, stock-photo empty states, blocking animations, "saving…" indicators, mid-keystroke autocomplete, default sounds.
 - **Distinctiveness lives at the README level.** The thesis ("the speed of thought, where empty is beautiful, every millisecond on the spec sheet") is how the project introduces itself, not buried in commit history.
@@ -82,16 +100,16 @@ This is a craft/portfolio project; project (not business) success metrics:
 
 ### Measurable Outcomes
 
-| Outcome | Target | Verified by |
-|---|---|---|
-| p95 keystroke→render | <16ms | CI perf test |
-| p95 check→strike | <50ms | CI perf test |
-| p95 add→appear | <100ms | CI perf test |
-| Destructive ops with reversibility tests | 100% | Coverage report |
-| Sync invariant violations under stress (1000 ops) | 0 | Integration test |
+| Outcome                                               | Target             | Verified by                 |
+| ----------------------------------------------------- | ------------------ | --------------------------- |
+| p95 keystroke→render                                  | <16ms              | CI perf test                |
+| p95 check→strike                                      | <50ms              | CI perf test                |
+| p95 add→appear                                        | <100ms             | CI perf test                |
+| Destructive ops with reversibility tests              | 100%               | Coverage report             |
+| Sync invariant violations under stress (1000 ops)     | 0                  | Integration test            |
 | First-time user completes core loop without help text | 100% of test users | Usability check, ≥5 testers |
-| External reviewers identify aesthetic as non-generic | ≥3 of 3 unprompted | Outside review |
-| Anti-feature list violations in v1 | 0 | Self-audit + outside review |
+| External reviewers identify aesthetic as non-generic  | ≥3 of 3 unprompted | Outside review              |
+| Anti-feature list violations in v1                    | 0                  | Self-audit + outside review |
 
 ## Product Scope
 
@@ -100,6 +118,7 @@ This is a craft/portfolio project; project (not business) success metrics:
 Must ship for v1 to be a complete product:
 
 **Functional**
+
 - Single-user, no auth.
 - Add task (single-field, plain text, captured on `enter`).
 - Complete task (strike-through + dim; stays visible in current session).
@@ -112,10 +131,12 @@ Must ship for v1 to be a complete product:
 - Honest sync state — annunciator-style indicator only when something is wrong (offline / conflict).
 
 **Interaction**
+
 - Keyboard-first: `n` new, `j`/`k` move, `x` check, `u` undo, `enter`/`esc` edit commit/cancel, `cmd+enter` quick-capture from anywhere.
 - Newest-first sort. Completed slide down but stay visible.
 
 **Aesthetic**
+
 - Single asymmetric column, no section headers, no filter chrome.
 - Capture input merged into top of the list (no separate "+" button).
 - No checkbox at rest — appears on focus/hover only.
@@ -126,6 +147,7 @@ Must ship for v1 to be a complete product:
 - Empty state: composed silence — single quiet input on generous canvas.
 
 **Quality**
+
 - Latency budgets enforced in CI.
 - Property-based tests for all destructive operations.
 - Sync invariant tests under stress.
@@ -134,6 +156,7 @@ Must ship for v1 to be a complete product:
 ### Growth Features (Post-MVP)
 
 Makes the product competitive:
+
 - Sensible single-suggestion autocomplete from history (stable, no mid-keystroke rewrite, dismissible by ignoring).
 - `/` to search/filter, `f` to focus single task.
 - User-rebindable shortcuts.
@@ -149,6 +172,7 @@ Makes the product competitive:
 ### Vision (Future)
 
 Possible v2+, deliberately deferred:
+
 - Spatial canvas mode (positioned tasks rather than a column).
 - DAW-style timeline view.
 - Tagging or projects (only if it doesn't violate the Quiet Tool thesis).
@@ -211,16 +235,16 @@ For v1, the following user types are explicitly **not** in scope, and so have no
 
 ### Journey Requirements Summary
 
-| Capability area | Required for journey | MVP commitment |
-|---|---|---|
-| Cache-first persistence with instant render | J1 (open is fast), J3 (Friday → Monday continuity) | Required |
-| Single-field, keyboard-driven capture | J1 (four-tasks-no-mouse), J3 (`n` to capture) | Required |
-| In-place completion with strike + dim, no blocking animation | J1 (climax: `x` mid-flow) | Required |
-| Session-long undo restoring exact prior state | J2 (entire journey) | Required |
-| No re-engagement, no nag, no measurement | J3 (entire journey) | Required (anti-feature) |
-| In-session retention of completed tasks (visible, dimmed) | J1 (resolution: glanceable day) | Required |
-| Annunciator-only error surface | J3 (silent corner) | Required |
-| Cursor-always-ready state on open | J1 (opening), J3 (re-entry) | Required |
+| Capability area                                              | Required for journey                               | MVP commitment          |
+| ------------------------------------------------------------ | -------------------------------------------------- | ----------------------- |
+| Cache-first persistence with instant render                  | J1 (open is fast), J3 (Friday → Monday continuity) | Required                |
+| Single-field, keyboard-driven capture                        | J1 (four-tasks-no-mouse), J3 (`n` to capture)      | Required                |
+| In-place completion with strike + dim, no blocking animation | J1 (climax: `x` mid-flow)                          | Required                |
+| Session-long undo restoring exact prior state                | J2 (entire journey)                                | Required                |
+| No re-engagement, no nag, no measurement                     | J3 (entire journey)                                | Required (anti-feature) |
+| In-session retention of completed tasks (visible, dimmed)    | J1 (resolution: glanceable day)                    | Required                |
+| Annunciator-only error surface                               | J3 (silent corner)                                 | Required                |
+| Cursor-always-ready state on open                            | J1 (opening), J3 (re-entry)                        | Required                |
 
 ## Innovation & Novel Patterns
 
@@ -228,13 +252,13 @@ For v1, the following user types are explicitly **not** in scope, and so have no
 
 The product is not a breakthrough in the technical-novelty sense — there is no new protocol, no new computational primitive, no WebAssembly trick. The innovation lives at the **interaction and product-positioning layer** and is genuine enough to warrant documentation.
 
-1. **Restraint-as-contract.** Most products differentiate on what they *do*. This product differentiates on what it *refuses to do*, and codifies that refusal as an explicit, testable, anti-feature contract. The anti-feature list (no XP, no streaks, no nags, no chrome, no fake cheer, no time-shame, no leaderboards, no skeleton-for-local-data, no spinners, no mid-keystroke autocomplete, etc.) is a load-bearing product specification — not a stylistic preference.
+1. **Restraint-as-contract.** Most products differentiate on what they _do_. This product differentiates on what it _refuses to do_, and codifies that refusal as an explicit, testable, anti-feature contract. The anti-feature list (no XP, no streaks, no nags, no chrome, no fake cheer, no time-shame, no leaderboards, no skeleton-for-local-data, no spinners, no mid-keystroke autocomplete, etc.) is a load-bearing product specification — not a stylistic preference.
 
-2. **Latency budgets as a product surface, not a backend KPI.** Numeric perceived-latency commitments (<16ms keystroke→render, <50ms check→strike, <100ms add→appear) are published in the README, enforced in CI, and made visible to the user via a debug/dev mode that displays live keystroke→render latency. Treating performance budgets as a *marketing claim that can be falsified at runtime by the user* is unusual in this category.
+2. **Latency budgets as a product surface, not a backend KPI.** Numeric perceived-latency commitments (<16ms keystroke→render, <50ms check→strike, <100ms add→appear) are published in the README, enforced in CI, and made visible to the user via a debug/dev mode that displays live keystroke→render latency. Treating performance budgets as a _marketing claim that can be falsified at runtime by the user_ is unusual in this category.
 
 3. **Journal-page aesthetic for a productivity tool.** The genre's default visual language — list rows, persistent checkboxes, section headers (Today / Upcoming / Someday), filter chrome, "+" buttons — is not what this product looks like. The page reads as continuous prose: a single asymmetric column, no headers, capture merged into the top of the list, no checkbox until a row is focused. This is a deliberate genre violation, not a minor styling choice.
 
-4. **No-chrome-at-rest as a design principle.** Borrowed from glass-cockpit avionics ("Dark Cockpit philosophy"): UI elements are silent until something is *abnormal* or the user invokes them. No persistent navigation. No always-on settings cog. No checkbox boxes. The list at rest is just text. This is unusual for productivity software.
+4. **No-chrome-at-rest as a design principle.** Borrowed from glass-cockpit avionics ("Dark Cockpit philosophy"): UI elements are silent until something is _abnormal_ or the user invokes them. No persistent navigation. No always-on settings cog. No checkbox boxes. The list at rest is just text. This is unusual for productivity software.
 
 5. **Honest sync via the annunciator pattern.** Standard practice is optimistic UI plus spinners during reconciliation. This product replaces the spinner with **calm silence on success and a single fixed-position indicator only when something is wrong**. The pattern (also from avionics) is well-established in safety-critical UIs and rare in consumer software.
 
@@ -248,9 +272,10 @@ The personal todo app category is mature, saturated, and aesthetically stagnant.
 - **Todoist / TickTick / Habitica** — gamification, streaks, social.
 - **Notion / Obsidian** — todos as a side effect of a knowledge-base tool.
 - **Linear / Height / Shortcut** — multi-user team task management; not personal-todo.
-- **Local-first newcomers (e.g., todos in Tinybase / Replicache / Linear's offline mode)** — local-first as a technical foundation, but rarely as a *user-visible product claim*.
+- **Local-first newcomers (e.g., todos in Tinybase / Replicache / Linear's offline mode)** — local-first as a technical foundation, but rarely as a _user-visible product claim_.
 
 The position this product takes — **personal, single-user, unapologetically restrained, latency-and-trust as marketing surfaces, journal aesthetic** — is genuinely under-occupied. The closest spiritual neighbours are:
+
 - **Bear** (typography-led, restraint-as-character) — but it's a notes app, not a todo, and has standard chrome.
 - **Things 3** (reduced ceremony, beautiful empty state) — but it has section headers, persistent checkboxes, and full chrome.
 - **vim/text-file todo lists** (the maker's anti-app) — share the no-chrome instinct but lack persistence guarantees, undo, sync, latency discipline.
@@ -270,26 +295,27 @@ Each innovation area has a concrete, testable validation path:
 
 ### Risk Mitigation
 
-| Risk | Likelihood | Mitigation |
-|---|---|---|
-| Aesthetic perceived as "incomplete" or "broken" by users expecting standard chrome | Medium | Self-selecting audience (Sam persona). The product does not aim for mass-market appeal; the README sets expectations. |
-| Anti-feature contract erodes under future PRs | High over time | Anti-features encoded as tests where possible (visual regression on empty state, codebase grep for forbidden strings/patterns, e.g. "🎉", "Streak", "XP"). Anti-feature list lives in the repo, not in the founder's head. |
-| Latency budgets unattainable on commodity hosting | Low | Cache-aggressive client means the budgets apply primarily to local operations, which are not network-bound. Sync is async and out of the perceived-latency path. |
-| "Reads like a journal" is too subjective to ship against | Medium | Tier-1 SCAMPER moves are *concrete* (no checkbox at rest, single column, no headers, capture merged into list, generous type ≥16px, single typeface). Aesthetic is the sum of those rules; if those rules are satisfied, the aesthetic is delivered. |
-| Honest-sync annunciator confuses users (no feedback feels broken) | Medium | Optimistic writes mean state changes appear instantly — the *absence* of feedback is itself confirmation. Annunciator only appears on *failure*, which is the case where feedback genuinely matters. |
-| Single-user no-auth limits future paths | Low (deferred risk) | Architecture must not preclude later auth/multi-device (Growth scope). Persistence layer designed with a per-user namespace from day one even though only one user exists. |
+| Risk                                                                               | Likelihood          | Mitigation                                                                                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Aesthetic perceived as "incomplete" or "broken" by users expecting standard chrome | Medium              | Self-selecting audience (Sam persona). The product does not aim for mass-market appeal; the README sets expectations.                                                                                                                                |
+| Anti-feature contract erodes under future PRs                                      | High over time      | Anti-features encoded as tests where possible (visual regression on empty state, codebase grep for forbidden strings/patterns, e.g. "🎉", "Streak", "XP"). Anti-feature list lives in the repo, not in the founder's head.                           |
+| Latency budgets unattainable on commodity hosting                                  | Low                 | Cache-aggressive client means the budgets apply primarily to local operations, which are not network-bound. Sync is async and out of the perceived-latency path.                                                                                     |
+| "Reads like a journal" is too subjective to ship against                           | Medium              | Tier-1 SCAMPER moves are _concrete_ (no checkbox at rest, single column, no headers, capture merged into list, generous type ≥16px, single typeface). Aesthetic is the sum of those rules; if those rules are satisfied, the aesthetic is delivered. |
+| Honest-sync annunciator confuses users (no feedback feels broken)                  | Medium              | Optimistic writes mean state changes appear instantly — the _absence_ of feedback is itself confirmation. Annunciator only appears on _failure_, which is the case where feedback genuinely matters.                                                 |
+| Single-user no-auth limits future paths                                            | Low (deferred risk) | Architecture must not preclude later auth/multi-device (Growth scope). Persistence layer designed with a per-user namespace from day one even though only one user exists.                                                                           |
 
 ## Web Application Specific Requirements
 
 ### Project-Type Overview
 
-bmad-todo is a **single-page web application** for personal task management. The **backend is the authoritative source of truth** for todo data; the browser maintains an **aggressive local cache (IndexedDB)** that paints cached cold loads instantly, supports offline reads, queues offline writes for later replay, and reconciles with the server in the background. This thin-client + aggressive-cache shape preserves the latency-budget and "instant-on-open" pillars *for all visits after the first*, while keeping the conventional full-stack architecture from the original PRD draft. Auth and multi-device are not in v1 but the server-of-truth model makes them additive.
+bmad-todo is a **single-page web application** for personal task management. The **backend is the authoritative source of truth** for todo data; the browser maintains an **aggressive local cache (IndexedDB)** that paints cached cold loads instantly, supports offline reads, queues offline writes for later replay, and reconciles with the server in the background. This thin-client + aggressive-cache shape preserves the latency-budget and "instant-on-open" pillars _for all visits after the first_, while keeping the conventional full-stack architecture from the original PRD draft. Auth and multi-device are not in v1 but the server-of-truth model makes them additive.
 
 ### Technical Architecture Considerations
 
 **Application shape — SPA, single-screen.** The app is a single-page application with no client-side routing needed in v1. The entire surface is one screen: list + capture line. Routing can be added later (settings, search results, focused-task view) without architectural change. The journal-page aesthetic and instant-on-open requirement work against page-reload-style navigation; the "no chrome at rest" rule means there is no nav bar to navigate from.
 
 **Server-of-truth + cache-aggressive client.** A small backend API is authoritative for tasks. The browser uses **IndexedDB as a cache and offline-write outbox**, not a primary store. Behavior:
+
 - **First-ever load (empty cache).** App shell renders immediately with the empty state and a focused capture line. Initial fetch starts in parallel; tasks fade in when the fetch resolves. The user can begin typing before the fetch returns.
 - **Cached cold load (every subsequent visit).** Paint from cache instantly. Background fetch reconciles any drift from the server. No skeleton, no "loading…", no spinner.
 - **Writes.** All mutations apply to cache + visible UI synchronously. Each write enters an outbox queue and is dispatched to the backend asynchronously. UI does not wait on the network.
@@ -299,6 +325,7 @@ bmad-todo is a **single-page web application** for personal task management. The
 **Annunciator pattern for failure surfaces.** A single fixed-position indicator (corner of viewport) surfaces only on failure states: offline, sync conflict, persistence write error. No global error toasts. No success toasts.
 
 **Backend shape (v1).**
+
 - Small REST API: `GET /tasks`, `POST /tasks`, `PATCH /tasks/:id`, `DELETE /tasks/:id`. JSON over HTTPS.
 - Stateless server, persistent store (Postgres or SQLite — TBD in architecture phase; favoring SQLite for v1 simplicity).
 - **No auth in v1.** The v1 deploy is intended for personal use, not multi-tenant. The data model includes a per-user namespace (single user in v1, but the column / scoping exists) so adding auth in Growth is a deploy/migration concern, not a rewrite.
@@ -308,17 +335,18 @@ bmad-todo is a **single-page web application** for personal task management. The
 
 **Targeted:**
 
-| Browser | Minimum version | Rationale |
-|---|---|---|
-| Chrome / Chromium-based (Edge, Brave, Arc, Vivaldi) | Last 2 stable | OPFS, IndexedDB, modern CSS (`:has()`, container queries) |
-| Safari | 16.4+ | Required for modern persistence APIs and CSS features |
-| Firefox | Last 2 stable | Same modern feature set |
-| Mobile Safari (iOS) | 16.4+ | Same as desktop Safari |
-| Chrome Android | Last 2 stable | Same as desktop Chrome |
+| Browser                                             | Minimum version | Rationale                                                 |
+| --------------------------------------------------- | --------------- | --------------------------------------------------------- |
+| Chrome / Chromium-based (Edge, Brave, Arc, Vivaldi) | Last 2 stable   | OPFS, IndexedDB, modern CSS (`:has()`, container queries) |
+| Safari                                              | 16.4+           | Required for modern persistence APIs and CSS features     |
+| Firefox                                             | Last 2 stable   | Same modern feature set                                   |
+| Mobile Safari (iOS)                                 | 16.4+           | Same as desktop Safari                                    |
+| Chrome Android                                      | Last 2 stable   | Same as desktop Chrome                                    |
 
 **Explicitly not supported:** IE11, legacy Edge, browsers older than ~2 years. The audience (Sam persona) does not use legacy browsers; the latency budgets and persistence guarantees require modern APIs; supporting old browsers would force polyfills that violate bundle-size discipline.
 
 **Browser feature requirements:**
+
 - IndexedDB (required for v1)
 - Service Worker (required — backs the cache and offline write outbox; also enables PWA install)
 - `prefers-color-scheme`, `prefers-reduced-motion` (required)
@@ -327,9 +355,10 @@ bmad-todo is a **single-page web application** for personal task management. The
 
 ### Responsive Design
 
-**Approach:** Single layout that adapts via fluid typography and generous whitespace, not breakpoint-defined "mobile / tablet / desktop" variants. The journal-page aesthetic *is* the layout at every viewport — only the column width and spacing scale.
+**Approach:** Single layout that adapts via fluid typography and generous whitespace, not breakpoint-defined "mobile / tablet / desktop" variants. The journal-page aesthetic _is_ the layout at every viewport — only the column width and spacing scale.
 
 **Specific behavior:**
+
 - **Desktop (≥1024px wide):** Single column, ~640px max-width, centered with generous side margin. Caps at one comfortable line length for prose-density reading.
 - **Tablet (640–1024px):** Same column, edge padding scales down proportionally.
 - **Mobile (<640px):** Full-width column with comfortable edge padding (≥16px). Tap targets enlarged: full-row tap surface for completion (per SCAMPER M2). Visible chrome remains absent at rest.
@@ -341,20 +370,21 @@ bmad-todo is a **single-page web application** for personal task management. The
 
 Hard, CI-enforced budgets (warm vs. cold made explicit):
 
-| Metric | Budget | Measurement |
-|---|---|---|
-| p95 keystroke→render in capture line | <16ms | Synthetic perf test in CI |
-| p95 check→strike (visible completion mark) | <50ms | Synthetic perf test in CI |
-| p95 add→appear (task lands in list after `enter`, warm session) | <100ms | Synthetic perf test in CI |
-| Cached cold load: first paint with N=100 tasks visible | <100ms after JS evaluated | Lighthouse |
-| First-ever load (empty cache) to interactive on Fast 3G | <2s | Lighthouse |
-| Bundle size, initial JS | <50KB gzipped | CI bundle-size check |
-| Total bundle (all chunks) | <150KB gzipped | CI bundle-size check |
-| Memory under sustained 1000-task workload | <50MB | Stress test |
+| Metric                                                          | Budget                    | Measurement               |
+| --------------------------------------------------------------- | ------------------------- | ------------------------- |
+| p95 keystroke→render in capture line                            | <16ms                     | Synthetic perf test in CI |
+| p95 check→strike (visible completion mark)                      | <50ms                     | Synthetic perf test in CI |
+| p95 add→appear (task lands in list after `enter`, warm session) | <100ms                    | Synthetic perf test in CI |
+| Cached cold load: first paint with N=100 tasks visible          | <100ms after JS evaluated | Lighthouse                |
+| First-ever load (empty cache) to interactive on Fast 3G         | <2s                       | Lighthouse                |
+| Bundle size, initial JS                                         | <50KB gzipped             | CI bundle-size check      |
+| Total bundle (all chunks)                                       | <150KB gzipped            | CI bundle-size check      |
+| Memory under sustained 1000-task workload                       | <50MB                     | Stress test               |
 
 The "instant on open" claim applies to **every visit after the first**, not the very first cold network load. First-ever load remains explicitly bounded (interactive in <2s on Fast 3G).
 
 **Engineering implications:**
+
 - Framework choice must support the bundle-size and render-budget constraints (likely rules out heavy SPA frameworks; favors solutions like Solid, Svelte, Preact, or a hand-rolled vanilla approach).
 - No render-blocking third-party scripts. No analytics in v1 (analytics is also an anti-feature — "no measurement of the user").
 - Animations must respect `prefers-reduced-motion` and never block input.
@@ -364,6 +394,7 @@ The "instant on open" claim applies to **every visit after the first**, not the 
 **Not a v1 concern.** The application is a single-user productivity tool. The content (the user's tasks) is private and must never be indexed. No public-facing pages are part of v1.
 
 **Concrete posture:**
+
 - The application root serves a `noindex, nofollow` directive.
 - Any future README/marketing/landing page is a separate static site, distinct from the app.
 - App structure is JS-rendered; this is acceptable because there is no SEO surface to lose.
@@ -374,20 +405,20 @@ The "instant on open" claim applies to **every visit after the first**, not the 
 
 **Specific commitments:**
 
-| Concern | Commitment |
-|---|---|
-| Keyboard-only operation | 100% of MVP functionality reachable via keyboard. Every capability that has a mouse path also has a key. |
-| Visible focus indicator | Always present, distinguishable, and *not* color-only. Focus ring designed (not browser default), part of the visual identity. |
-| "No checkbox at rest" pattern | Each task row uses correct semantics (likely `role="listitem"` with an inner `role="checkbox"` element that is *visually* hidden at rest but *programmatically* always present). Screen readers must always announce completion state. The visual restraint must not become an a11y regression. |
-| Strike-through + dim for completion | Completion state communicated via *both* visual (strike + reduced opacity) *and* aria-state (`aria-checked="true"`). Color/opacity is never the sole signal. |
-| Hand-textured tick | Decorative; the underlying state announcement does not depend on the tick visual. |
-| Annunciator (sync error indicator) | `aria-live="polite"` region. Announces only on state change to abnormal. |
-| Live latency display (dev mode) | Hidden from screen readers (`aria-hidden`); developer affordance only. |
-| Color contrast | ≥4.5:1 for body text in both themes. Both themes designed to AA, no auto-inversion. |
-| `prefers-reduced-motion` | Honored. The "strike" animation reduces to instant state change; no decorative motion under reduced-motion. |
-| Touch target size | ≥44×44px on mobile (full-row tap target satisfies this). |
-| Text resizing | Content remains usable up to 200% zoom without horizontal scroll. Generous type baseline (≥16px) makes this easy. |
-| Empty state | Composed silence is *visually* sparse, but the capture input is properly labeled (visible label or `aria-label="Add a task"`). Never invisible to assistive tech. |
+| Concern                             | Commitment                                                                                                                                                                                                                                                                                      |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Keyboard-only operation             | 100% of MVP functionality reachable via keyboard. Every capability that has a mouse path also has a key.                                                                                                                                                                                        |
+| Visible focus indicator             | Always present, distinguishable, and _not_ color-only. Focus ring designed (not browser default), part of the visual identity.                                                                                                                                                                  |
+| "No checkbox at rest" pattern       | Each task row uses correct semantics (likely `role="listitem"` with an inner `role="checkbox"` element that is _visually_ hidden at rest but _programmatically_ always present). Screen readers must always announce completion state. The visual restraint must not become an a11y regression. |
+| Strike-through + dim for completion | Completion state communicated via _both_ visual (strike + reduced opacity) _and_ aria-state (`aria-checked="true"`). Color/opacity is never the sole signal.                                                                                                                                    |
+| Hand-textured tick                  | Decorative; the underlying state announcement does not depend on the tick visual.                                                                                                                                                                                                               |
+| Annunciator (sync error indicator)  | `aria-live="polite"` region. Announces only on state change to abnormal.                                                                                                                                                                                                                        |
+| Live latency display (dev mode)     | Hidden from screen readers (`aria-hidden`); developer affordance only.                                                                                                                                                                                                                          |
+| Color contrast                      | ≥4.5:1 for body text in both themes. Both themes designed to AA, no auto-inversion.                                                                                                                                                                                                             |
+| `prefers-reduced-motion`            | Honored. The "strike" animation reduces to instant state change; no decorative motion under reduced-motion.                                                                                                                                                                                     |
+| Touch target size                   | ≥44×44px on mobile (full-row tap target satisfies this).                                                                                                                                                                                                                                        |
+| Text resizing                       | Content remains usable up to 200% zoom without horizontal scroll. Generous type baseline (≥16px) makes this easy.                                                                                                                                                                               |
+| Empty state                         | Composed silence is _visually_ sparse, but the capture input is properly labeled (visible label or `aria-label="Add a task"`). Never invisible to assistive tech.                                                                                                                               |
 
 **Anti-pattern explicitly avoided:** "Cargo-cult dark mode" with insufficient contrast (per the brainstorm flip rule #10). Both themes must pass AA in their own right.
 
@@ -406,16 +437,18 @@ The "instant on open" claim applies to **every visit after the first**, not the 
 
 ### MVP Strategy & Philosophy
 
-**MVP type: experience-validation MVP, not problem-validation.** The personal-todo problem is fully solved by the existing market — there is no question whether users need a tool to track tasks. What is *not* validated is the underlying thesis of this product: **that the design-literate audience will pay attention to "productivity software whose differentiator is what it refuses to do, with the speed of thought as a CI-enforced commitment."**
+**MVP type: experience-validation MVP, not problem-validation.** The personal-todo problem is fully solved by the existing market — there is no question whether users need a tool to track tasks. What is _not_ validated is the underlying thesis of this product: **that the design-literate audience will pay attention to "productivity software whose differentiator is what it refuses to do, with the speed of thought as a CI-enforced commitment."**
 
 The MVP must therefore not be feature-thin in the conventional sense — that would test the wrong question. It must be **character-complete**: every Tier-1 distinctiveness move present (journal aesthetic, no checkbox at rest, capture-merged-into-list, hand-textured tick, latency budgets enforced, real undo proven by test, anti-feature contract observably honored). A reduced MVP that ships "just CRUD and we'll style it later" would not validate anything that matters about this product.
 
 **Validated learning the MVP delivers:**
-- Does the journal-page aesthetic read as "not a typical todo app" to outside design-literate reviewers? *(Target: ≥3 of 3 unprompted.)*
-- Are the latency claims survivable in real use, on real devices, with real CI? *(Target: zero CI-budget failures across the development period.)*
-- Does the anti-feature contract survive a quarter of development without leaking productivity-software defaults? *(Target: zero anti-feature-list violations at v1 ship.)*
+
+- Does the journal-page aesthetic read as "not a typical todo app" to outside design-literate reviewers? _(Target: ≥3 of 3 unprompted.)_
+- Are the latency claims survivable in real use, on real devices, with real CI? _(Target: zero CI-budget failures across the development period.)_
+- Does the anti-feature contract survive a quarter of development without leaking productivity-software defaults? _(Target: zero anti-feature-list violations at v1 ship.)_
 
 **Resource Requirements:**
+
 - **Team size:** Solo (one engineer/designer). The product's restraint thesis is well-suited to a single opinionated builder; design-by-committee actively works against it.
 - **Skills required:** Frontend (TypeScript, modern CSS, service workers, IndexedDB, performance instrumentation); backend (a small REST API with persistence — Node/Postgres or Go/SQLite or similar — depth matters less than discipline); test engineering (property-based testing, CI perf budgets, visual regression). All within one person's reach.
 - **Estimated MVP duration:** Not estimated here; left for the architecture and execution phases. The scope is small in surface area but deep in finish quality, which historically takes longer than a feature-thin MVP of comparable feature count.
@@ -435,35 +468,35 @@ The MVP feature list is defined in **Product Scope → MVP — Minimum Viable Pr
 
 The Growth and Vision phases are defined in **Product Scope → Growth Features (Post-MVP)** and **Product Scope → Vision (Future)** above and are not restated. Summary of strategic intent:
 
-- **Phase 2 (Growth):** multi-device sync, auth, sensible autocomplete, snooze, recurring tasks, search/focus, rebindable shortcuts, mobile-tuned interaction. *Strategic purpose:* makes the MVP competitive as a daily-driver tool for users beyond Sam-the-archetype.
-- **Phase 3 (Vision):** spatial canvas, timeline view, projects/tags, collaboration, public API, native apps. *Strategic purpose:* explores whether the Quiet Tool thesis generalizes beyond a personal todo, or stays defensively in its lane.
+- **Phase 2 (Growth):** multi-device sync, auth, sensible autocomplete, snooze, recurring tasks, search/focus, rebindable shortcuts, mobile-tuned interaction. _Strategic purpose:_ makes the MVP competitive as a daily-driver tool for users beyond Sam-the-archetype.
+- **Phase 3 (Vision):** spatial canvas, timeline view, projects/tags, collaboration, public API, native apps. _Strategic purpose:_ explores whether the Quiet Tool thesis generalizes beyond a personal todo, or stays defensively in its lane.
 
 ### Risk Mitigation Strategy
 
-**Technical risks** *(beyond those already in Innovation → Risk Mitigation):*
+**Technical risks** _(beyond those already in Innovation → Risk Mitigation):_
 
-| Risk | Mitigation |
-|---|---|
-| Service worker / IndexedDB / outbox interaction is buggy under real network conditions (offline → online → offline cycles) | Build a deterministic test harness that simulates network state transitions; property-based tests on the outbox replay logic; sync invariants enforced under stress (1000 randomized ops with simulated transitions). |
-| Latency budgets unattainable on chosen framework | De-risk early: prototype the capture line + 1000-row list at the beginning of MVP development on candidate framework(s), measure against budgets. If budget cannot be hit, pick a different framework before the rest of the app is built on it. |
-| First-ever load to interactive on slow networks blows the <2s budget | Aggressive bundle-size discipline (50KB initial / 150KB total) is the primary defense; CSS-only first paint of the empty state is a fallback to keep the capture line interactive even if JS is still loading. |
-| Cache-write-outbox conflict resolution wrong in edge cases (e.g., user completes then deletes the same task while offline) | Outbox treats writes as ordered ops; replays in sequence; idempotency keys server-side; soft-delete server-side preserves recovery. Property-based test for any operation sequence under offline → online transitions. |
+| Risk                                                                                                                       | Mitigation                                                                                                                                                                                                                                       |
+| -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Service worker / IndexedDB / outbox interaction is buggy under real network conditions (offline → online → offline cycles) | Build a deterministic test harness that simulates network state transitions; property-based tests on the outbox replay logic; sync invariants enforced under stress (1000 randomized ops with simulated transitions).                            |
+| Latency budgets unattainable on chosen framework                                                                           | De-risk early: prototype the capture line + 1000-row list at the beginning of MVP development on candidate framework(s), measure against budgets. If budget cannot be hit, pick a different framework before the rest of the app is built on it. |
+| First-ever load to interactive on slow networks blows the <2s budget                                                       | Aggressive bundle-size discipline (50KB initial / 150KB total) is the primary defense; CSS-only first paint of the empty state is a fallback to keep the capture line interactive even if JS is still loading.                                   |
+| Cache-write-outbox conflict resolution wrong in edge cases (e.g., user completes then deletes the same task while offline) | Outbox treats writes as ordered ops; replays in sequence; idempotency keys server-side; soft-delete server-side preserves recovery. Property-based test for any operation sequence under offline → online transitions.                           |
 
 **Market / audience risks:**
 
-| Risk | Mitigation |
-|---|---|
-| Audience too narrow — "design-literate makers" is small | Acceptable risk. This is a portfolio/craft project; broad audience is not a v1 success criterion. |
-| Aesthetic perceived as gimmicky rather than principled | Validation gate: ≥3 outside design-literate reviewers identify v1 as non-generic *unprompted*. If unprompted recognition fails, the aesthetic moves were not strong enough and the product needs more divergence, not less. |
-| Anti-feature contract is invisible — users don't notice what *isn't* there | Acceptable. The thesis is "dignified absence" — absence is the feature; calling attention to it would betray the thesis. The audience that responds to absence will recognize it; the audience that doesn't is not the target. |
+| Risk                                                                       | Mitigation                                                                                                                                                                                                                     |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Audience too narrow — "design-literate makers" is small                    | Acceptable risk. This is a portfolio/craft project; broad audience is not a v1 success criterion.                                                                                                                              |
+| Aesthetic perceived as gimmicky rather than principled                     | Validation gate: ≥3 outside design-literate reviewers identify v1 as non-generic _unprompted_. If unprompted recognition fails, the aesthetic moves were not strong enough and the product needs more divergence, not less.    |
+| Anti-feature contract is invisible — users don't notice what _isn't_ there | Acceptable. The thesis is "dignified absence" — absence is the feature; calling attention to it would betray the thesis. The audience that responds to absence will recognize it; the audience that doesn't is not the target. |
 
 **Resource risks:**
 
-| Risk | Mitigation |
-|---|---|
-| Solo build stalls on the test/quality discipline (latency CI, property-based tests, visual regression) — these are the slow-to-build parts | Front-load: build the CI perf-budget harness and the property-based test scaffolding *before* writing application code. Discipline that exists from day one is cheap; discipline retrofitted is expensive. |
-| Feature creep from the Growth or Vision lists into MVP | Anti-feature list and MVP-vs-Growth split in Product Scope are load-bearing. Re-read this PRD before merging anything that adds surface area. |
-| Distraction by polish before correctness | Test discipline orders the work: latency tests, sync invariant tests, undo correctness tests come *before* visual polish. Polish is the last 20%, not a parallel track. |
+| Risk                                                                                                                                       | Mitigation                                                                                                                                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Solo build stalls on the test/quality discipline (latency CI, property-based tests, visual regression) — these are the slow-to-build parts | Front-load: build the CI perf-budget harness and the property-based test scaffolding _before_ writing application code. Discipline that exists from day one is cheap; discipline retrofitted is expensive. |
+| Feature creep from the Growth or Vision lists into MVP                                                                                     | Anti-feature list and MVP-vs-Growth split in Product Scope are load-bearing. Re-read this PRD before merging anything that adds surface area.                                                              |
+| Distraction by polish before correctness                                                                                                   | Test discipline orders the work: latency tests, sync invariant tests, undo correctness tests come _before_ visual polish. Polish is the last 20%, not a parallel track.                                    |
 
 ## Functional Requirements
 
@@ -566,7 +599,7 @@ The Growth and Vision phases are defined in **Product Scope → Growth Features 
 ### Reliability & Data Integrity
 
 - **NFR-Rel-1:** No task data loss across page refresh, browser close, or device restart, other than tasks the user has explicitly deleted and not undone within the session.
-- **NFR-Rel-2:** Sync invariants — *never duplicate, never lose* — hold under a 1000-operation randomized workload including simulated offline/online/conflict transitions. Verified by property-based tests in CI.
+- **NFR-Rel-2:** Sync invariants — _never duplicate, never lose_ — hold under a 1000-operation randomized workload including simulated offline/online/conflict transitions. Verified by property-based tests in CI.
 - **NFR-Rel-3:** Every destructive operation has a reversibility test that verifies exact-state restoration (text, position, completion status). Coverage of destructive operations by reversibility tests: **100%**.
 - **NFR-Rel-4:** Server retains soft-deleted tasks for **≥30 days** to support cross-session recovery edge cases and future undo-beyond-session functionality.
 - **NFR-Rel-5:** Idempotency keys on all mutations; server must tolerate **≥10 retries** of the same operation without producing duplicate state.

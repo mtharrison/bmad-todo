@@ -1,7 +1,7 @@
 import { createStore } from "solid-js/store";
 import type { Mutation, Task } from "@bmad-todo/shared";
 import { generateId } from "../lib/ids";
-import { deleteCachedTask, getAllTasks, putTask } from "../sync/idb";
+import { deleteCachedTask, getAllOutboxEntries, getAllTasks, putTask } from "../sync/idb";
 import { drain, enqueueAndDrain, resetBackoff } from "../sync/outbox";
 import { fetchTasks } from "../sync/api-client";
 import { setSyncState } from "./annunciator-store";
@@ -81,7 +81,8 @@ export function updateTaskText(id: string, text: string): void {
   setTasks((t) => t.id === id, "text", text);
   setTasks((t) => t.id === id, "updatedAt", Date.now());
   const updated = tasks.find((t) => t.id === id);
-  if (updated) safePut(updated);
+  if (!updated) return;
+  safePut(updated);
   safeEnqueue({
     type: "update",
     id,
@@ -94,7 +95,8 @@ export function setTaskCompletedAt(id: string, value: number | null): void {
   setTasks((t) => t.id === id, "completedAt", value);
   setTasks((t) => t.id === id, "updatedAt", Date.now());
   const updated = tasks.find((t) => t.id === id);
-  if (updated) safePut(updated);
+  if (!updated) return;
+  safePut(updated);
   safeEnqueue({
     type: "update",
     id,
@@ -104,7 +106,9 @@ export function setTaskCompletedAt(id: string, value: number | null): void {
 }
 
 export function deleteTask(id: string): void {
+  const exists = tasks.some((t) => t.id === id);
   setTasks((prev) => prev.filter((t) => t.id !== id));
+  if (!exists) return;
   safeDelete(id);
   safeEnqueue({
     type: "delete",
@@ -171,18 +175,35 @@ export async function reconcileWithServer(): Promise<void> {
   try {
     const serverTasks = await fetchTasks();
     const serverById = new Map(serverTasks.map((t) => [t.id, t]));
-    // Conservative merge: server wins for tasks both sides know about, but
-    // any local-only task (e.g., still racing through the outbox) is
-    // preserved. This prevents reconcile from wiping optimistic creates that
-    // arrived after the GET /tasks request was sent.
-    const merged: ActiveTask[] = [...serverTasks];
+    const localById = new Map(tasks.map((t) => [t.id, t]));
+    const pending = await getAllOutboxEntries();
+    const pendingIds = new Set(pending.map((e) => e.mutation.id));
+
+    let hasConflict = false;
+    const merged: ActiveTask[] = [];
+    for (const st of serverTasks) {
+      if (pendingIds.has(st.id)) {
+        const local = localById.get(st.id);
+        if (local && st.updatedAt > local.updatedAt) {
+          hasConflict = true;
+        }
+        // Preserve local version for tasks with pending mutations
+        merged.push(local ?? st);
+      } else {
+        merged.push(st);
+      }
+    }
+    // Preserve local-only tasks not yet on server
     for (const t of tasks) {
       if (!serverById.has(t.id)) merged.push(t);
     }
     merged.sort((a, b) => (a.id < b.id ? 1 : -1));
     setTasks(() => merged);
-    for (const t of serverTasks) await putTask(t);
-    setSyncState("online");
+    // Update IDB cache with server tasks that have no pending mutations
+    for (const t of serverTasks) {
+      if (!pendingIds.has(t.id)) await putTask(t);
+    }
+    setSyncState(hasConflict ? "conflict" : "online");
   } catch {
     setSyncState("offline");
   }

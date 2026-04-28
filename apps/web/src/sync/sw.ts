@@ -7,11 +7,8 @@ declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<{ url: string; revision: string | null }>;
 };
 
-precacheAndRoute(self.__WB_MANIFEST);
-
 // Cloudflare Access endpoints must NEVER be cached (architecture AR8 / line 1028).
-// A stale 200 from /cdn-cgi/access/* would cause silent auth failures the
-// annunciator cannot recover from. Pass-through, never cache.
+// Registered BEFORE precacheAndRoute so this listener fires first.
 self.addEventListener("fetch", (event: FetchEvent) => {
   const url = new URL(event.request.url);
   if (url.pathname.startsWith("/cdn-cgi/access/")) {
@@ -19,13 +16,14 @@ self.addEventListener("fetch", (event: FetchEvent) => {
   }
 });
 
+precacheAndRoute(self.__WB_MANIFEST);
+
 registerRoute(
   ({ url }) => url.pathname.startsWith("/tasks"),
   new NetworkFirst({ cacheName: "tasks-api" }),
 );
 
 registerRoute(
-  ({ request }) =>
-    ["font", "style", "script", "image"].includes(request.destination),
+  ({ request }) => ["font", "style", "script", "image"].includes(request.destination),
   new CacheFirst({ cacheName: "static-assets" }),
 );

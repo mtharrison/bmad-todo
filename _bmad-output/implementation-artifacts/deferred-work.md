@@ -1,5 +1,17 @@
 # Deferred Work
 
+## Deferred from: code review of 1-9-cross-session-persistence-and-offline-first-sync (2026-04-28)
+
+- Unbounded `idempotency_keys` table growth — no TTL or purge logic; rows accumulate forever; `idx_idem_created` index exists but is never queried; single-user v1 volume is bounded; purge cron is Growth-scope
+- Production auth (`auth-jwt.ts`) throws unconditionally in production mode — intentional safety net per spec; Story 1.13 implements Cloudflare Access JWT verification
+- `hashRequestBody` uses `JSON.stringify` which is not canonical — key reordering produces different hashes; theoretical for v1 (client always sends same serialization order)
+- `createTask` repo uses server `Date.now()` for `updated_at` while `created_at` uses client-supplied timestamp — clock skew could make `updated_at < created_at`; deliberate design choice (server owns mutation timestamp)
+- Missing reload-while-offline E2E test per AC#3 — requires production SW shell cache from Story 1.13
+- No explicit >=10 retry idempotency test per AC#5 — property test exercises replay indirectly; specific 10-retry scenario is nice-to-have
+- `listActive` has no pagination — unbounded result set for GET /tasks; single-user todo app with practical limits; add LIMIT/offset when multi-user or large-scale
+- Idempotency race with concurrent same-key requests — read-then-write gap in middleware; theoretical in single-user v1 with SQLite serialization and single-threaded Node.js
+- `hydrateFromCache` blocks first render in `index.tsx` — matches spec intent (no empty flash before cached data); IDB read is <10ms for small datasets; risk of white screen on corrupted/slow IDB
+
 ## Deferred from: code review of 1-8-theme-toggle-dark-mode-and-accessibility-tokens (2026-04-28)
 
 - `design-tokens.test.ts` high-contrast contrast tests assert against locally declared hex constants instead of parsing the actual CSS, so a drift in `globals.css` `prefers-contrast: more` values would not be caught — align with the CSS-parsing approach used in the existing AA tests further down the file

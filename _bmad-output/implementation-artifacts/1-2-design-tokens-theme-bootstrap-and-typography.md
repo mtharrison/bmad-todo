@@ -64,6 +64,7 @@ So that first impressions of the app are calm and consistent regardless of my OS
 ### CRITICAL: Architecture vs Epics Discrepancies (Inherited from 1.1)
 
 **The architecture document is the source of truth.** Key corrections:
+
 1. **Framework**: SolidJS, NOT React. All component code uses Solid's JSX.
 2. **Directory**: `apps/api`, NOT `apps/server`.
 3. **Database**: SQLite, NOT PostgreSQL (relevant for later stories).
@@ -71,12 +72,14 @@ So that first impressions of the app are calm and consistent regardless of my OS
 ### Architecture Compliance
 
 **Tailwind v4 strict-token mode** (AR3, UX spec):
+
 - ALL colors, spacing, type sizes, radii, motion durations defined in per-theme `@theme` blocks
 - Default Tailwind palette and scales MUST be disabled
 - A lint rule prohibits unprefixed default-palette utilities (`bg-blue-500`, `text-gray-700`, `font-sans`)
 - Every utility must resolve to a project token (`bg-ink`, `text-paper`, `border-rule`, `font-default`)
 
 **Theming implementation** (AR9, UX-DR1, UX-DR4):
+
 - Two complete `@theme` blocks — `light` and `dark`
 - Theme switch via `[data-theme="light"|"dark"]` attribute on `<html>`
 - Theme attribute set by inline `<head>` script BEFORE first paint (prevents FOUC)
@@ -84,6 +87,7 @@ So that first impressions of the app are calm and consistent regardless of my OS
 - Default driven by `prefers-color-scheme` media query
 
 **Color identity** (UX spec):
+
 - Light: "Field Notes paper" — warm off-white + rust accent
 - Dark: "Reading-lamp coffee" — warm dark brown-black + verdigris accent
 - Each theme is a deliberate composition, NOT an auto-inversion
@@ -91,6 +95,7 @@ So that first impressions of the app are calm and consistent regardless of my OS
 - 5 tokens per theme is the ENTIRE color system
 
 **Typography** (UX-DR5, UX-DR6):
+
 - **Fraunces Variable** — free variable serif with personality at body sizes
 - Self-hosted at `apps/web/public/fonts/Fraunces-VF.woff2`
 - Subsetted to Latin + Latin-Ext (~100KB estimated)
@@ -107,28 +112,32 @@ So that first impressions of the app are calm and consistent regardless of my OS
 ### Technical Implementation Details
 
 **Theme bootstrap script (`theme-bootstrap.ts`):**
+
 ```typescript
 // This script runs inline in <head> BEFORE any other JS
 // It must be synchronous and tiny — no imports, no framework code
-(function() {
-  const stored = localStorage.getItem('theme');
-  const preferred = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  document.documentElement.setAttribute('data-theme', stored || preferred);
+(function () {
+  const stored = localStorage.getItem("theme");
+  const preferred = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", stored || preferred);
 })();
 ```
 
 **Tailwind v4 @theme structure in `globals.css`:**
+
 - Use `@theme` blocks to define CSS custom properties as Tailwind tokens
 - Scope theme-specific values to `[data-theme="light"]` and `[data-theme="dark"]` selectors
 - Define shared structural tokens (spacing, typography) in an unscoped `@theme` block
 - The token names must be semantic: `--color-ink`, `--color-paper`, NOT `--color-dark-brown`
 
 **Font acquisition:**
+
 - Download from Google Fonts API or fontsource: `Fraunces[opsz,wght].woff2`
 - Subset using `pyftsubset` or `glyphhanger` to Latin + Latin-Ext
 - Target file size: ~100KB (well within total 150KB budget — current JS is only 2.8KB gzipped)
 
 **Contrast ratio validation:**
+
 - Light: ink (#1F1A14) on paper (#F4EFE6) — compute relative luminance, verify >= 4.5:1
 - Light: muted (rgba(31,26,20,.6) composited on #F4EFE6) on paper — verify >= 4.5:1
 - Light: accent (#9C3B1B) on paper — verify >= 3:1
@@ -169,6 +178,7 @@ So that first impressions of the app are calm and consistent regardless of my OS
 ### Project Structure Notes
 
 Files created/modified by this story:
+
 ```
 apps/web/
 ├── public/

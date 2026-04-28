@@ -6,10 +6,7 @@ import { IdempotencyRepo } from "./db/repos/idempotency-repo.js";
 import { taskRoutes } from "./routes/tasks.js";
 import { healthRoutes } from "./routes/health.js";
 import { registerAuth } from "./middleware/auth-jwt.js";
-import {
-  errorEnvelope,
-  notFoundHandler,
-} from "./middleware/error-envelope.js";
+import { errorEnvelope, notFoundHandler } from "./middleware/error-envelope.js";
 import { registerRateLimit, type RateLimitOptions } from "./middleware/rate-limit.js";
 import { env } from "./env.js";
 
@@ -24,8 +21,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
 
   registerAuth(app);
   if (opts.rateLimit) {
-    const rl =
-      typeof opts.rateLimit === "object" ? opts.rateLimit : undefined;
+    const rl = typeof opts.rateLimit === "object" ? opts.rateLimit : undefined;
     await registerRateLimit(app, rl);
   }
 
@@ -37,6 +33,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
     await taskRoutes(scope, {
       tasksRepo: new TasksRepo(opts.kysely),
       idempotencyRepo: new IdempotencyRepo(opts.kysely),
+      kysely: opts.kysely,
     });
   });
 

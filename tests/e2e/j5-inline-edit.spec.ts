@@ -1,9 +1,7 @@
 import { test, expect } from "./test-fixtures";
 
 test.describe("Journey 5: Inline edit", () => {
-  test("click text, change, press Enter commits the edit", async ({
-    page,
-  }) => {
+  test("click text, change, press Enter commits the edit", async ({ page }) => {
     await page.goto("/");
 
     const captureInput = page.locator('input[aria-label="Add a task"]');
@@ -61,9 +59,7 @@ test.describe("Journey 5: Inline edit", () => {
     await expect(page.locator("li")).toHaveCount(0);
   });
 
-  test("no dialogs, toasts, or save indicators after edit", async ({
-    page,
-  }) => {
+  test("no dialogs, toasts, or save indicators after edit", async ({ page }) => {
     await page.goto("/");
 
     const captureInput = page.locator('input[aria-label="Add a task"]');
@@ -78,11 +74,7 @@ test.describe("Journey 5: Inline edit", () => {
     await textSpan.pressSequentially("Edited text");
     await page.keyboard.press("Enter");
 
-    await expect(
-      page.locator("text=/saving|loading|saved|done!|nice|great/i"),
-    ).toHaveCount(0);
-    await expect(
-      page.locator("[role=alertdialog], [role=dialog]"),
-    ).toHaveCount(0);
+    await expect(page.locator("text=/saving|loading|saved|done!|nice|great/i")).toHaveCount(0);
+    await expect(page.locator("[role=alertdialog], [role=dialog]")).toHaveCount(0);
   });
 });

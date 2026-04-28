@@ -1,8 +1,4 @@
-import type {
-  FastifyError,
-  FastifyReply,
-  FastifyRequest,
-} from "fastify";
+import type { FastifyError, FastifyReply, FastifyRequest } from "fastify";
 import { ZodError } from "zod";
 import { log } from "../lib/log.js";
 
@@ -103,10 +99,7 @@ export function errorEnvelope(
   });
 }
 
-export function notFoundHandler(
-  _req: FastifyRequest,
-  reply: FastifyReply,
-): void {
+export function notFoundHandler(_req: FastifyRequest, reply: FastifyReply): void {
   void reply.status(404).send({
     error: { code: "NotFound", message: "Route not found" },
   });

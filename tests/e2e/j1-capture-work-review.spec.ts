@@ -25,9 +25,7 @@ test.describe("Journey 1: Capture work review", () => {
     await expect(items2.nth(1)).toHaveText("Buy oat milk");
   });
 
-  test("no spinner, skeleton, or loading indicator appears", async ({
-    page,
-  }) => {
+  test("no spinner, skeleton, or loading indicator appears", async ({ page }) => {
     await page.goto("/");
 
     const captureInput = page.locator('input[aria-label="Add a task"]');

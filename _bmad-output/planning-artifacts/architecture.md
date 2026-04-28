@@ -1,19 +1,19 @@
 ---
 stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8]
 inputDocuments:
-  - '_bmad-output/planning-artifacts/prd.md'
-  - 'docs/Product Requirement Document (PRD) for the Todo App.md'
-  - '_bmad-output/planning-artifacts/ux-design-specification.md'
-  - '_bmad-output/planning-artifacts/ux-design-directions.html'
-  - '_bmad-output/brainstorming/brainstorming-session-2026-04-27-1709.md'
-workflowType: 'architecture'
+  - "_bmad-output/planning-artifacts/prd.md"
+  - "docs/Product Requirement Document (PRD) for the Todo App.md"
+  - "_bmad-output/planning-artifacts/ux-design-specification.md"
+  - "_bmad-output/planning-artifacts/ux-design-directions.html"
+  - "_bmad-output/brainstorming/brainstorming-session-2026-04-27-1709.md"
+workflowType: "architecture"
 workflowComplete: true
-status: 'complete'
+status: "complete"
 lastStep: 8
-completedAt: '2026-04-27'
-project_name: 'bmad-todo'
-user_name: 'Matt'
-date: '2026-04-27'
+completedAt: "2026-04-27"
+project_name: "bmad-todo"
+user_name: "Matt"
+date: "2026-04-27"
 ---
 
 # Architecture Decision Document
@@ -25,16 +25,18 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 ### Requirements Overview
 
 **Functional Requirements (54 total, 9 categories):**
-The product is functionally narrow — a single-screen task list with add/complete/uncomplete/edit/delete/undo, plus capture-anywhere, theming, and an annunciator failure surface. The architectural surface area is dominated not by feature count but by the **anti-feature contract** (FR46–54), which mandates the *absence* of common productivity-app patterns (toasts, spinners, modals, gamification, telemetry, mid-keystroke autocomplete, decorative motion). Architecturally this means: no toast/notification subsystem, no skeleton/loading state machinery, no analytics pipeline, no client-side telemetry, and a single failure-feedback surface (`<Annunciator>`) that all subsystems route into.
+The product is functionally narrow — a single-screen task list with add/complete/uncomplete/edit/delete/undo, plus capture-anywhere, theming, and an annunciator failure surface. The architectural surface area is dominated not by feature count but by the **anti-feature contract** (FR46–54), which mandates the _absence_ of common productivity-app patterns (toasts, spinners, modals, gamification, telemetry, mid-keystroke autocomplete, decorative motion). Architecturally this means: no toast/notification subsystem, no skeleton/loading state machinery, no analytics pipeline, no client-side telemetry, and a single failure-feedback surface (`<Annunciator>`) that all subsystems route into.
 
 **Non-Functional Requirements (31 total) — load-bearing for architecture:**
-- *Performance:* CI-enforced p95 latency budgets (16/50/100ms) and bundle budgets (50KB initial / 150KB total gzipped) constrain framework choice, render strategy, and the persistence read path. The cache-first read path is mandatory — no architecture that depends on a network round-trip for first paint after the first-ever visit can satisfy NFR-Perf-4.
-- *Reliability:* Sync must hold "never duplicate, never lose" under 1000-op stress with offline transitions; idempotency keys on every mutation; outbox preserves order across reconnect; soft-delete with ≥30-day server retention.
-- *Accessibility:* WCAG 2.1 AA verified by axe-core in CI; the "no checkbox at rest" pattern requires the visually-suppressed-but-semantically-present checkbox idiom.
-- *Privacy/Security:* per-user namespace from day one despite single-user v1; plain-text-only rendering (no HTML/markdown evaluation); HTTPS+HSTS; deploy access-restricted at network/transport layer in v1; clean seam for future OAuth/OIDC auth.
-- *Maintainability:* anti-feature regressions caught by visual-regression on empty state plus codebase grep for forbidden patterns (analytics SDKs, gamification keywords, blocking-animation patterns); full test suite <5 min CI.
+
+- _Performance:_ CI-enforced p95 latency budgets (16/50/100ms) and bundle budgets (50KB initial / 150KB total gzipped) constrain framework choice, render strategy, and the persistence read path. The cache-first read path is mandatory — no architecture that depends on a network round-trip for first paint after the first-ever visit can satisfy NFR-Perf-4.
+- _Reliability:_ Sync must hold "never duplicate, never lose" under 1000-op stress with offline transitions; idempotency keys on every mutation; outbox preserves order across reconnect; soft-delete with ≥30-day server retention.
+- _Accessibility:_ WCAG 2.1 AA verified by axe-core in CI; the "no checkbox at rest" pattern requires the visually-suppressed-but-semantically-present checkbox idiom.
+- _Privacy/Security:_ per-user namespace from day one despite single-user v1; plain-text-only rendering (no HTML/markdown evaluation); HTTPS+HSTS; deploy access-restricted at network/transport layer in v1; clean seam for future OAuth/OIDC auth.
+- _Maintainability:_ anti-feature regressions caught by visual-regression on empty state plus codebase grep for forbidden patterns (analytics SDKs, gamification keywords, blocking-animation patterns); full test suite <5 min CI.
 
 **Scale & Complexity:**
+
 - Primary domain: full-stack web (SPA + REST + PWA-installable), single-screen, single-user
 - Functional complexity: low (narrow feature set, deliberate)
 - Engineering discipline: elevated — latency budgets, sync correctness, and anti-feature drift are first-class architectural concerns
@@ -43,6 +45,7 @@ The product is functionally narrow — a single-screen task list with add/comple
 ### Technical Constraints & Dependencies
 
 **Hard constraints from PRD/UX (not negotiable in this workflow):**
+
 - Bundle ≤50KB initial / ≤150KB total gzipped (NFR-Perf-6) — likely rules out React/Vue at the framework layer; favors Solid, Svelte, Preact, or hand-rolled vanilla
 - Service worker is required (cache + offline outbox) — not optional
 - IndexedDB is required for the cache; OPFS may be considered but is not currently mandated
@@ -52,6 +55,7 @@ The product is functionally narrow — a single-screen task list with add/comple
 - Browser support: Chrome/Edge/Brave/Arc/Firefox last-2, Safari 16.4+, Mobile Safari 16.4+, Chrome Android last-2
 
 **Open at the architecture layer:**
+
 - Reactive framework selection (Solid / Svelte / Preact / vanilla) — must satisfy bundle budget AND <16ms keystroke→render under 1000-row workload
 - Backend runtime + persistence (Node/Bun/Deno/Go vs SQLite/Postgres)
 - Build pipeline / dev server
@@ -90,6 +94,7 @@ The bundle ceiling (50KB initial / 150KB total gzipped) and the hand-rolled 7-co
 ### Selected Starter: `create-solid` (plain Solid + Vite + TypeScript)
 
 **Rationale for Selection:**
+
 - **`create-solid` (the official Solid scaffolder) offers a "Solid + Vite + TypeScript" template** that produces a minimal SPA scaffold — Vite dev server, TypeScript config, JSX/TSX support, no router, no SSR. This is the smallest viable starting point for an SPA on Solid.
 - Solid's runtime (~7KB) plus Vite's tree-shaking plus a hand-rolled component layer is the only realistic path to the 50KB initial / 150KB total bundle budget given the Fraunces variable woff2 also competes for budget.
 - Plain Solid (not SolidStart) keeps the surface tiny — file-system routing, server actions, and SSR are out of scope for v1.
@@ -112,19 +117,23 @@ cd apps && pnpm create solid web
 ### Architectural Decisions Provided by Starter (`create-solid` "ts" template)
 
 **Language & Runtime:**
+
 - TypeScript (strict mode by default)
 - Node ≥ 20 LTS for the toolchain (Vite, vitest, etc.)
 
 **Styling Solution:**
+
 - The `ts` template ships no styling solution; Tailwind v4 is added immediately as the next install step (`pnpm add -D tailwindcss@latest @tailwindcss/vite`). Tailwind v4's Vite plugin replaces the v3 PostCSS-based setup; `@theme` blocks live in a single `globals.css`. **Strict-token mode** (locked in UX Step 6) is enforced via a custom `@theme` that disables default palettes; lint rule against unprefixed default-palette utilities is added in Phase 1 of the implementation roadmap.
 
 **Build Tooling:**
+
 - Vite (via `vite-plugin-solid`)
 - Production build outputs ES modules, code-split, with Vite's default tree-shaking and minification (esbuild + Rollup)
 - Manifest generation for service-worker pre-caching is added via `vite-plugin-pwa` in a later step (registered explicitly in step 4 — Persistence & Sync architecture)
 - Bundle-size budget is enforced in CI via a custom check on `dist/` output (added during step 5 — Patterns)
 
 **Testing Framework:**
+
 - The starter does not preinstall a test framework. Choices made in step 4 (Architectural Decisions): **Vitest** for unit + property-based tests (with `fast-check`), **Playwright** for E2E + a11y (axe-core) + visual regression + latency benchmarks.
 
 **Code Organization (monorepo, `pnpm` workspaces):**
@@ -157,6 +166,7 @@ bmad-todo/
 ```
 
 **Development Experience:**
+
 - HMR via Vite, sub-second reload
 - `pnpm --filter web dev` and `pnpm --filter api dev` run independently (or use `pnpm -r --parallel dev` for both)
 - TypeScript project references via `packages/shared` give end-to-end type safety on the wire format without runtime overhead
@@ -168,6 +178,7 @@ bmad-todo/
 ### Decision Priority Analysis
 
 **Critical (block implementation):**
+
 - Frontend framework + bundler (Solid + Vite + TS) — locked in step 3
 - Backend runtime + framework + DB driver (Node 20+ / Fastify / better-sqlite3) — locked in step 3
 - Database access layer (Kysely + raw SQL migrations)
@@ -176,6 +187,7 @@ bmad-todo/
 - Service-worker strategy (vite-plugin-pwa + custom Workbox)
 
 **Important (shape architecture):**
+
 - Hosting target (Fly.io)
 - Access restriction (Cloudflare Access in front of the Fly app)
 - CI provider (GitHub Actions)
@@ -184,6 +196,7 @@ bmad-todo/
 - v1 single-region deploy; no horizontal scaling targets
 
 **Deferred (Growth scope or post-MVP):**
+
 - OAuth/OIDC authentication mechanism (data model leaves clean seam; unblocked at any time)
 - Multi-device sync conflict resolution (CRDT or operational-transform — out of v1)
 - Postgres migration path (clean Kysely dialect swap when needed)
@@ -226,6 +239,7 @@ CREATE INDEX idx_idem_created ON idempotency_keys (created_at);  -- for periodic
 **Validation:** Zod schemas in `packages/shared/src/schema.ts` define `Task`, `CreateTaskInput`, `UpdateTaskInput`, `Mutation`, and the `Idempotency-Key` format. Server validates with `parse()` at the route boundary. Client gets `z.infer<>` types for free. Fastify integration via `fastify-type-provider-zod` for typed routes.
 
 **Caching strategy (client):** IndexedDB via `idb` wrapper. Two object stores:
+
 - `tasks` — keyed by id; the cached representation of server state (last-known good plus pending local mutations applied).
 - `outbox` — keyed by client-generated mutation id (UUIDv7). Each entry: `{ id, type: 'create'|'update'|'delete', payload, idempotencyKey, queuedAt }`. FIFO replay on reconnect.
 
@@ -238,6 +252,7 @@ CREATE INDEX idx_idem_created ON idempotency_keys (created_at);  -- for periodic
 **Clean seam for Growth-scope auth:** the `user_namespace` column is populated from the verified Cloudflare Access JWT's `sub` claim today. When v1 graduates to multi-user, the JWT-to-namespace mapping is the only swap required — no schema migration, no rewrite of route handlers.
 
 **Security posture:**
+
 - All transport HTTPS via Cloudflare → Fly. HTTP redirected. HSTS with `includeSubDomains` and `preload`.
 - All user-supplied text rendered as plain text only (FR4, NFR-Sec-1). No HTML, markdown, or script evaluated. Solid's JSX uses `textContent` by default; explicit `innerHTML` is forbidden by lint.
 - Server enforces task text ≤ 10,000 chars (NFR-Sec-2) — both Zod schema and SQL CHECK constraint.
@@ -249,15 +264,16 @@ CREATE INDEX idx_idem_created ON idempotency_keys (created_at);  -- for periodic
 
 **REST endpoints (single resource, narrow surface):**
 
-| Method | Path | Purpose |
-|---|---|---|
-| `GET` | `/tasks` | Returns all non-deleted tasks for the namespace, newest-first |
-| `POST` | `/tasks` | Create. Body: `{ id, text, createdAt }`. Idempotency-Key header required. |
-| `PATCH` | `/tasks/:id` | Update text and/or completed_at. Idempotency-Key header required. |
-| `DELETE` | `/tasks/:id` | Soft-delete (sets `deleted_at`). Idempotency-Key header required. |
-| `GET` | `/health` | Liveness probe for Fly. Returns 200 unconditionally. |
+| Method   | Path         | Purpose                                                                   |
+| -------- | ------------ | ------------------------------------------------------------------------- |
+| `GET`    | `/tasks`     | Returns all non-deleted tasks for the namespace, newest-first             |
+| `POST`   | `/tasks`     | Create. Body: `{ id, text, createdAt }`. Idempotency-Key header required. |
+| `PATCH`  | `/tasks/:id` | Update text and/or completed_at. Idempotency-Key header required.         |
+| `DELETE` | `/tasks/:id` | Soft-delete (sets `deleted_at`). Idempotency-Key header required.         |
+| `GET`    | `/health`    | Liveness probe for Fly. Returns 200 unconditionally.                      |
 
 **Idempotency contract:**
+
 - Every mutating request requires an `Idempotency-Key` header (UUIDv7, client-generated).
 - Server stores `(key, request_hash, response)` for 24 h. Replay of a request with the same key returns the stored response without re-executing the mutation. Replay with a different request body but the same key returns 409.
 - This makes the outbox safe to replay on reconnect (NFR-Rel-5: ≥10 retries without producing duplicate state).
@@ -277,6 +293,7 @@ Error codes are an enum: `ValidationError | NotFound | Conflict | RateLimited | 
 ### Frontend Architecture
 
 **Reactivity primitives (idiomatic Solid):**
+
 - `createSignal` for individual reactive values (e.g., theme, focused-row index).
 - `createStore` for the task list and undo stack — fine-grained reactivity at the task level so adding/completing/editing one task does not re-render the whole list.
 - `createResource` for the initial cache-then-server fetch pattern.
@@ -291,12 +308,14 @@ Error codes are an enum: `ValidationError | NotFound | Conflict | RateLimited | 
 **Routing:** none. The app is single-screen. No `solid-router`, no path-based state.
 
 **Bundle optimization:**
+
 - Vite's default tree-shaking + esbuild minification.
 - Manual chunk for the service worker (separate from app shell).
 - Fraunces variable woff2 self-hosted, subsetted to Latin + Latin-Ext, `font-display: block` ≤200ms then `swap` (matches UX Step 8 spec).
 - CI fails the build if `dist/` initial-JS exceeds 50KB gzipped or total exceeds 150KB gzipped (NFR-Perf-6).
 
 **Service worker:**
+
 - Generated by `vite-plugin-pwa` with `injectManifest` strategy (custom SW source, plugin handles precache list + registration boilerplate).
 - Workbox modules used selectively: `precaching`, `routing`, `strategies` (`CacheFirst` for assets, `NetworkFirst` for `/tasks`), `background-sync` for outbox replay.
 - Custom logic: outbox dispatch with idempotency keys, queue-order preservation, annunciator state messages to the page via `postMessage`.
@@ -308,37 +327,41 @@ Error codes are an enum: `ValidationError | NotFound | Conflict | RateLimited | 
 **Hosting:** **Fly.io** single-region (closest to Matt). One small `shared-cpu-1x` VM (256MB RAM is plenty for SQLite + Fastify at this scale). Persistent volume mounted at `/data` for the SQLite file; nightly volume snapshot retained 14 days.
 
 **Topology:**
+
 - Cloudflare → Cloudflare Access gate → Fly app
 - Fly app process: a single Node process running both Fastify (API) and serving the built SPA static assets from `apps/web/dist/`. Same origin avoids CORS entirely.
 - SQLite on the persistent volume; WAL mode; backed up via Fly volume snapshot + a daily logical dump (`sqlite3 .backup`) shipped to Cloudflare R2.
 
 **Environments:**
+
 - `development` — local Vite dev server (`apps/web`) + local Fastify (`apps/api`), shared SQLite at `./data/dev.db`. CORS allowed from `localhost`.
 - `production` — single Fly app. No staging in v1 (single user, single deploy; the CI gate is the staging environment).
 
 **CI/CD (GitHub Actions):**
 
-| Job | Runs on | Fails build if |
-|---|---|---|
-| `lint` | every PR | ESLint or Prettier violation; anti-feature codebase grep matches |
-| `typecheck` | every PR | `tsc --noEmit` errors anywhere in the workspace |
-| `unit-and-property` | every PR | `vitest` failure; fast-check counterexample on any destructive op |
-| `e2e-and-a11y` | every PR | Playwright failure; axe-core violation; visual-regression diff |
-| `latency-budget` | every PR | p95 keystroke→render >16ms, check→strike >50ms, add→appear >100ms |
-| `bundle-budget` | every PR | initial JS >50KB or total >150KB gzipped |
-| `audit` | every PR + nightly | `pnpm audit --audit-level=high` |
-| `stress-sync` | nightly + on-tag | 1000-op outbox replay produces duplicates or losses |
-| `deploy` | push to `main` | any of the above failed |
+| Job                 | Runs on            | Fails build if                                                    |
+| ------------------- | ------------------ | ----------------------------------------------------------------- |
+| `lint`              | every PR           | ESLint or Prettier violation; anti-feature codebase grep matches  |
+| `typecheck`         | every PR           | `tsc --noEmit` errors anywhere in the workspace                   |
+| `unit-and-property` | every PR           | `vitest` failure; fast-check counterexample on any destructive op |
+| `e2e-and-a11y`      | every PR           | Playwright failure; axe-core violation; visual-regression diff    |
+| `latency-budget`    | every PR           | p95 keystroke→render >16ms, check→strike >50ms, add→appear >100ms |
+| `bundle-budget`     | every PR           | initial JS >50KB or total >150KB gzipped                          |
+| `audit`             | every PR + nightly | `pnpm audit --audit-level=high`                                   |
+| `stress-sync`       | nightly + on-tag   | 1000-op outbox replay produces duplicates or losses               |
+| `deploy`            | push to `main`     | any of the above failed                                           |
 
 Deploy is a single `flyctl deploy` step; Fly handles the rolling restart. Migrations apply at boot.
 
 **Logging & observability:**
+
 - Backend: `pino` (Fastify's default logger). Structured JSON to stdout. Fly's log shipping retains 7 days; tail via `flyctl logs`.
 - Task text is **never logged in plaintext** (NFR-Priv-1). Mutation log entries include task id, type, namespace, and outcome — not text content.
 - No production telemetry on user behavior (NFR-Obs-3). No analytics SDK in the client. The annunciator and the dev-mode latency display are the user-facing observability.
 - CI latency-budget job is the production-facing perf signal — there is no production performance monitoring service in v1.
 
 **Backups & recovery:**
+
 - Volume snapshots daily, retained 14 days.
 - `sqlite3 .backup` daily, shipped to R2, retained 30 days.
 - DR plan: launch a new Fly volume from snapshot or restore from R2 dump. RTO target: under 1 hour; RPO: 24 hours. Personal-use posture; not a service-level commitment.
@@ -359,6 +382,7 @@ Deploy is a single `flyctl deploy` step; Fly handles the rolling restart. Migrat
 10. Manual screen-reader pass; polish.
 
 **Cross-component dependencies:**
+
 - `Idempotency-Key` is the load-bearing primitive for both server (dedupe table) and client (outbox replay). It MUST be specified in `packages/shared` before either side is implemented; both sides must agree on UUIDv7 generation.
 - `user_namespace` plumbing must exist end-to-end from day one (`'default'` value), even though only one user exists in v1 — adding it later is a schema migration, not a refactor.
 - Soft-delete (`deleted_at`) is what enables session-long undo across the network boundary; the API contract for `DELETE` and the client outbox both depend on this being settled in step 4 before either side codes.
@@ -373,12 +397,14 @@ These rules exist so any agent (human or AI) writing code in this repo makes the
 ### Naming Patterns
 
 **Database (snake_case, plural tables):**
+
 - Tables: `tasks`, `idempotency_keys`, `migrations` — plural, snake_case.
 - Columns: `user_namespace`, `created_at`, `deleted_at` — snake_case.
 - Indexes: `idx_<table>_<columns>` — e.g., `idx_tasks_namespace_created`.
 - Timestamps: integer epoch ms (`INTEGER` in SQLite). Never `TEXT` ISO strings, never `DATETIME`.
 
 **TypeScript (camelCase, single source of truth via Kysely + Zod):**
+
 - Variables, functions, fields: `camelCase` (`userNamespace`, `createdAt`).
 - Types and interfaces: `PascalCase` (`Task`, `CreateTaskInput`, `Mutation`).
 - Constants: `SCREAMING_SNAKE_CASE` only for true compile-time constants (`MAX_TASK_LENGTH`, `IDEMPOTENCY_TTL_MS`); regular config values stay `camelCase`.
@@ -386,6 +412,7 @@ These rules exist so any agent (human or AI) writing code in this repo makes the
 - DB ↔ TS mapping: Kysely's `Selectable<T>` + a thin `toTask(row)` mapper in `apps/api/src/db/mappers.ts` converts `snake_case` rows to `camelCase` objects. Never expose raw DB rows past the repo layer.
 
 **API (camelCase JSON, kebab-case URLs, plural resources):**
+
 - URLs: `/tasks`, `/tasks/:id`, `/health` — plural, kebab-case if multi-word.
 - Path params: `:id` (Fastify style), never `{id}`.
 - Headers: `Idempotency-Key`, `Cf-Access-Jwt-Assertion` — `Train-Case` per HTTP convention.
@@ -393,6 +420,7 @@ These rules exist so any agent (human or AI) writing code in this repo makes the
 - Status codes: `200` for read success, `201` for create, `204` for delete success, `400` for validation, `404` for not-found, `409` for conflict (incl. idempotency-key-with-different-body), `429` for rate-limited, `5xx` for server failures.
 
 **Files & directories (kebab-case for files, PascalCase for component files):**
+
 - Components: `apps/web/src/components/CaptureLine.tsx` — `PascalCase.tsx` matching the component name.
 - Hooks / non-component modules: `apps/web/src/store/use-task-store.ts` — `kebab-case.ts`.
 - Backend modules: `apps/api/src/routes/tasks.ts`, `apps/api/src/db/mappers.ts` — `kebab-case.ts`.
@@ -402,6 +430,7 @@ These rules exist so any agent (human or AI) writing code in this repo makes the
 ### Structure Patterns
 
 **Test colocation rules:**
+
 - Unit + property-based tests: co-located with source (`Foo.test.ts` next to `Foo.ts`). Ran by `vitest`.
 - Integration tests (route + DB): `apps/api/src/routes/*.integration.test.ts`. Spin up an in-memory SQLite per test.
 - E2E + a11y + visual-regression: `tests/e2e/<journey>.spec.ts`. Playwright owns this directory.
@@ -409,6 +438,7 @@ These rules exist so any agent (human or AI) writing code in this repo makes the
 - Sync stress tests: `tests/property/sync-invariants.test.ts`. fast-check + simulated network state machine.
 
 **Module boundaries (frontend):**
+
 - `components/` — presentation only. No fetch, no IDB, no business logic. Receives signals/stores via props or `useContext`.
 - `store/` — reactive state owners. The task store, the undo stack, the theme, the annunciator state. No DOM access.
 - `sync/` — IndexedDB wrappers, fetch wrappers, outbox dispatch, service-worker message handlers. No reactivity primitives directly; emits state changes that `store/` reacts to.
@@ -416,6 +446,7 @@ These rules exist so any agent (human or AI) writing code in this repo makes the
 - Imports: components may import from `store/`; `store/` may import from `sync/`; `sync/` may not import from `components/` or `store/`. ESLint `import/no-restricted-paths` enforces.
 
 **Module boundaries (backend):**
+
 - `routes/` — request validation (Zod), call repo, format response. No SQL, no business logic.
 - `db/` — Kysely queries and row → object mappers. No HTTP concerns.
 - `db/repos/` — one file per resource (`tasks-repo.ts`). Pure data access; transactions live here.
@@ -445,16 +476,19 @@ These rules exist so any agent (human or AI) writing code in this repo makes the
 `code` is one of: `ValidationError | NotFound | Conflict | RateLimited | ServerError`. `message` is human-readable; the client never displays it (annunciator-only) but it's present for log correlation.
 
 **Date/time format:**
+
 - On the wire and in storage: integer epoch ms (`createdAt: 1735200000000`).
 - In the DOM / for display: convert at the render boundary using `Intl.DateTimeFormat` with the user's locale. Display only happens in the dev-mode latency display in v1; no task timestamps are shown to the user.
 - Generation: `Date.now()` in TS, `unixepoch('subsec') * 1000` in SQL (SQLite ≥3.42).
 
 **ID format:**
+
 - All IDs are UUIDv7, generated client-side via the `uuidv7` package. Lexicographically time-ordered, so DB inserts and `ORDER BY id DESC` give the same ordering as `ORDER BY created_at DESC` for free.
 - Never use SQLite `INTEGER PRIMARY KEY` autoincrement. Client must be able to assign IDs without a server round-trip (optimistic writes depend on this).
 - Never expose internal numeric row IDs anywhere — there are none.
 
 **Idempotency-Key format:**
+
 - UUIDv7, fresh per mutation (not reused across retries of different mutations).
 - Sent as `Idempotency-Key: <uuid>` header on every mutating request.
 - Server stores `(key, request_hash, response_status, response_body)` for 24 h; replay returns stored response.
@@ -462,6 +496,7 @@ These rules exist so any agent (human or AI) writing code in this repo makes the
 ### Communication Patterns
 
 **Service worker ↔ page communication (single channel, typed messages):**
+
 - Defined in `packages/shared/src/sw-messages.ts` as a discriminated union.
 - Page → SW: `{ type: 'flush-outbox' }`, `{ type: 'reconcile' }`.
 - SW → page: `{ type: 'sync-state', state: 'online' | 'offline' | 'conflict' | 'error' }`, `{ type: 'mutation-applied', id }`, `{ type: 'mutation-rejected', id, reason }`.
@@ -469,12 +504,14 @@ These rules exist so any agent (human or AI) writing code in this repo makes the
 - The page state's `annunciator` signal is updated solely by `sync-state` messages — **no other code path writes to it**.
 
 **State management patterns (Solid):**
+
 - Reactive primitives only inside `store/`. Components receive signals or store accessors via props.
 - Store updates are immutable: `setStore('tasks', tasks => [...tasks, newTask])`. No direct push/splice on store-owned arrays.
 - The undo stack is a separate store (`createStore<UndoEntry[]>([])`). Each entry: `{ inverseMutation, timestamp }`. `u` pops; the popped inverse mutation is dispatched through the same path as user mutations (so it goes through the outbox, gets an idempotency key, and reconciles like any other write).
 - No global event bus. Cross-store communication happens by reading the other store's signals reactively.
 
 **Action / mutation naming:**
+
 - Mutations are typed values, not functions: `Mutation = { type: 'create' | 'update' | 'delete', ... }`. Defined in `packages/shared/src/schema.ts`.
 - Functions that produce mutations: `verbNoun` form (`createTask`, `completeTask`, `deleteTask`).
 - Functions that apply mutations: `applyMutation(store, mutation)` — single entry point, used identically for user actions and undo replays.
@@ -490,11 +527,13 @@ These rules exist so any agent (human or AI) writing code in this repo makes the
 There is no per-component `try/catch`-with-toast. There is no React-style error boundary in the conventional sense. **All failures route through the annunciator.** This is enforced by codebase grep for `toast(`, `Snackbar`, `<Modal`, etc. (NFR-Maint-3).
 
 **Loading states — there are none:**
+
 - Cache-first paint means there is no "loading" state for the task list after the first-ever visit.
 - First-ever visit: the empty composition + cursor renders immediately (no network dependency); tasks fetch in parallel and merge in. No skeleton, no spinner.
 - Pattern: any component or store reading `tasks` reads the cache snapshot synchronously. Network state is reflected only in the annunciator, not in component-local loading flags.
 
 **Retry patterns:**
+
 - Mutating requests are retried by the SW outbox using exponential backoff (1s, 2s, 4s, 8s, 16s, capped at 60s). Idempotency key is preserved across retries.
 - Non-mutating GETs are not retried automatically — if a reconciliation fetch fails, the cache simply stays current and the next user action triggers a fresh attempt.
 - 429 (rate-limited): SW honors `Retry-After` header; otherwise uses backoff.
@@ -504,9 +543,9 @@ There is no per-component `try/catch`-with-toast. There is no React-style error 
 
 ```ts
 // shape — always JSON, never f-string
-log.info({ event: 'task.created', taskId, userNamespace, idempotencyKey, status: 'new' });
-log.warn({ event: 'idempotency.replayed', taskId, userNamespace, idempotencyKey });
-log.error({ event: 'db.write_failed', err: serializeError(err), userNamespace });
+log.info({ event: "task.created", taskId, userNamespace, idempotencyKey, status: "new" });
+log.warn({ event: "idempotency.replayed", taskId, userNamespace, idempotencyKey });
+log.error({ event: "db.write_failed", err: serializeError(err), userNamespace });
 ```
 
 - `event` is the canonical name (`<resource>.<verb>` or `<subsystem>.<failure>`).
@@ -514,18 +553,21 @@ log.error({ event: 'db.write_failed', err: serializeError(err), userNamespace })
 - No `console.log` in committed code. Lint rule `no-console` errors except in the Vite dev server bootstrap (whitelisted file).
 
 **Frontend logging:**
+
 - Production: no logs. The browser console is silent.
 - Dev mode (`cmd+shift+L` per FR44): the latency display is the only output. Optional verbose flag enables sync-state transitions to console.
 
 ### Enforcement Guidelines
 
 **All AI agents and human contributors MUST:**
+
 1. Read this section before writing any code in this repo.
 2. Use the patterns above without variation. If a pattern conflicts with the task, raise it as a question and update the architecture doc — do not silently deviate.
 3. Run the full pre-commit hook (lint + typecheck + vitest changed-files) before pushing.
 4. Treat any CI failure as a hard stop — never `--no-verify`, never disable a CI job.
 
 **Pattern enforcement (mechanical, in CI):**
+
 - ESLint with `import/no-restricted-paths`, `no-console`, `no-default-export`, `no-restricted-syntax` (forbidden patterns from anti-feature contract).
 - TypeScript `strict: true`, `noUncheckedIndexedAccess: true`, `exactOptionalPropertyTypes: true`.
 - Codebase grep job (in `lint` CI step) fails on: `toast(`, `Snackbar`, `Toaster`, `Skeleton`, `Spinner`, `confirm(`, `alert(`, `<Modal`, `<Dialog`, `🎉`, `✨`, `🏆`, `Streak`, `Achievement`, `XP`, `Karma`.
@@ -533,6 +575,7 @@ log.error({ event: 'db.write_failed', err: serializeError(err), userNamespace })
 - Bundle-size check on `dist/`.
 
 **Pattern updates:**
+
 - Pattern changes happen here, in this section, via PR. The PR description states what changed and why.
 - Patterns are not changed during a feature PR — separate the discussion of the rule from the work the rule enables.
 
@@ -553,13 +596,24 @@ export const Task = z.object({
 export type Task = z.infer<typeof Task>;
 
 // apps/api/src/routes/tasks.ts
-app.post('/tasks', { schema: { body: CreateTaskInput } }, async (req, reply) => {
-  const idempotencyKey = req.headers['idempotency-key'] as string;
+app.post("/tasks", { schema: { body: CreateTaskInput } }, async (req, reply) => {
+  const idempotencyKey = req.headers["idempotency-key"] as string;
   const cached = await idempotencyRepo.find(idempotencyKey, req.userNamespace);
   if (cached) return reply.status(cached.responseStatus).send(JSON.parse(cached.responseBody));
   const task = await tasksRepo.create({ ...req.body, userNamespace: req.userNamespace });
-  await idempotencyRepo.store(idempotencyKey, req.userNamespace, hash(req.body), 201, JSON.stringify(task));
-  log.info({ event: 'task.created', taskId: task.id, userNamespace: req.userNamespace, idempotencyKey });
+  await idempotencyRepo.store(
+    idempotencyKey,
+    req.userNamespace,
+    hash(req.body),
+    201,
+    JSON.stringify(task),
+  );
+  log.info({
+    event: "task.created",
+    taskId: task.id,
+    userNamespace: req.userNamespace,
+    idempotencyKey,
+  });
   return reply.status(201).send(task);
 });
 
@@ -567,15 +621,15 @@ app.post('/tasks', { schema: { body: CreateTaskInput } }, async (req, reply) => 
 export function createTask(text: string) {
   const task: Task = {
     id: uuidv7(),
-    userNamespace: 'default',
+    userNamespace: "default",
     text,
     completedAt: null,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
-  setStore('tasks', tasks => [task, ...tasks]);                // optimistic, immediate
-  pushUndo({ inverseMutation: { type: 'delete', id: task.id } });
-  enqueueOutbox({ type: 'create', payload: task, idempotencyKey: uuidv7() });
+  setStore("tasks", (tasks) => [task, ...tasks]); // optimistic, immediate
+  pushUndo({ inverseMutation: { type: "delete", id: task.id } });
+  enqueueOutbox({ type: "create", payload: task, idempotencyKey: uuidv7() });
 }
 ```
 
@@ -764,11 +818,13 @@ bmad-todo/
 ### Architectural Boundaries
 
 **API boundaries (HTTP layer):**
+
 - External (browser → Fly app): 5 routes total (`GET /tasks`, `POST /tasks`, `PATCH /tasks/:id`, `DELETE /tasks/:id`, `GET /health`). All non-health routes require `Cf-Access-Jwt-Assertion`; all mutating routes require `Idempotency-Key`.
 - No internal RPC layer; the Fastify process serves both API routes and the SPA static assets from `apps/web/dist/` mounted at `/` (same origin → no CORS).
 - No third-party APIs are called from server in v1. (Cloudflare Access JWKS is fetched once at boot; cached.)
 
 **Component boundaries (frontend):**
+
 - The 7 components in `apps/web/src/components/` (plus `DevLatencyDisplay`) are the only renderable units. New components require an explicit UX-spec amendment.
 - Components are **presentation-only** — they read signals from props, dispatch actions imported from `store/`. They never `fetch`, never read IndexedDB, never call SW APIs directly.
 - Component → Store: components read `store/*` accessors and call `store/*` mutators. One direction.
@@ -776,11 +832,13 @@ bmad-todo/
 - Sync → Store: sync emits via SW `postMessage` → `sw-bridge.ts` → `annunciator-store` / `task-store`. The bridge is the only place sync writes to stores.
 
 **Service boundaries (backend):**
+
 - `routes/` ↔ `db/repos/`: routes call repo methods. Repos are the only code that uses Kysely. Routes never `db.selectFrom(...)`.
 - `middleware/` ↔ `routes/`: middleware adds request decorations (`req.userNamespace`, `req.idempotencyResult`). Routes consume them. No upward dependency.
 - `db/migrate.ts` is invoked once at server boot from `server.ts`; never from a route handler.
 
 **Data boundaries:**
+
 - The DB schema in `apps/api/migrations/` is the source of truth for column shape. The Kysely `Database` interface in `db/kysely.ts` is generated/maintained against it.
 - `db/mappers.ts` is the only place that converts between the snake_case row shape and the camelCase domain shape. The shape past `mappers.ts` is the same shape on the wire and in `packages/shared`.
 - IndexedDB schema lives in `apps/web/src/sync/idb.ts` (`tasks` and `outbox` object stores). Migrations to the IDB schema use the IDB `version` mechanism; migration steps documented in code.
@@ -820,6 +878,7 @@ bmad-todo/
 ### Integration Points
 
 **Internal communication:**
+
 - Browser ↔ SW: `postMessage` typed via `packages/shared/src/sw-messages.ts`.
 - Page ↔ Store: Solid signals/stores read directly; mutations go through `applyMutation`.
 - Store ↔ Sync: store calls `enqueueOutbox`; sync notifies store via `sw-bridge`.
@@ -827,6 +886,7 @@ bmad-todo/
 - Migrations ↔ DB: one-shot at boot via `migrate.ts`.
 
 **External integrations:**
+
 - **Cloudflare Access** in front of the Fly app — JWT in `Cf-Access-Jwt-Assertion` header verified against the team JWKS endpoint (cached at server boot).
 - **Cloudflare R2** for daily SQLite backup — invoked by Fly cron task running `scripts/backup-db.sh`.
 - **Fly platform APIs** for deploy, volume snapshots, log shipping — handled via `flyctl`, not from app code.
@@ -882,27 +942,32 @@ user opens app
 ### File Organization Patterns
 
 **Configuration files (root-level, predictable names):**
+
 - `pnpm-workspace.yaml`, `package.json`, `tsconfig.base.json`, `.eslintrc.cjs`, `.prettierrc`, `.editorconfig`, `.nvmrc`, `.npmrc`, `LICENSE`, `README.md`.
 - Per-package configs (`apps/*/package.json`, `apps/*/tsconfig.json`, `apps/web/vite.config.ts`) extend root.
 - No nested config files outside packages — no `src/config.ts` patterns; runtime config is in `apps/api/src/env.ts` (Zod-validated process.env).
 
 **Source organization (clear-by-name, never by-feature in v1):**
+
 - Frontend: organized by **layer** (components / store / sync / styles / lib), not by feature. The product has one feature; cross-feature organization would be premature.
 - Backend: organized by **HTTP concern** (routes / middleware / db / lib).
 - The 7-component cap means no `components/feature-x/` subdirectories. Each component is a top-level file in `components/`.
 
 **Test organization:**
+
 - Unit + small-integration: co-located, `*.test.ts(x)` next to source.
 - Cross-cutting: `tests/property/` (property-based), `tests/perf/` (latency), `tests/e2e/` (Playwright).
 - No global `__mocks__/` directory — Vitest module mocking is sufficient and inline.
 
 **Asset organization:**
+
 - Static assets in `apps/web/public/`. Fonts subsetted ahead-of-time and committed as `.woff2`. Icons committed as `.png` (precomputed; no runtime SVG-to-icon pipeline).
 - No CMS, no asset bundler service. Everything is a checked-in file.
 
 ### Development Workflow Integration
 
 **Development server structure:**
+
 - `pnpm -r --parallel dev` launches:
   - `apps/web`: Vite dev server on `:5173` with HMR
   - `apps/api`: Fastify dev (via `tsx watch`) on `:3000`, serving against `./data/dev.db`
@@ -911,6 +976,7 @@ user opens app
 - Cloudflare Access is bypassed in dev — `auth-jwt` middleware checks `process.env.NODE_ENV === 'production'` and is skipped locally.
 
 **Build process structure:**
+
 1. `pnpm -r build` →
    - `packages/shared`: `tsc -b` produces `dist/` with `.d.ts` and `.js`.
    - `apps/web`: `vite build` produces static `dist/` (HTML + JS + CSS + service worker + manifest + fonts).
@@ -919,6 +985,7 @@ user opens app
 3. CI also runs the test pyramid: vitest, then Playwright, then perf benches. Failure at any layer fails the build.
 
 **Deployment structure:**
+
 - Single Docker image built from `infra/Dockerfile` (multi-stage):
   - Stage 1: install pnpm deps, build all workspaces.
   - Stage 2: copy `apps/api/dist`, `apps/web/dist`, `apps/api/migrations`, `node_modules` (production-only via `pnpm deploy`).
@@ -931,16 +998,19 @@ user opens app
 ### Coherence Validation ✅ (with caveats)
 
 **Decision compatibility:**
+
 - Solid (~7KB runtime) + Vite + Tailwind v4 + Fraunces VF (~100KB subsetted) + idb (~1KB) + Workbox-selective (~5–8KB) leaves comfortable headroom under the 50KB initial / 150KB total bundle budget — provided application code and the SW chunk stay disciplined. Vite's per-chunk gzipped reporting plus the `check-bundle-size.ts` gate enforces this on every PR.
 - Node 20+ / Fastify / Kysely / better-sqlite3 / Zod is a battle-tested combination. `fastify-type-provider-zod` provides end-to-end type safety from `packages/shared` schemas to route handlers without runtime cost beyond Zod's `parse()`.
 - pnpm workspaces + TypeScript project references (root `tsconfig.base.json` extended by each package, with `references: [{ path: "../../packages/shared" }]`) gives shared types without bundling cost in the client.
 
 **Pattern consistency:**
+
 - Naming patterns (camelCase TS, snake_case DB, kebab-case files except PascalCase components) are internally consistent and follow widely-recognized conventions; the `db/mappers.ts` boundary cleanly separates the two casings.
 - Idempotency-Key as the load-bearing primitive appears identically in: client outbox (`sync/outbox.ts`), HTTP header (`Idempotency-Key`), server middleware (`middleware/idempotency.ts`), DB table (`idempotency_keys`), and shared schema (`packages/shared/src/schema.ts`). One concept, one name, end-to-end.
 - The annunciator is the only failure-feedback surface in the design AND in the code structure. Codebase-grep CI job (`scripts/check-anti-features.sh`) enforces the absence of competing surfaces.
 
 **Structure alignment:**
+
 - The 7-component inventory (UX Step 11) maps 1:1 to files in `apps/web/src/components/`. No structural slack for AI agents to introduce additional components without an explicit pattern violation.
 - Module-boundary rules (`components → store → sync`, no reverse imports) are mechanically enforceable via `eslint-plugin-import` `import/no-restricted-paths`.
 - Test pyramid is shaped correctly: unit/property co-located, integration in API package, cross-cutting in `tests/`. CI job names match directory names — no orphan suites.
@@ -949,63 +1019,63 @@ user opens app
 
 **Functional Requirements (54/54 covered):**
 
-| FR Group | Coverage |
-|---|---|
-| FR1–5 (Capture) | `<CaptureLine>`, `task-store.createTask`, `POST /tasks`, `tasks-repo.create` ✅ |
-| FR6–13 (Lifecycle, undo) | `<TaskRow>`, `task-store.{complete,edit,delete}Task`, `undo-stack`, `PATCH/DELETE /tasks/:id` ✅ |
-| FR14–20 (Display) | `<TaskList>`, `<TaskRow>`, `<App>`, `globals.css` ✅ |
-| FR21–28 (Persistence/sync) | `sync/idb`, `outbox`, `sw`, `tasks-repo` (soft-delete), `idempotency` middleware ✅ |
-| FR29–31 (Reliability surfaces) | `<Annunciator>`, `annunciator-store`, `sw-bridge` ✅ |
-| FR32–35 (Input/nav) | `<App>` global keyboard, `<TaskList>` roving tabindex, `focus-store` ✅ |
-| FR36–43 (Theming/a11y) | `theme-bootstrap`, `theme-store`, `globals.css` (@theme), visually-suppressed checkbox in `<TaskRow>` ✅ |
-| FR44–45 (Self-honesty) | `<DevLatencyDisplay>`, `docs/ANTI-FEATURES.md` ✅ |
-| FR46–54 (Anti-feature contract) | `scripts/check-anti-features.sh`, ESLint rules, visual-regression on empty state ✅ |
+| FR Group                        | Coverage                                                                                                 |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| FR1–5 (Capture)                 | `<CaptureLine>`, `task-store.createTask`, `POST /tasks`, `tasks-repo.create` ✅                          |
+| FR6–13 (Lifecycle, undo)        | `<TaskRow>`, `task-store.{complete,edit,delete}Task`, `undo-stack`, `PATCH/DELETE /tasks/:id` ✅         |
+| FR14–20 (Display)               | `<TaskList>`, `<TaskRow>`, `<App>`, `globals.css` ✅                                                     |
+| FR21–28 (Persistence/sync)      | `sync/idb`, `outbox`, `sw`, `tasks-repo` (soft-delete), `idempotency` middleware ✅                      |
+| FR29–31 (Reliability surfaces)  | `<Annunciator>`, `annunciator-store`, `sw-bridge` ✅                                                     |
+| FR32–35 (Input/nav)             | `<App>` global keyboard, `<TaskList>` roving tabindex, `focus-store` ✅                                  |
+| FR36–43 (Theming/a11y)          | `theme-bootstrap`, `theme-store`, `globals.css` (@theme), visually-suppressed checkbox in `<TaskRow>` ✅ |
+| FR44–45 (Self-honesty)          | `<DevLatencyDisplay>`, `docs/ANTI-FEATURES.md` ✅                                                        |
+| FR46–54 (Anti-feature contract) | `scripts/check-anti-features.sh`, ESLint rules, visual-regression on empty state ✅                      |
 
 **Non-Functional Requirements (31/31 covered):**
 
-| NFR | Architectural mechanism |
-|---|---|
-| NFR-Perf-1/2/3/4 (latency) | `tests/perf/*.bench.ts`, CI `latency-budget` job, `lib/latency.ts` instrumentation ✅ |
-| NFR-Perf-5 (cold-load Fast 3G) | Bundle budget + `font-display: block` + cached cold-load test ✅ |
-| NFR-Perf-6 (bundle) | `scripts/check-bundle-size.ts` ✅ |
-| NFR-Perf-7 (memory 1000 tasks) | Stress test in `tests/property/sync-invariants.test.ts` ✅ |
-| NFR-Perf-8 (CI enforcement) | Above jobs are required-pass on every PR ✅ |
-| NFR-Perf-9 (reduced motion) | Verified by perf bench under `prefers-reduced-motion: reduce` flag — **action item: explicitly enable this in `playwright.config.ts`** ⚠️ |
-| NFR-Rel-1 (no data loss) | Outbox + soft-delete + idempotency keys ✅ |
-| NFR-Rel-2 (1000-op stress) | `tests/property/sync-invariants.test.ts` (fast-check + simulated network state machine) ✅ |
-| NFR-Rel-3 (reversibility) | `tests/property/undo-restores-exact-state.test.ts`; soft-delete server side ✅ |
-| NFR-Rel-4 (≥30d server retention) | `idempotency-keys` purge job; `tasks` soft-deletes never hard-purged in v1 (acceptable single-user volume) ✅ |
-| NFR-Rel-5 (≥10 retries idempotent) | Idempotency middleware test ✅ |
-| NFR-Rel-6 (FIFO replay) | `outbox.test.ts` property test ✅ |
-| NFR-A11y-1 (axe AA) | `tests/e2e/a11y.spec.ts` ✅ |
-| NFR-A11y-2 (contrast) | Token verification step in CI ✅ |
-| NFR-A11y-3 (keyboard 100%) | `tests/e2e/keyboard-only.spec.ts` ✅ |
-| NFR-A11y-4 (manual SR) | Pre-ship checklist in `docs/` ✅ |
-| NFR-A11y-5 (accessible names) | Via axe-core ✅ |
-| NFR-A11y-6 (reduced motion) | CSS-driven; verified by perf bench ✅ |
-| NFR-A11y-7 (touch targets) | Visual-regression at mobile viewport ✅ |
-| NFR-A11y-8 (200% zoom) | Manual pre-ship check ✅ |
-| NFR-Priv-1 (no PII in logs) | `lib/log.ts` redaction; ESLint rule ✅ |
-| NFR-Priv-2 (no third-party tracking) | Codebase-grep CI; no SDK in package.json ✅ |
-| NFR-Priv-3 (noindex) | Static `<meta name="robots">` in `index.html` — **action item: add to scaffold checklist** ⚠️ |
-| NFR-Priv-4 (per-user namespace) | `user_namespace` column day-one ✅ |
-| NFR-Priv-5 (HTTPS+HSTS) | Cloudflare front + Fly origin certs ✅ |
-| NFR-Sec-1 (plain text) | Solid JSX `textContent`; ESLint forbids `innerHTML` ✅ |
-| NFR-Sec-2 (≤10000 chars) | Zod schema + SQL CHECK constraint ✅ |
-| NFR-Sec-3 (rate limit) | `@fastify/rate-limit` 100 req/min/namespace ✅ |
-| NFR-Sec-4 (audit) | `pnpm audit --audit-level=high` in CI ✅ |
-| NFR-Sec-5 (no client secrets) | Fly secrets injected at deploy only ✅ |
-| NFR-Sec-6 (network access restriction) | Cloudflare Access ✅ |
-| NFR-Sec-7 (auth seam) | `auth-jwt` middleware + `user_namespace` from JWT `sub` ✅ |
-| NFR-Maint-1 (property tests destructive ops) | `task-store.test.ts`, `outbox.test.ts`, `undo-restores-exact-state.test.ts` ✅ |
-| NFR-Maint-2 (sync stress) | `tests/property/sync-invariants.test.ts` ✅ |
-| NFR-Maint-3 (anti-feature lints) | `scripts/check-anti-features.sh` + visual regression ✅ |
-| NFR-Maint-4 (CONTRIBUTING references) | `docs/CONTRIBUTING.md` ✅ |
-| NFR-Maint-5 (<5min CI) | Achievable given Vitest parallelism + Playwright parallel projects — **needs measurement post-build, may require optimisation** ⚠️ |
-| NFR-Scale-1 (not v1 concern) | Explicitly deferred ✅ |
-| NFR-Obs-1 (latency CI) | Latency-budget job ✅ |
-| NFR-Obs-2 (dev latency display) | `<DevLatencyDisplay>` ✅ |
-| NFR-Obs-3 (no prod telemetry) | No SDKs, codebase-grep enforces ✅ |
+| NFR                                          | Architectural mechanism                                                                                                                   |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| NFR-Perf-1/2/3/4 (latency)                   | `tests/perf/*.bench.ts`, CI `latency-budget` job, `lib/latency.ts` instrumentation ✅                                                     |
+| NFR-Perf-5 (cold-load Fast 3G)               | Bundle budget + `font-display: block` + cached cold-load test ✅                                                                          |
+| NFR-Perf-6 (bundle)                          | `scripts/check-bundle-size.ts` ✅                                                                                                         |
+| NFR-Perf-7 (memory 1000 tasks)               | Stress test in `tests/property/sync-invariants.test.ts` ✅                                                                                |
+| NFR-Perf-8 (CI enforcement)                  | Above jobs are required-pass on every PR ✅                                                                                               |
+| NFR-Perf-9 (reduced motion)                  | Verified by perf bench under `prefers-reduced-motion: reduce` flag — **action item: explicitly enable this in `playwright.config.ts`** ⚠️ |
+| NFR-Rel-1 (no data loss)                     | Outbox + soft-delete + idempotency keys ✅                                                                                                |
+| NFR-Rel-2 (1000-op stress)                   | `tests/property/sync-invariants.test.ts` (fast-check + simulated network state machine) ✅                                                |
+| NFR-Rel-3 (reversibility)                    | `tests/property/undo-restores-exact-state.test.ts`; soft-delete server side ✅                                                            |
+| NFR-Rel-4 (≥30d server retention)            | `idempotency-keys` purge job; `tasks` soft-deletes never hard-purged in v1 (acceptable single-user volume) ✅                             |
+| NFR-Rel-5 (≥10 retries idempotent)           | Idempotency middleware test ✅                                                                                                            |
+| NFR-Rel-6 (FIFO replay)                      | `outbox.test.ts` property test ✅                                                                                                         |
+| NFR-A11y-1 (axe AA)                          | `tests/e2e/a11y.spec.ts` ✅                                                                                                               |
+| NFR-A11y-2 (contrast)                        | Token verification step in CI ✅                                                                                                          |
+| NFR-A11y-3 (keyboard 100%)                   | `tests/e2e/keyboard-only.spec.ts` ✅                                                                                                      |
+| NFR-A11y-4 (manual SR)                       | Pre-ship checklist in `docs/` ✅                                                                                                          |
+| NFR-A11y-5 (accessible names)                | Via axe-core ✅                                                                                                                           |
+| NFR-A11y-6 (reduced motion)                  | CSS-driven; verified by perf bench ✅                                                                                                     |
+| NFR-A11y-7 (touch targets)                   | Visual-regression at mobile viewport ✅                                                                                                   |
+| NFR-A11y-8 (200% zoom)                       | Manual pre-ship check ✅                                                                                                                  |
+| NFR-Priv-1 (no PII in logs)                  | `lib/log.ts` redaction; ESLint rule ✅                                                                                                    |
+| NFR-Priv-2 (no third-party tracking)         | Codebase-grep CI; no SDK in package.json ✅                                                                                               |
+| NFR-Priv-3 (noindex)                         | Static `<meta name="robots">` in `index.html` — **action item: add to scaffold checklist** ⚠️                                             |
+| NFR-Priv-4 (per-user namespace)              | `user_namespace` column day-one ✅                                                                                                        |
+| NFR-Priv-5 (HTTPS+HSTS)                      | Cloudflare front + Fly origin certs ✅                                                                                                    |
+| NFR-Sec-1 (plain text)                       | Solid JSX `textContent`; ESLint forbids `innerHTML` ✅                                                                                    |
+| NFR-Sec-2 (≤10000 chars)                     | Zod schema + SQL CHECK constraint ✅                                                                                                      |
+| NFR-Sec-3 (rate limit)                       | `@fastify/rate-limit` 100 req/min/namespace ✅                                                                                            |
+| NFR-Sec-4 (audit)                            | `pnpm audit --audit-level=high` in CI ✅                                                                                                  |
+| NFR-Sec-5 (no client secrets)                | Fly secrets injected at deploy only ✅                                                                                                    |
+| NFR-Sec-6 (network access restriction)       | Cloudflare Access ✅                                                                                                                      |
+| NFR-Sec-7 (auth seam)                        | `auth-jwt` middleware + `user_namespace` from JWT `sub` ✅                                                                                |
+| NFR-Maint-1 (property tests destructive ops) | `task-store.test.ts`, `outbox.test.ts`, `undo-restores-exact-state.test.ts` ✅                                                            |
+| NFR-Maint-2 (sync stress)                    | `tests/property/sync-invariants.test.ts` ✅                                                                                               |
+| NFR-Maint-3 (anti-feature lints)             | `scripts/check-anti-features.sh` + visual regression ✅                                                                                   |
+| NFR-Maint-4 (CONTRIBUTING references)        | `docs/CONTRIBUTING.md` ✅                                                                                                                 |
+| NFR-Maint-5 (<5min CI)                       | Achievable given Vitest parallelism + Playwright parallel projects — **needs measurement post-build, may require optimisation** ⚠️        |
+| NFR-Scale-1 (not v1 concern)                 | Explicitly deferred ✅                                                                                                                    |
+| NFR-Obs-1 (latency CI)                       | Latency-budget job ✅                                                                                                                     |
+| NFR-Obs-2 (dev latency display)              | `<DevLatencyDisplay>` ✅                                                                                                                  |
+| NFR-Obs-3 (no prod telemetry)                | No SDKs, codebase-grep enforces ✅                                                                                                        |
 
 ### Implementation Readiness Validation
 
@@ -1027,7 +1097,7 @@ All critical paths are covered. Architecture is implementable.
 
 2. **Service worker must NOT cache Cloudflare Access endpoints.** The SW caches static assets and `/tasks` (network-first). It must explicitly exclude `/cdn-cgi/access/*` paths and authentication redirects, or stale CFA cookies could cause silent auth failures that the annunciator can't recover from. **Resolution:** add an exclusion list to the Workbox routing config in `sw.ts`; add a test that simulates a JWT expiry mid-session and verifies the SW does not return a stale 200.
 
-3. **Idempotency-key TTL of 24h vs outbox staleness.** If the user is offline >24h and the response to a successfully-applied mutation was lost in transit, replaying after the key expires could create a duplicate. **Resolution:** extend `idempotency_keys` retention from 24h to **14 days** (cheap; the row is small). Update step 4 spec accordingly. ⚠️ *Recommend doing this now.*
+3. **Idempotency-key TTL of 24h vs outbox staleness.** If the user is offline >24h and the response to a successfully-applied mutation was lost in transit, replaying after the key expires could create a duplicate. **Resolution:** extend `idempotency_keys` retention from 24h to **14 days** (cheap; the row is small). Update step 4 spec accordingly. ⚠️ _Recommend doing this now._
 
 4. **Property-based testing scope.** `fast-check` + `vitest` is the chosen stack; this works cleanly on store / sync / outbox logic. **Component-level** property testing (e.g., random sequences of keystrokes against `<CaptureLine>`) requires `@solidjs/testing-library` + a test harness; Playwright is the natural home for this kind of test. **Resolution:** clarify in step 5 patterns: property-based tests live at the **store layer**; component-level user-input tests live in `tests/e2e/*.spec.ts` as Playwright integration tests with randomised input sequences.
 
@@ -1042,6 +1112,7 @@ All critical paths are covered. Architecture is implementable.
 ### Validation Issues Addressed
 
 The three "important" items #1, #2, and #3 above are addressed inline as architectural amendments and should be applied to the relevant prior sections in implementation. Specifically:
+
 - Idempotency TTL raised from 24 h → 14 d (Section: Data Architecture).
 - SW Workbox routing config explicitly excludes `/cdn-cgi/access/*` (Section: Frontend Architecture / Service worker).
 - PRD FR3 interpretation: `cmd+enter` works inside the PWA window; cross-tab native capture is a Growth-scope item (Section: Decision Priority Analysis / Deferred).
@@ -1051,30 +1122,35 @@ These amendments are noted here rather than retroactively edited into earlier se
 ### Architecture Completeness Checklist
 
 **✅ Requirements Analysis**
+
 - [x] Project context thoroughly analyzed
 - [x] Scale and complexity assessed
 - [x] Technical constraints identified
 - [x] Cross-cutting concerns mapped (8 enumerated)
 
 **✅ Architectural Decisions**
+
 - [x] Critical decisions documented (frontend, backend, DB, validation, IDB, SW, hosting, auth, CI)
 - [x] Technology stack fully specified
 - [x] Integration patterns defined (idempotency, soft-delete, annunciator routing)
 - [x] Performance considerations addressed (bundle, latency, cache-first)
 
 **✅ Implementation Patterns**
+
 - [x] Naming conventions established (DB, TS, API, files)
 - [x] Structure patterns defined (module boundaries, test colocation)
 - [x] Communication patterns specified (SW↔page, store, mutation flow)
 - [x] Process patterns documented (errors, retries, logging)
 
 **✅ Project Structure**
+
 - [x] Complete directory structure defined (every file named)
 - [x] Component boundaries established (one-direction imports, ESLint-enforced)
 - [x] Integration points mapped (write/read paths diagrammed)
 - [x] Requirements to structure mapping complete (FR1–54 + every NFR)
 
 **✅ Validation**
+
 - [x] Coherence verified (with caveats noted)
 - [x] All 54 FRs and 31 NFRs traced to architectural mechanisms
 - [x] Five important gaps identified with resolution paths
@@ -1087,6 +1163,7 @@ These amendments are noted here rather than retroactively edited into earlier se
 **Confidence Level:** HIGH. The five "important" gaps are scope clarifications and one TTL extension, not redesigns. None block implementation start.
 
 **Key strengths:**
+
 - The anti-feature contract is mechanically enforceable (CI grep + visual regression + ESLint), not just aspirational.
 - Idempotency-Key as a single load-bearing primitive eliminates a class of sync-correctness bugs.
 - Solid + Vite + hand-rolled components is the only realistic path to the stated bundle and latency budgets, and the choice is honestly justified rather than fashionable.
@@ -1094,6 +1171,7 @@ These amendments are noted here rather than retroactively edited into earlier se
 - The 7-component cap and module-boundary lints prevent feature/component sprawl over time.
 
 **Areas for future enhancement (Growth scope):**
+
 - CRDT or operational-transform layer for multi-device sync.
 - Cross-tab native capture via a small native shell or WebExtension.
 - Postgres migration for multi-user.
@@ -1103,12 +1181,14 @@ These amendments are noted here rather than retroactively edited into earlier se
 ### Implementation Handoff
 
 **AI Agent Guidelines:**
+
 - Follow architectural decisions and patterns exactly. Deviations require updating this document via PR, not ad-hoc choices.
 - The `Implementation Patterns & Consistency Rules` section is the day-to-day reference; re-read it before each new file.
 - The `Project Structure & Boundaries` section is the location reference; new files go where this doc says they go.
 - Every CI gate is load-bearing. None of them are advisory. Failures are stop-the-line.
 
 **First implementation priority (Phase 1 / Foundation):**
+
 1. Create the monorepo skeleton: `pnpm-workspace.yaml`, root `package.json`, `tsconfig.base.json`, `.eslintrc.cjs`, `.prettierrc`.
 2. Run `cd apps && pnpm create solid web` (template: `ts`).
 3. Hand-scaffold `apps/api/` with Fastify + Kysely + better-sqlite3 + Zod + pino skeleton.

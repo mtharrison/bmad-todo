@@ -1,9 +1,7 @@
 import { test, expect } from "./test-fixtures";
 
 test.describe("Journey 4: First ever visit", () => {
-  test("shows focused capture line with empty list and no decorative content", async ({
-    page,
-  }) => {
+  test("shows focused capture line with empty list and no decorative content", async ({ page }) => {
     await page.goto("/");
 
     const captureInput = page.locator('input[aria-label="Add a task"]');

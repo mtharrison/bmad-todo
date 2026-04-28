@@ -1,8 +1,7 @@
 import { createSignal } from "solid-js";
 import type { SyncState } from "@bmad-todo/shared";
 
-const [syncStateSignal, setSyncStateInternal] =
-  createSignal<SyncState>("online");
+const [syncStateSignal, setSyncStateInternal] = createSignal<SyncState>("online");
 let offlineTimer: ReturnType<typeof setTimeout> | null = null;
 
 export const syncState = syncStateSignal;

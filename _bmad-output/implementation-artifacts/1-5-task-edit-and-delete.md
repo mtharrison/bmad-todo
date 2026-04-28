@@ -74,7 +74,7 @@ so that corrections and cleanup have zero ceremony.
       caret-color: var(--color-accent);
     }
     ```
-  - [x] 4.2 When in edit mode, the focus ring should NOT appear on the `<li>` (focus is *inside* the row on the contenteditable span — UX spec line 849). The existing `:focus-visible` on `.task-row` handles this naturally: when focus is on the contenteditable child, the `<li>` does not have `:focus-visible`, so no ring shows. Verify in testing.
+  - [x] 4.2 When in edit mode, the focus ring should NOT appear on the `<li>` (focus is _inside_ the row on the contenteditable span — UX spec line 849). The existing `:focus-visible` on `.task-row` handles this naturally: when focus is on the contenteditable child, the `<li>` does not have `:focus-visible`, so no ring shows. Verify in testing.
   - [x] 4.3 Token discipline: only `--color-accent` used. No new colours.
 
 - [x] Task 5: Unit tests for TaskRow edit and delete behavior (AC: all)
@@ -96,7 +96,7 @@ so that corrections and cleanup have zero ceremony.
   - [x] 6.1 Create `tests/e2e/j5-inline-edit.spec.ts`:
     - Add a task "Buy oat milk"; click on the task text; verify contenteditable is present; change text to "Buy almond milk"; press Enter; verify task now shows "Buy almond milk".
     - Add a task "Walk the dog"; click text; press Escape; verify text unchanged.
-    - Add a task "   "; edit existing task text to all whitespace; press Enter; verify task is deleted from the list.
+    - Add a task " "; edit existing task text to all whitespace; press Enter; verify task is deleted from the list.
     - Anti-feature regression: no dialogs, no toasts, no save indicators after edit/delete.
   - [x] 6.2 Create `tests/e2e/j2-delete-undo.spec.ts` (delete portion only; undo portion in Story 1.6):
     - Add a task "Buy bread"; focus the task row; press `D`; verify task is removed from list.
@@ -123,7 +123,7 @@ The architecture document is the source of truth where it disagrees with the epi
 
 ### Phase placement
 
-Story 1.5 is part of **Phase 4 (Reversibility)** in the architecture's implementation roadmap (UX spec § Implementation Roadmap items 10–12): **undo stack, `<TaskRow>` edit variant, `u` keystroke**. However, the undo stack itself is Story 1.6. This story implements the edit and delete *actions* with the expectation that 1.6 wires in the undo entries.
+Story 1.5 is part of **Phase 4 (Reversibility)** in the architecture's implementation roadmap (UX spec § Implementation Roadmap items 10–12): **undo stack, `<TaskRow>` edit variant, `u` keystroke**. However, the undo stack itself is Story 1.6. This story implements the edit and delete _actions_ with the expectation that 1.6 wires in the undo entries.
 
 Backend wiring, IndexedDB, the outbox, idempotency keys, the service worker, the annunciator, the full keyboard navigation model, and the undo stack are all out-of-scope. The store stays in-memory; tasks vanish on reload.
 
@@ -182,7 +182,10 @@ export function createTask(text: string): void {
   const trimmed = text.trim();
   if (trimmed.length === 0) return;
   const task: ActiveTask = {
-    id: generateId(), text: trimmed, createdAt: Date.now(), completedAt: null,
+    id: generateId(),
+    text: trimmed,
+    createdAt: Date.now(),
+    completedAt: null,
   };
   setTasks((prev) => [task, ...prev]);
 }
@@ -195,7 +198,9 @@ export function toggleTaskCompleted(id: string): void {
   );
 }
 
-export function clearAllTasks(): void { setTasks(() => []); }
+export function clearAllTasks(): void {
+  setTasks(() => []);
+}
 ```
 
 What 1.5 adds: `updateTaskText`, `deleteTask`, `getTaskById`, `insertTaskAtIndex`. Keep `createTask`, `toggleTaskCompleted`, `clearAllTasks` EXACTLY as-is — they are validated by 15 existing tests.
@@ -237,6 +242,7 @@ export function TaskRow(props: { task: ActiveTask }) {
 ```
 
 What 1.5 changes:
+
 - `handleRowClick`: clicking `.task-text` now enters edit mode instead of returning early.
 - `handleRowKeyDown`: adds `e`/`E` (enter edit) and `d`/`D` (delete) branches. Guards all shortcuts with `if (isEditing()) return`.
 - `handleRowClick`: guards with `if (isEditing()) return` to prevent completion toggle during edit.
@@ -308,7 +314,7 @@ function handleRowKeyDown(event: KeyboardEvent) {
 
 ### Interaction with Story 1.6 (Undo Stack)
 
-Story 1.6 creates `store/undo-stack.ts` with `pushUndo({ inverseMutation, timestamp })`. This story's `commitEdit` and `deleteTask` calls need to be *wirable* — meaning the code path is clear and the pre-action snapshot is captured. Structure like:
+Story 1.6 creates `store/undo-stack.ts` with `pushUndo({ inverseMutation, timestamp })`. This story's `commitEdit` and `deleteTask` calls need to be _wirable_ — meaning the code path is clear and the pre-action snapshot is captured. Structure like:
 
 ```ts
 // In commitEdit (TaskRow.tsx), after getting the trimmed new text:
@@ -316,7 +322,7 @@ const snapshot = getTaskById(props.task.id);
 if (!snapshot) return;
 
 if (newText.trim().length === 0) {
-  const index = tasks.findIndex(t => t.id === props.task.id);
+  const index = tasks.findIndex((t) => t.id === props.task.id);
   deleteTask(props.task.id);
   // 1.6 will add: pushUndo({ type: 'insert', task: snapshot, index });
 } else if (newText !== originalText) {
@@ -337,8 +343,8 @@ Editing a completed task is allowed (UX spec line 722). The strike-through styli
 
 ### Library / Framework Requirements
 
-| Package | Version | Source | Why |
-|---|---|---|---|
+| Package    | Version                                     | Source   | Why                                     |
+| ---------- | ------------------------------------------- | -------- | --------------------------------------- |
 | `solid-js` | already in `apps/web/package.json` (^1.9.5) | existing | `createSignal`, `<Show>`, `createStore` |
 
 **No new dependencies in this story.** `contenteditable` is a native browser API. `Selection`/`Range` for cursor placement are native APIs. No external library needed.

@@ -2,9 +2,7 @@ import { test, expect } from "./test-fixtures";
 
 test("web app loads with capture line focused", async ({ page }) => {
   await page.goto("/");
-  await expect(
-    page.locator('input[aria-label="Add a task"]'),
-  ).toBeFocused();
+  await expect(page.locator('input[aria-label="Add a task"]')).toBeFocused();
 });
 
 test("health endpoint returns 200", async ({ request }) => {

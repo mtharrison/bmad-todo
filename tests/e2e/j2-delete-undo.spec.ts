@@ -1,9 +1,7 @@
 import { test, expect } from "./test-fixtures";
 
 test.describe("Journey 2: Delete + Undo", () => {
-  test("pressing D on focused task row removes it from the list", async ({
-    page,
-  }) => {
+  test("pressing D on focused task row removes it from the list", async ({ page }) => {
     await page.goto("/");
 
     const captureInput = page.locator('input[aria-label="Add a task"]');
@@ -29,9 +27,7 @@ test.describe("Journey 2: Delete + Undo", () => {
 
     await page.keyboard.press("d");
 
-    await expect(
-      page.locator("[role=alertdialog], [role=dialog]"),
-    ).toHaveCount(0);
+    await expect(page.locator("[role=alertdialog], [role=dialog]")).toHaveCount(0);
     await expect(page.locator("text=/are you sure|confirm/i")).toHaveCount(0);
   });
 

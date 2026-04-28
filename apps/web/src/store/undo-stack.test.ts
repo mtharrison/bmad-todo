@@ -7,13 +7,7 @@ import {
   updateTaskText,
   deleteTask,
 } from "./task-store";
-import {
-  undoStack,
-  pushUndo,
-  popUndo,
-  applyUndo,
-  clearUndoStack,
-} from "./undo-stack";
+import { undoStack, pushUndo, popUndo, applyUndo, clearUndoStack } from "./undo-stack";
 
 describe("undo-stack", () => {
   beforeEach(() => {
@@ -35,7 +29,10 @@ describe("undo-stack", () => {
       const entry = popUndo();
       expect(entry).toBeDefined();
       expect(entry!.inverseMutation.type).toBe("updateText");
-      expect((entry!.inverseMutation as { type: "updateText"; id: string; previousText: string }).previousText).toBe("second");
+      expect(
+        (entry!.inverseMutation as { type: "updateText"; id: string; previousText: string })
+          .previousText,
+      ).toBe("second");
       expect(undoStack.length).toBe(1);
     });
 
@@ -189,7 +186,9 @@ describe("undo-stack", () => {
 
       const prevCompleted = tasks[0]!.completedAt;
       toggleTaskCompleted(id);
-      pushUndo({ inverseMutation: { type: "setCompletedAt", id, previousCompletedAt: prevCompleted } });
+      pushUndo({
+        inverseMutation: { type: "setCompletedAt", id, previousCompletedAt: prevCompleted },
+      });
 
       const snapshot = { ...tasks[0]! };
       deleteTask(id);

@@ -95,7 +95,7 @@ so that task capture requires zero navigation, zero clicks, and zero extra field
   - [x] 9.2 Create `tests/e2e/j1-capture-work-review.spec.ts` (capture-loop subset of Journey 1): goto `/`; type "Buy oat milk" + Enter; assert exactly one `<li>` with text `"Buy oat milk"`; assert the input is empty; assert the input is still focused. Then type "Walk the dog" + Enter; assert `<li>` count is 2; assert first `<li>` text is `"Walk the dog"` and second is `"Buy oat milk"` (newest-first per FR11).
   - [x] 9.3 In the same J1 spec, also assert no spinner / skeleton / loading element appears at any point (`expect(page.locator('text=/saving|loading|saved/i')).toHaveCount(0)`).
   - [x] 9.4 In the same J1 spec, assert that pressing Escape inside a non-empty capture line clears the value without creating a task: type "drafttext"; press Escape; assert input is empty AND `<li>` count is unchanged.
-  - [x] 9.5 In the same J1 spec, assert whitespace-only Enter is a no-op: type "   "; press Enter; assert `<li>` count is unchanged AND input is still `"   "` (whitespace not auto-trimmed in the input — only the *commit path* rejects whitespace; the input itself preserves what the user typed).
+  - [x] 9.5 In the same J1 spec, assert whitespace-only Enter is a no-op: type " "; press Enter; assert `<li>` count is unchanged AND input is still `"   "` (whitespace not auto-trimmed in the input — only the _commit path_ rejects whitespace; the input itself preserves what the user typed).
 
 - [x] Task 10: Verify all gates and update the codebase grep / lint envelope (AC: all)
   - [x] 10.1 Run `pnpm lint` — passes. Re-confirm `import/no-restricted-paths` (components must NOT import from `sync/`; we don't import from `sync/` in this story — directory may not exist yet).
@@ -362,12 +362,12 @@ The `:focus-visible` selector is intentional — keyboard navigation reveals the
 
 ### Library / Framework Requirements
 
-| Package | Version | Source | Why |
-|---|---|---|---|
-| `solid-js` | already in `apps/web/package.json` (^1.9.5) | existing | reactivity primitives |
-| `uuidv7` | latest stable | NEW dependency | architecture AR7: lex-ordered IDs; client-generated; same primitive will be reused for idempotency keys in Story 1.9 |
-| `@solidjs/testing-library` | latest stable | NEW devDependency | component testing inside Vitest (jsdom) |
-| `@testing-library/jest-dom` | already in root `devDependencies` | existing | DOM assertions; works with Solid testing-library |
+| Package                     | Version                                     | Source            | Why                                                                                                                  |
+| --------------------------- | ------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `solid-js`                  | already in `apps/web/package.json` (^1.9.5) | existing          | reactivity primitives                                                                                                |
+| `uuidv7`                    | latest stable                               | NEW dependency    | architecture AR7: lex-ordered IDs; client-generated; same primitive will be reused for idempotency keys in Story 1.9 |
+| `@solidjs/testing-library`  | latest stable                               | NEW devDependency | component testing inside Vitest (jsdom)                                                                              |
+| `@testing-library/jest-dom` | already in root `devDependencies`           | existing          | DOM assertions; works with Solid testing-library                                                                     |
 
 **Add via:**
 
@@ -447,7 +447,7 @@ The path `apps/web/src/App.tsx` MUST be deleted — leaving it stale would cause
 - No property-based tests (`fast-check`) — those land in Story 1.6 alongside the undo stack and reversibility invariants (NFR-Maint-1).
 - No latency-budget perf tests — Story 1.12 wires up the `latency-budget` CI job; this story only needs the architectural choices that allow the budget to hold (uncontrolled input + Solid fine-grained reactivity).
 - No axe-core run — Story 1.12 wires it; we do honour the AC-11y prerequisites here (semantic `<ul role="list">`, `<input>` with `aria-label`, `:focus-visible`-only focus ring) so axe will pass when it lands.
-- No keyboard-only E2E — Story 1.7 lands keyboard navigation `j`/`k`/`x`/`u`/`e`/`n` and the dedicated `tests/e2e/keyboard-only.spec.ts`. This story's J1 spec uses `page.keyboard.type` and `page.keyboard.press("Enter")` which exercises *some* keyboard-only path, but full coverage is 1.7.
+- No keyboard-only E2E — Story 1.7 lands keyboard navigation `j`/`k`/`x`/`u`/`e`/`n` and the dedicated `tests/e2e/keyboard-only.spec.ts`. This story's J1 spec uses `page.keyboard.type` and `page.keyboard.press("Enter")` which exercises _some_ keyboard-only path, but full coverage is 1.7.
 
 ### Previous Story Intelligence (Story 1.2)
 
@@ -465,11 +465,11 @@ The path `apps/web/src/App.tsx` MUST be deleted — leaving it stale would cause
 
 **Discrepancy that 1.2 surfaced and 1.3 should NOT silently inherit:**
 
-- `--color-ink-muted` for the light theme uses `#1F1A14A6` (alpha 0.65) NOT the `#1F1A1499` (alpha 0.6) the epic file lists. This was a deliberate amendment to clear WCAG AA contrast (4.5:1). The epic and PRD are *illustrative* on hex; the contrast-test in `design-tokens.test.ts` is the source of truth. If you find yourself second-guessing a colour value, run the contrast test, don't reach for the epic.
+- `--color-ink-muted` for the light theme uses `#1F1A14A6` (alpha 0.65) NOT the `#1F1A1499` (alpha 0.6) the epic file lists. This was a deliberate amendment to clear WCAG AA contrast (4.5:1). The epic and PRD are _illustrative_ on hex; the contrast-test in `design-tokens.test.ts` is the source of truth. If you find yourself second-guessing a colour value, run the contrast test, don't reach for the epic.
 
 **Visual-regression baseline status carried from 1.2:**
 
-- The Playwright visual-regression test was *written* in 1.2 but baselines were not committed (sandbox could not run Playwright). This story's Task 8.3 commits both the (re-baselined) light and dark snapshots after the empty-state composition changes. If your environment also cannot run Playwright, mark Task 8.3 deferred and explicitly call it out in completion notes — do NOT silently pass it.
+- The Playwright visual-regression test was _written_ in 1.2 but baselines were not committed (sandbox could not run Playwright). This story's Task 8.3 commits both the (re-baselined) light and dark snapshots after the empty-state composition changes. If your environment also cannot run Playwright, mark Task 8.3 deferred and explicitly call it out in completion notes — do NOT silently pass it.
 
 **Pre-existing lint warning (NOT introduced by 1.3):**
 
@@ -570,6 +570,7 @@ Claude Opus 4.6 (1M context)
 ### File List
 
 New files:
+
 - apps/web/src/components/App.tsx (moved from apps/web/src/App.tsx)
 - apps/web/src/components/CaptureLine.tsx
 - apps/web/src/components/CaptureLine.test.tsx
@@ -585,17 +586,19 @@ New files:
 - tests/e2e/j4-first-ever-visit.spec.ts
 
 Modified files:
+
 - apps/web/src/index.tsx (import path update)
 - apps/web/src/styles/globals.css (appended layout rules)
 - apps/web/package.json (added uuidv7, @solidjs/testing-library)
 - tests/e2e/smoke.spec.ts (replaced h1 assertion with capture-line focus)
-- tests/e2e/visual-regression.spec.ts (scoped assertion to #root > *)
+- tests/e2e/visual-regression.spec.ts (scoped assertion to #root > \*)
 - vitest.config.ts (added solid plugin, tsx test pattern)
 - eslint.config.js (added playwright.config.ts and e2e globals)
 - package.json (added vite-plugin-solid devDependency)
 - pnpm-lock.yaml (dependency updates)
 
 Deleted files:
+
 - apps/web/src/App.tsx (moved to components/)
 
 ### Review Findings

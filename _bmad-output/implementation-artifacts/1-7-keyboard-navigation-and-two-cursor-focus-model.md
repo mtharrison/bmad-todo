@@ -23,11 +23,11 @@ so that I never need to reach for the mouse to manage my tasks.
 5. **Given** CaptureLine is focused, **When** Sam presses `X`, `U`, `J`, `K`, `D`, or `E` (without modifiers), **Then** focus does not move away from CaptureLine and no command fires — the keystroke is typed into the input as a regular character (capture-line focus stickiness).
 
 6. **Given** list focus is on a task and the CaptureLine has typed text with a caret position,
-**When** Sam toggles completion on the focused row,
-**Then** the CaptureLine's `value` and `selectionStart`/`selectionEnd` are unaffected (two cursors are independent — a separate test asserts both are preserved across the operation).
+   **When** Sam toggles completion on the focused row,
+   **Then** the CaptureLine's `value` and `selectionStart`/`selectionEnd` are unaffected (two cursors are independent — a separate test asserts both are preserved across the operation).
 
 7. **Given** any interactive element receives focus via keyboard,
-**Then** a 2px solid `--color-accent` outline with 4px offset and border-radius 2px appears via `:focus-visible` only (not `:focus` alone); the ring uses `outline` (not `box-shadow`) so it survives `forced-colors` mode.
+   **Then** a 2px solid `--color-accent` outline with 4px offset and border-radius 2px appears via `:focus-visible` only (not `:focus` alone); the ring uses `outline` (not `box-shadow`) so it survives `forced-colors` mode.
 
 8. **And** `<TaskList>` uses roving tabindex: the row whose index matches `focusedRowIndex()` has `tabindex="0"` (and `data-focused="true"`); all other rows have `tabindex="-1"` (and `data-focused="false"`). Tab from CaptureLine reaches the currently-focused row only.
 
@@ -42,25 +42,32 @@ so that I never need to reach for the mouse to manage my tasks.
 - [x] Task 1: Create `store/focus-store.ts` with focused-row index, editing-task id, capture-input ref, and helper functions (AC: #1, #2, #4, #8, #9, #10)
   - [x] 1.1 New file `apps/web/src/store/focus-store.ts`. Use `createSignal` (not `createStore`) for each piece of state — these are scalar reactive values, exactly what architecture.md line 280 prescribes ("`createSignal` for individual reactive values (e.g., theme, focused-row index)").
   - [x] 1.2 Define and export the three signals as `[getter, setter]` tuples — but DO NOT export the raw setters. Wrap them in named functions so callers cannot bypass invariants (mirrors the `pushUndo`/`popUndo` encapsulation in `undo-stack.ts`):
+
     ```ts
     import { createSignal } from "solid-js";
 
     const [focusedRowIndexSignal, setFocusedRowIndexInternal] = createSignal<number | null>(null);
     const [editingTaskIdSignal, setEditingTaskIdInternal] = createSignal<string | null>(null);
-    const [captureInputRefSignal, setCaptureInputRefInternal] = createSignal<HTMLInputElement | null>(null);
+    const [captureInputRefSignal, setCaptureInputRefInternal] =
+      createSignal<HTMLInputElement | null>(null);
 
     export const focusedRowIndex = focusedRowIndexSignal;
     export const editingTaskId = editingTaskIdSignal;
     export const captureInputRef = captureInputRefSignal;
     ```
+
   - [x] 1.3 Export navigation helpers (consume `tasks.length` from `task-store` to clamp):
+
     ```ts
     import { tasks } from "./task-store";
 
     export function focusNextRow(): void {
       if (tasks.length === 0) return;
       const current = focusedRowIndexSignal();
-      if (current === null) { setFocusedRowIndexInternal(0); return; }
+      if (current === null) {
+        setFocusedRowIndexInternal(0);
+        return;
+      }
       const next = current + 1;
       if (next < tasks.length) setFocusedRowIndexInternal(next);
     }
@@ -74,7 +81,9 @@ so that I never need to reach for the mouse to manage my tasks.
       if (current > 0) setFocusedRowIndexInternal(current - 1);
     }
     ```
+
     The "first K from null lands on row 0" rule comes from architecture.md line 824: "First `j` press focuses the first task; first `k` press from no-focus also focuses the first task."
+
   - [x] 1.4 Export `clearRowFocus()` and `setRowFocus(index: number | null)` for direct manipulation (used by `D` deletion-cleanup and by tests). `setRowFocus` accepts `null` or a clamped index.
   - [x] 1.5 Export `setEditingTask(id: string | null)` — the only setter for the editing signal. Clearing edit (passing `null`) is called by TaskRow's `commitEdit`/`cancelEdit`.
   - [x] 1.6 Export `setCaptureInputRef(el: HTMLInputElement | null)` — called once by `<CaptureLine>` `onMount`, cleared on cleanup. Storing a DOM ref inside `store/` is unusual but does NOT violate `import/no-restricted-paths` (the store does not import from `components/`; the component writes to the store, never the reverse).
@@ -95,7 +104,12 @@ so that I never need to reach for the mouse to manage my tasks.
   - [x] 3.1 Add `index: number` to props: `export function TaskRow(props: { task: ActiveTask; index: number })`. Solid props are reactive accessors — `props.index` reads the current index reactively. Do NOT destructure (Solid props rule from previous stories).
   - [x] 3.2 Replace local `isEditing` signal with derived editing state from the store:
     ```ts
-    import { editingTaskId, setEditingTask, focusedRowIndex, setRowFocus } from "../store/focus-store";
+    import {
+      editingTaskId,
+      setEditingTask,
+      focusedRowIndex,
+      setRowFocus,
+    } from "../store/focus-store";
     const isEditing = () => editingTaskId() === props.task.id;
     ```
     Remove `const [isEditing, setIsEditing] = createSignal(false);` and all `setIsEditing(...)` calls — replace with `setEditingTask(props.task.id)` (enter) and `setEditingTask(null)` (exit).
@@ -153,15 +167,11 @@ so that I never need to reach for the mouse to manage my tasks.
       setEditingTask,
       focusCaptureLine,
     } from "../store/focus-store";
-    import {
-      tasks,
-      toggleTaskCompleted,
-      deleteTask,
-      getTaskById,
-    } from "../store/task-store";
+    import { tasks, toggleTaskCompleted, deleteTask, getTaskById } from "../store/task-store";
     import { pushUndo } from "../store/undo-stack";
     ```
   - [x] 4.2 Replace the existing 1.6 `u`-only handler with a comprehensive switch. Order of guards (CRITICAL — wrong order breaks AC#4 or AC#5):
+
     ```ts
     onMount(() => {
       const handler = (event: KeyboardEvent) => {
@@ -182,19 +192,34 @@ so that I never need to reach for the mouse to manage my tasks.
         if (event.metaKey || event.ctrlKey || event.altKey) return;
 
         switch (event.key) {
-          case "u": case "U":
-            event.preventDefault(); applyUndo(); return;
+          case "u":
+          case "U":
+            event.preventDefault();
+            applyUndo();
+            return;
 
-          case "n": case "N":
-            event.preventDefault(); focusCaptureLine(); return;
+          case "n":
+          case "N":
+            event.preventDefault();
+            focusCaptureLine();
+            return;
 
-          case "j": case "J": case "ArrowDown":
-            event.preventDefault(); focusNextRow(); return;
+          case "j":
+          case "J":
+          case "ArrowDown":
+            event.preventDefault();
+            focusNextRow();
+            return;
 
-          case "k": case "K": case "ArrowUp":
-            event.preventDefault(); focusPrevRow(); return;
+          case "k":
+          case "K":
+          case "ArrowUp":
+            event.preventDefault();
+            focusPrevRow();
+            return;
 
-          case "x": case "X": {
+          case "x":
+          case "X": {
             const idx = focusedRowIndex();
             if (idx === null) return;
             const task = tasks[idx];
@@ -202,11 +227,14 @@ so that I never need to reach for the mouse to manage my tasks.
             event.preventDefault();
             const previousCompletedAt = task.completedAt;
             toggleTaskCompleted(task.id);
-            pushUndo({ inverseMutation: { type: "setCompletedAt", id: task.id, previousCompletedAt } });
+            pushUndo({
+              inverseMutation: { type: "setCompletedAt", id: task.id, previousCompletedAt },
+            });
             return;
           }
 
-          case "e": case "E": {
+          case "e":
+          case "E": {
             const idx = focusedRowIndex();
             if (idx === null) return;
             const task = tasks[idx];
@@ -216,7 +244,8 @@ so that I never need to reach for the mouse to manage my tasks.
             return;
           }
 
-          case "d": case "D": {
+          case "d":
+          case "D": {
             const idx = focusedRowIndex();
             if (idx === null) return;
             const task = tasks[idx];
@@ -239,6 +268,7 @@ so that I never need to reach for the mouse to manage my tasks.
       onCleanup(() => window.removeEventListener("keydown", handler));
     });
     ```
+
   - [x] 4.3 Keep `isEditableTarget(target)` as defined in Story 1.6 (`INPUT`, `TEXTAREA`, `isContentEditable`). This is the same guard — do NOT duplicate it; it stays inline at top of file.
   - [x] 4.4 The `Cmd+Enter` branch fires BEFORE `isEditableTarget` check because the user must be able to press `Cmd+Enter` while typing in `<CaptureLine>` to commit + return-focus pattern… wait, that is NOT the AC. Re-reading AC#4: "Sam presses N or Cmd+Enter, Then CaptureLine receives focus." This works regardless of current focus. The user might be on a row and press Cmd+Enter → focus moves to capture line. Or they might be in capture line and press Cmd+Enter — no-op (already focused). Either way the order shown above is correct: `Cmd+Enter` is processed before the editable-target guard.
   - [x] 4.5 The `Cmd+Enter` branch must NOT clash with `<CaptureLine>`'s plain-`Enter` commit handler. CaptureLine's `handleKeyDown` already returns early on `event.metaKey || event.ctrlKey` (verify Story 1.3 implementation — see code at `apps/web/src/components/CaptureLine.tsx:13-28`; if not present, ADD `if (event.metaKey || event.ctrlKey) return;` at the top of CaptureLine's `handleKeyDown` to prevent committing an empty / partial task on Cmd+Enter).
@@ -299,6 +329,7 @@ so that I never need to reach for the mouse to manage my tasks.
 - [x] Task 7: Playwright keyboard-only E2E spec — Journeys 1, 2, 5 with zero pointer events (AC: #11)
   - [x] 7.1 Create `tests/e2e/keyboard-only.spec.ts`. ESLint or a simple regex grep at the spec level should reject `page.mouse`, `.click(`, `.tap(`, `.hover(`, `page.touchscreen` — for now, simply avoid these APIs in the spec and add a comment block at the top: `// NFR-A11y-3: this spec must use keyboard-only interactions. Do not introduce page.click(), page.tap(), or page.mouse.`
   - [x] 7.2 **Journey 1 (add task) keyboard-only:**
+
     ```ts
     test("J1 — add three tasks via keyboard alone", async ({ page }) => {
       await page.goto("/");
@@ -316,6 +347,7 @@ so that I never need to reach for the mouse to manage my tasks.
       await expect(items.nth(2)).toHaveText("Buy oat milk");
     });
     ```
+
   - [x] 7.3 **Journey 2 (delete + undo) keyboard-only:**
     ```ts
     test("J2 — delete and undo via j, d, u alone", async ({ page }) => {
@@ -341,10 +373,10 @@ so that I never need to reach for the mouse to manage my tasks.
       await page.goto("/");
       await page.keyboard.type("Buy oat milk");
       await page.keyboard.press("Enter");
-      await page.keyboard.press("Tab");                   // focus first row
-      await page.keyboard.press("e");                     // enter edit mode
+      await page.keyboard.press("Tab"); // focus first row
+      await page.keyboard.press("e"); // enter edit mode
       // Select all text in the contenteditable, replace.
-      await page.keyboard.press("Control+A");             // or Meta+A on macOS — Playwright maps this
+      await page.keyboard.press("Control+A"); // or Meta+A on macOS — Playwright maps this
       await page.keyboard.press("Backspace");
       await page.keyboard.type("Buy almond milk");
       await page.keyboard.press("Enter");
@@ -401,6 +433,7 @@ Story 1.7 completes **Phase 3 step 9** in the architecture's implementation road
 `cmd+shift+L` is NOT in this story — it lands in Story 1.11 (`<DevLatencyDisplay>`). This story implements every other shortcut listed.
 
 Out of scope this story (preserved from 1.6):
+
 - IndexedDB / outbox / service worker (Story 1.9).
 - Idempotency keys (Story 1.9).
 - Annunciator wiring (Story 1.10).
@@ -469,6 +502,7 @@ What must be preserved: `<ul role="list">`; the `class="task-list"` token; the e
 **`apps/web/src/components/TaskRow.tsx`** (current state at line 1–162, reviewed in full):
 
 What 1.7 changes:
+
 1. Add `index: number` prop (Task 3.1).
 2. Replace local `isEditing` signal with derived `editingTaskId() === props.task.id` (Task 3.2).
 3. Capture `liRef` (Task 3.3).
@@ -484,6 +518,7 @@ What must be preserved: `placeCursorAtEnd` helper; `createRenderEffect` text-syn
 **`apps/web/src/components/CaptureLine.tsx`** (current state at line 1–42, reviewed in full):
 
 What 1.7 changes:
+
 1. Register `inputEl` with focus-store on mount (Task 5.1): `setCaptureInputRef(inputEl ?? null)`. Cleanup in `onCleanup`.
 2. Add `if (event.metaKey || event.ctrlKey) return;` at the top of `handleKeyDown` (Task 5.2) so `Cmd+Enter` doesn't double-fire.
 
@@ -555,7 +590,7 @@ const isEditing = () => editingTaskId() === props.task.id;
 
 function enterEditMode() {
   if (isEditing()) return;
-  if (editingTaskId() !== null) return;  // another row is editing — refuse
+  if (editingTaskId() !== null) return; // another row is editing — refuse
   originalText = props.task.text;
   setEditingTask(props.task.id);
   queueMicrotask(() => {
@@ -569,7 +604,7 @@ function enterEditMode() {
 function commitEdit() {
   if (!isEditing()) return;
   // ... existing commit logic ...
-  setEditingTask(null);  // was setIsEditing(false)
+  setEditingTask(null); // was setIsEditing(false)
   // No explicit liRef.focus() — the createEffect (Task 3.4) re-runs because isEditing flipped,
   // and it focuses the li. SINGLE source of truth.
 }
@@ -647,8 +682,8 @@ This story creates the `tests/e2e/keyboard-only.spec.ts` file (NFR-A11y-3 satisf
 
 ### Library / Framework Requirements
 
-| Package | Version | Source | Why |
-|---|---|---|---|
+| Package    | Version                    | Source   | Why                                                                            |
+| ---------- | -------------------------- | -------- | ------------------------------------------------------------------------------ |
 | `solid-js` | already installed (^1.9.5) | existing | `createSignal`, `createEffect`, `onMount`, `onCleanup`, `<For>` index accessor |
 
 **No new dependencies in this story.** `KeyboardEvent`, `window.addEventListener`, `document.activeElement`, `HTMLElement.focus()`, `HTMLInputElement.selectionStart`/`selectionEnd` are native browser APIs.
@@ -757,6 +792,7 @@ UX spec line 1129 (the "undo-as-the-confirmation" pattern) and FR35 ("never requ
 The visible response IS: the row disappears (delete), the strike-through appears (complete), the contenteditable opens (edit). These are the only feedbacks needed.
 
 Specifically forbidden additions (would silently re-introduce anti-features):
+
 - "Press `?` for shortcuts" overlay — Growth scope.
 - Highlighting the focus ring with a color flash on navigation — FR53 (no decorative motion).
 - Sound on focus change — FR52 (no audible notification).
@@ -857,11 +893,13 @@ Code review of Story 1.7 — 2026-04-28. Three review layers (Blind Hunter, Edge
 ### File List
 
 **New:**
+
 - `apps/web/src/store/focus-store.ts`
 - `apps/web/src/store/focus-store.test.ts`
 - `tests/e2e/keyboard-only.spec.ts`
 
 **Modified:**
+
 - `apps/web/src/components/App.tsx`
 - `apps/web/src/components/App.test.tsx`
 - `apps/web/src/components/TaskList.tsx`

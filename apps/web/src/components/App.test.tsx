@@ -521,9 +521,7 @@ describe("App global keyboard handler", () => {
       const button = container.querySelector("button.theme-toggle") as HTMLButtonElement;
 
       const focusables = Array.from(
-        container.querySelectorAll<HTMLElement>(
-          'input, button, [tabindex="0"]',
-        ),
+        container.querySelectorAll<HTMLElement>('input, button, [tabindex="0"]'),
       );
       const inputIdx = focusables.indexOf(input);
       const liIdx = focusables.indexOf(li);
@@ -541,9 +539,7 @@ describe("App global keyboard handler", () => {
       const button = container.querySelector("button.theme-toggle") as HTMLButtonElement;
 
       const focusables = Array.from(
-        container.querySelectorAll<HTMLElement>(
-          'input, button, [tabindex="0"]',
-        ),
+        container.querySelectorAll<HTMLElement>('input, button, [tabindex="0"]'),
       );
       const inputIdx = focusables.indexOf(input);
       const buttonIdx = focusables.indexOf(button);

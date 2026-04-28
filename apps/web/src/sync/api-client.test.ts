@@ -1,25 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  ApiError,
-  deleteTaskRequest,
-  fetchTasks,
-  patchTask,
-  postTask,
-} from "./api-client";
+import { ApiError, deleteTaskRequest, fetchTasks, patchTask, postTask } from "./api-client";
 
-function mockResponse(
-  status: number,
-  body: unknown,
-  init: { isJson?: boolean } = {},
-): Response {
+function mockResponse(status: number, body: unknown, init: { isJson?: boolean } = {}): Response {
   const headers = new Headers();
   if (status !== 204 && init.isJson !== false) {
     headers.set("content-type", "application/json");
   }
-  return new Response(
-    status === 204 ? null : JSON.stringify(body ?? null),
-    { status, headers },
-  );
+  return new Response(status === 204 ? null : JSON.stringify(body ?? null), { status, headers });
 }
 
 afterEach(() => {
@@ -38,24 +25,17 @@ describe("api-client", () => {
         updatedAt: 1,
       }),
     );
-    const t = await postTask(
-      { id: "a", text: "x", createdAt: 1 },
-      "key-1",
-    );
+    const t = await postTask({ id: "a", text: "x", createdAt: 1 }, "key-1");
     expect(t.id).toBe("a");
     expect(fetchSpy).toHaveBeenCalledOnce();
     const [url, init] = fetchSpy.mock.calls[0]! as [string, RequestInit];
     expect(url).toBe("/tasks");
     expect(init.method).toBe("POST");
-    expect((init.headers as Record<string, string>)["Idempotency-Key"]).toBe(
-      "key-1",
-    );
+    expect((init.headers as Record<string, string>)["Idempotency-Key"]).toBe("key-1");
   });
 
   it("fetchTasks returns parsed JSON on 200", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      mockResponse(200, []),
-    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(mockResponse(200, []));
     expect(await fetchTasks()).toEqual([]);
   });
 
@@ -76,9 +56,7 @@ describe("api-client", () => {
   });
 
   it("deleteTaskRequest handles 204", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      mockResponse(204, null),
-    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(mockResponse(204, null));
     await expect(deleteTaskRequest("a", "k")).resolves.toBeUndefined();
   });
 
@@ -97,9 +75,9 @@ describe("api-client", () => {
         error: { code: "Conflict", message: "key replay" },
       }),
     );
-    await expect(
-      postTask({ id: "a", text: "x", createdAt: 1 }, "k"),
-    ).rejects.toMatchObject({ status: 409 });
+    await expect(postTask({ id: "a", text: "x", createdAt: 1 }, "k")).rejects.toMatchObject({
+      status: 409,
+    });
   });
 
   it("throws ApiError for 500", async () => {

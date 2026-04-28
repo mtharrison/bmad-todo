@@ -1,9 +1,7 @@
 import { test, expect } from "./test-fixtures";
 
 test.describe("Journey 1: Completion toggle", () => {
-  test("click on row outside text toggles completion on and off", async ({
-    page,
-  }) => {
+  test("click on row outside text toggles completion on and off", async ({ page }) => {
     await page.goto("/");
 
     const captureInput = page.locator('input[aria-label="Add a task"]');
@@ -43,9 +41,7 @@ test.describe("Journey 1: Completion toggle", () => {
     await expect(row).toHaveAttribute("data-completed", "false");
   });
 
-  test("no saving/loading/success indicator or dialog appears after toggle", async ({
-    page,
-  }) => {
+  test("no saving/loading/success indicator or dialog appears after toggle", async ({ page }) => {
     await page.goto("/");
 
     const captureInput = page.locator('input[aria-label="Add a task"]');
@@ -56,11 +52,7 @@ test.describe("Journey 1: Completion toggle", () => {
     const checkbox = row.locator('input[type="checkbox"]');
     await checkbox.click();
 
-    await expect(
-      page.locator("text=/saving|loading|saved|done!|nice|great/i"),
-    ).toHaveCount(0);
-    await expect(
-      page.locator("[role=alertdialog], [role=dialog]"),
-    ).toHaveCount(0);
+    await expect(page.locator("text=/saving|loading|saved|done!|nice|great/i")).toHaveCount(0);
+    await expect(page.locator("[role=alertdialog], [role=dialog]")).toHaveCount(0);
   });
 });

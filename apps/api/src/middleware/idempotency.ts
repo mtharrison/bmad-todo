@@ -6,10 +6,7 @@ import { log } from "../lib/log.js";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function makeIdempotencyHook(repo: IdempotencyRepo) {
-  return async function idempotencyHook(
-    req: FastifyRequest,
-    reply: FastifyReply,
-  ): Promise<void> {
+  return async function idempotencyHook(req: FastifyRequest, reply: FastifyReply): Promise<void> {
     const headerVal = req.headers["idempotency-key"];
     const key = Array.isArray(headerVal) ? headerVal[0] : headerVal;
 

@@ -23,9 +23,7 @@ export async function postToSw(msg: PageToSwMessageT): Promise<void> {
   ctrl?.postMessage(parsed.data);
 }
 
-export function subscribeToSwMessages(
-  handler: (msg: SwToPageMessageT) => void,
-): () => void {
+export function subscribeToSwMessages(handler: (msg: SwToPageMessageT) => void): () => void {
   const listener = (event: MessageEvent) => {
     const parsed = SwToPageMessage.safeParse(event.data);
     if (parsed.success) handler(parsed.data);

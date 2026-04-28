@@ -8,12 +8,7 @@ import {
   deleteTask,
   getTaskById,
 } from "../store/task-store";
-import {
-  editingTaskId,
-  setEditingTask,
-  focusedRowIndex,
-  setRowFocus,
-} from "../store/focus-store";
+import { editingTaskId, setEditingTask, focusedRowIndex, setRowFocus } from "../store/focus-store";
 import { pushUndo } from "../store/undo-stack";
 import { Tick } from "./Tick";
 
@@ -104,7 +99,9 @@ export function TaskRow(props: { task: ActiveTask; index: number }) {
   function handleCheckboxChange() {
     const previousCompletedAt = props.task.completedAt;
     toggleTaskCompleted(props.task.id);
-    pushUndo({ inverseMutation: { type: "setCompletedAt", id: props.task.id, previousCompletedAt } });
+    pushUndo({
+      inverseMutation: { type: "setCompletedAt", id: props.task.id, previousCompletedAt },
+    });
   }
 
   function handleRowClick(event: MouseEvent) {
@@ -116,7 +113,9 @@ export function TaskRow(props: { task: ActiveTask; index: number }) {
     }
     const previousCompletedAt = props.task.completedAt;
     toggleTaskCompleted(props.task.id);
-    pushUndo({ inverseMutation: { type: "setCompletedAt", id: props.task.id, previousCompletedAt } });
+    pushUndo({
+      inverseMutation: { type: "setCompletedAt", id: props.task.id, previousCompletedAt },
+    });
   }
 
   function handleRowFocus() {
@@ -131,8 +130,7 @@ export function TaskRow(props: { task: ActiveTask; index: number }) {
       data-completed={props.task.completedAt !== null ? "true" : "false"}
       data-focused={focusedRowIndex() === props.index ? "true" : "false"}
       tabindex={
-        focusedRowIndex() === props.index ||
-        (focusedRowIndex() === null && props.index === 0)
+        focusedRowIndex() === props.index || (focusedRowIndex() === null && props.index === 0)
           ? 0
           : -1
       }

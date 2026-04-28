@@ -10,10 +10,7 @@ export interface CachedResponse {
 export class IdempotencyRepo {
   constructor(private readonly db: Kysely<DB>) {}
 
-  async find(
-    key: string,
-    userNamespace: string,
-  ): Promise<CachedResponse | null> {
+  async find(key: string, userNamespace: string): Promise<CachedResponse | null> {
     const row = await this.db
       .selectFrom("idempotency_keys")
       .select(["request_hash", "response_status", "response_body"])

@@ -1,10 +1,6 @@
 import { createStore } from "solid-js/store";
 import type { ActiveTask } from "./task-store";
-import {
-  insertTaskAtIndex,
-  updateTaskText,
-  setTaskCompletedAt,
-} from "./task-store";
+import { insertTaskAtIndex, updateTaskText, setTaskCompletedAt } from "./task-store";
 
 export type InverseMutation =
   | { type: "insert"; task: ActiveTask; index: number }
@@ -20,10 +16,7 @@ const [undoStackStore, setUndoStack] = createStore<UndoEntry[]>([]);
 
 export { undoStackStore as undoStack };
 
-export function pushUndo(entry: {
-  inverseMutation: InverseMutation;
-  timestamp?: number;
-}): void {
+export function pushUndo(entry: { inverseMutation: InverseMutation; timestamp?: number }): void {
   const full: UndoEntry = {
     inverseMutation: entry.inverseMutation,
     timestamp: entry.timestamp ?? Date.now(),

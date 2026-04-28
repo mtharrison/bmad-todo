@@ -4,15 +4,15 @@ These patterns are **deliberately excluded** from bmad-todo. Their absence is a 
 
 ## Forbidden UI Patterns (FR46-54)
 
-| ID | Pattern | Rationale |
-|---|---|---|
-| FR46 | Toasts / Snackbars | Use annunciator status line instead |
-| FR47 | Skeleton loaders / Spinners | App must be fast enough to never need them |
-| FR48 | Confirmation dialogs (`confirm()`, `alert()`) | Undo stack replaces destructive-action gates |
-| FR49 | Modal dialogs (`<Modal>`, `<Dialog>`) | Inline editing only |
-| FR50 | Gamification (Streaks, Achievements, XP, Karma) | Productivity tools should not manipulate behavior |
-| FR51 | Celebration emoji (🎉, ✨, 🏆) | Same as above |
-| FR52 | `<ErrorBoundary>` | Errors route to annunciator, not silent swallowing |
+| ID   | Pattern                                         | Rationale                                          |
+| ---- | ----------------------------------------------- | -------------------------------------------------- |
+| FR46 | Toasts / Snackbars                              | Use annunciator status line instead                |
+| FR47 | Skeleton loaders / Spinners                     | App must be fast enough to never need them         |
+| FR48 | Confirmation dialogs (`confirm()`, `alert()`)   | Undo stack replaces destructive-action gates       |
+| FR49 | Modal dialogs (`<Modal>`, `<Dialog>`)           | Inline editing only                                |
+| FR50 | Gamification (Streaks, Achievements, XP, Karma) | Productivity tools should not manipulate behavior  |
+| FR51 | Celebration emoji (🎉, ✨, 🏆)                  | Same as above                                      |
+| FR52 | `<ErrorBoundary>`                               | Errors route to annunciator, not silent swallowing |
 
 ## Enforcement
 

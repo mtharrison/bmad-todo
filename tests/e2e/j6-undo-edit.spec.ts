@@ -13,9 +13,7 @@ test.describe("Journey 6: Undo Edit", () => {
     await page.keyboard.type("buy almond milk");
     await page.keyboard.press("Enter");
 
-    await expect(page.locator(".task-text").first()).toHaveText(
-      "buy almond milk",
-    );
+    await expect(page.locator(".task-text").first()).toHaveText("buy almond milk");
 
     const row = page.locator("li").first();
     await row.focus();
@@ -24,9 +22,7 @@ test.describe("Journey 6: Undo Edit", () => {
     await expect(page.locator(".task-text").first()).toHaveText("buy oat milk");
   });
 
-  test("undo of whitespace-delete restores original text", async ({
-    page,
-  }) => {
+  test("undo of whitespace-delete restores original text", async ({ page }) => {
     await page.goto("/");
 
     const captureInput = page.locator('input[aria-label="Add a task"]');

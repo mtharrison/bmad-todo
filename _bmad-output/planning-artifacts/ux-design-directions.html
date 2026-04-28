@@ -1,331 +1,378 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>bmad-todo — Design Direction Showcase</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400&display=swap" rel="stylesheet" />
-<style>
-  :root {
-    --color-paper: #F4EFE6;
-    --color-ink: #1F1A14;
-    --color-ink-muted: rgba(31, 26, 20, 0.45);
-    --color-ink-rule: rgba(31, 26, 20, 0.13);
-    --color-accent: #9C3B1B;
-  }
-  [data-theme="dark"] {
-    --color-paper: #1A1612;
-    --color-ink: #E8DFCE;
-    --color-ink-muted: rgba(232, 223, 206, 0.45);
-    --color-ink-rule: rgba(232, 223, 206, 0.13);
-    --color-accent: #6B8E7F;
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    font-family: 'Fraunces', Georgia, serif;
-    font-size: 18px;
-    line-height: 1.55;
-    background: #ECE6DA;
-    color: #1F1A14;
-    -webkit-font-smoothing: antialiased;
-  }
-  .meta-header {
-    padding: 32px 64px 16px;
-    font-family: 'Fraunces', Georgia, serif;
-    font-size: 14px;
-    color: #5C5044;
-    border-bottom: 1px solid #D7D0C2;
-  }
-  .meta-header h1 { font-size: 22px; margin: 0 0 4px; color: #1F1A14; font-weight: 400; }
-  .meta-header p { margin: 0; }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>bmad-todo — Design Direction Showcase</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --color-paper: #f4efe6;
+        --color-ink: #1f1a14;
+        --color-ink-muted: rgba(31, 26, 20, 0.45);
+        --color-ink-rule: rgba(31, 26, 20, 0.13);
+        --color-accent: #9c3b1b;
+      }
+      [data-theme="dark"] {
+        --color-paper: #1a1612;
+        --color-ink: #e8dfce;
+        --color-ink-muted: rgba(232, 223, 206, 0.45);
+        --color-ink-rule: rgba(232, 223, 206, 0.13);
+        --color-accent: #6b8e7f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Fraunces", Georgia, serif;
+        font-size: 18px;
+        line-height: 1.55;
+        background: #ece6da;
+        color: #1f1a14;
+        -webkit-font-smoothing: antialiased;
+      }
+      .meta-header {
+        padding: 32px 64px 16px;
+        font-family: "Fraunces", Georgia, serif;
+        font-size: 14px;
+        color: #5c5044;
+        border-bottom: 1px solid #d7d0c2;
+      }
+      .meta-header h1 {
+        font-size: 22px;
+        margin: 0 0 4px;
+        color: #1f1a14;
+        font-weight: 400;
+      }
+      .meta-header p {
+        margin: 0;
+      }
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1px;
-    background: #D7D0C2;
-  }
-  .frame {
-    background: var(--color-paper);
-    color: var(--color-ink);
-    height: 600px;
-    overflow: hidden;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-  }
-  .frame-label {
-    position: absolute;
-    top: 12px;
-    right: 16px;
-    font-size: 11px;
-    font-family: 'Fraunces', Georgia, serif;
-    color: var(--color-ink-muted);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    z-index: 10;
-  }
-  .column {
-    margin-left: 96px;
-    margin-top: 96px;
-    margin-right: 64px;
-    max-width: 640px;
-    flex: 1;
-    overflow: hidden;
-  }
-  .row {
-    padding: 8px 0;
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-    margin-bottom: 16px;
-    position: relative;
-  }
-  .row.completed {
-    color: var(--color-ink-muted);
-    text-decoration: line-through;
-    text-decoration-thickness: 1px;
-    text-decoration-color: var(--color-ink);
-  }
-  .row.focused::before {
-    content: '';
-    position: absolute;
-    left: -28px;
-    top: 50%;
-    width: 12px;
-    height: 12px;
-    border: 2px solid var(--color-ink);
-    border-radius: 2px;
-    transform: translateY(-50%);
-    background: var(--color-paper);
-  }
-  .row.focused.completed::before {
-    background: var(--color-paper);
-  }
-  .focus-ring {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 4px;
-  }
-  .capture {
-    padding: 8px 0;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: baseline;
-    gap: 0;
-    position: relative;
-    min-height: 1.55em;
-  }
-  .capture .caret {
-    display: inline-block;
-    width: 2px;
-    height: 1em;
-    background: var(--color-accent);
-    transform: translateY(2px);
-    animation: blink 1.06s steps(2, start) infinite;
-  }
-  .capture.typed .caret {
-    margin-left: 1px;
-  }
-  @keyframes blink { to { visibility: hidden; } }
-  .typed-text { color: var(--color-ink); }
-  .tick {
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-    transform: translateY(2px);
-  }
-  .tick path {
-    fill: none;
-    stroke: var(--color-accent);
-    stroke-width: 2.2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-  .annunciator {
-    position: absolute;
-    bottom: 24px;
-    right: 24px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--color-accent);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 18%, transparent);
-  }
-  .annunciator.silent { display: none; }
-  .annunciator-label {
-    position: absolute;
-    bottom: 22px;
-    right: 44px;
-    font-size: 13px;
-    color: var(--color-ink-muted);
-    font-family: 'Fraunces', Georgia, serif;
-  }
-  .footer-note {
-    padding: 16px 64px 32px;
-    font-size: 13px;
-    color: #5C5044;
-    border-top: 1px solid #D7D0C2;
-  }
-  /* Mobile preview narrower frames */
-  .mobile-row .frame { height: 600px; }
-  .mobile-row .column { margin-left: 24px; margin-right: 24px; margin-top: 48px; }
-  .mobile-frame { max-width: 380px; margin: 0 auto; }
-</style>
-</head>
-<body>
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1px;
+        background: #d7d0c2;
+      }
+      .frame {
+        background: var(--color-paper);
+        color: var(--color-ink);
+        height: 600px;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+      .frame-label {
+        position: absolute;
+        top: 12px;
+        right: 16px;
+        font-size: 11px;
+        font-family: "Fraunces", Georgia, serif;
+        color: var(--color-ink-muted);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        z-index: 10;
+      }
+      .column {
+        margin-left: 96px;
+        margin-top: 96px;
+        margin-right: 64px;
+        max-width: 640px;
+        flex: 1;
+        overflow: hidden;
+      }
+      .row {
+        padding: 8px 0;
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 16px;
+        position: relative;
+      }
+      .row.completed {
+        color: var(--color-ink-muted);
+        text-decoration: line-through;
+        text-decoration-thickness: 1px;
+        text-decoration-color: var(--color-ink);
+      }
+      .row.focused::before {
+        content: "";
+        position: absolute;
+        left: -28px;
+        top: 50%;
+        width: 12px;
+        height: 12px;
+        border: 2px solid var(--color-ink);
+        border-radius: 2px;
+        transform: translateY(-50%);
+        background: var(--color-paper);
+      }
+      .row.focused.completed::before {
+        background: var(--color-paper);
+      }
+      .focus-ring {
+        outline: 2px solid var(--color-accent);
+        outline-offset: 4px;
+      }
+      .capture {
+        padding: 8px 0;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: baseline;
+        gap: 0;
+        position: relative;
+        min-height: 1.55em;
+      }
+      .capture .caret {
+        display: inline-block;
+        width: 2px;
+        height: 1em;
+        background: var(--color-accent);
+        transform: translateY(2px);
+        animation: blink 1.06s steps(2, start) infinite;
+      }
+      .capture.typed .caret {
+        margin-left: 1px;
+      }
+      @keyframes blink {
+        to {
+          visibility: hidden;
+        }
+      }
+      .typed-text {
+        color: var(--color-ink);
+      }
+      .tick {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        transform: translateY(2px);
+      }
+      .tick path {
+        fill: none;
+        stroke: var(--color-accent);
+        stroke-width: 2.2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .annunciator {
+        position: absolute;
+        bottom: 24px;
+        right: 24px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--color-accent);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 18%, transparent);
+      }
+      .annunciator.silent {
+        display: none;
+      }
+      .annunciator-label {
+        position: absolute;
+        bottom: 22px;
+        right: 44px;
+        font-size: 13px;
+        color: var(--color-ink-muted);
+        font-family: "Fraunces", Georgia, serif;
+      }
+      .footer-note {
+        padding: 16px 64px 32px;
+        font-size: 13px;
+        color: #5c5044;
+        border-top: 1px solid #d7d0c2;
+      }
+      /* Mobile preview narrower frames */
+      .mobile-row .frame {
+        height: 600px;
+      }
+      .mobile-row .column {
+        margin-left: 24px;
+        margin-right: 24px;
+        margin-top: 48px;
+      }
+      .mobile-frame {
+        max-width: 380px;
+        margin: 0 auto;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="meta-header">
+      <h1>bmad-todo — design direction showcase</h1>
+      <p>
+        One canonical direction. Six states. Two themes.
+        <em>Fraunces 18px / 1.55, single weight, asymmetric column at left+96px.</em>
+      </p>
+    </header>
 
-<header class="meta-header">
-  <h1>bmad-todo — design direction showcase</h1>
-  <p>One canonical direction. Six states. Two themes. <em>Fraunces 18px / 1.55, single weight, asymmetric column at left+96px.</em></p>
-</header>
+    <div class="grid">
+      <!-- 1: Empty light -->
+      <div class="frame" data-theme="light">
+        <span class="frame-label">1 · empty · light</span>
+        <div class="column">
+          <div class="capture"><span class="caret"></span></div>
+        </div>
+        <div class="annunciator silent"></div>
+      </div>
 
-<div class="grid">
+      <!-- 2: Empty dark -->
+      <div class="frame" data-theme="dark">
+        <span class="frame-label">2 · empty · dark</span>
+        <div class="column">
+          <div class="capture"><span class="caret"></span></div>
+        </div>
+        <div class="annunciator silent"></div>
+      </div>
 
-  <!-- 1: Empty light -->
-  <div class="frame" data-theme="light">
-    <span class="frame-label">1 · empty · light</span>
-    <div class="column">
-      <div class="capture"><span class="caret"></span></div>
+      <!-- 3: Mid-typing light -->
+      <div class="frame" data-theme="light">
+        <span class="frame-label">3 · mid-typing · light</span>
+        <div class="column">
+          <div class="capture typed">
+            <span class="typed-text">Reply to Jen about Q3 budget</span><span class="caret"></span>
+          </div>
+          <div class="row">Run the migration on staging</div>
+          <div class="row">Schedule dentist</div>
+          <div class="row completed">
+            <svg class="tick" viewBox="0 0 14 14" aria-hidden="true">
+              <path d="M2.5 7.4 C 4 8.6, 5 9.5, 6 10.4 C 8.2 7.5, 10.5 4.7, 12 2.7" />
+            </svg>
+            Pick up flowers — anniversary
+          </div>
+        </div>
+        <div class="annunciator silent"></div>
+      </div>
+
+      <!-- 4: Populated dark, focus on row 2 -->
+      <div class="frame" data-theme="dark">
+        <span class="frame-label">4 · navigating · dark</span>
+        <div class="column">
+          <div class="capture"><span class="caret"></span></div>
+          <div class="row">Reply to Jen about Q3 budget</div>
+          <div class="row focused focus-ring">Run the migration on staging</div>
+          <div class="row">Schedule dentist</div>
+          <div class="row completed">
+            <svg class="tick" viewBox="0 0 14 14" aria-hidden="true">
+              <path d="M2.7 7.2 C 4.1 8.4, 5.3 9.6, 6.2 10.5 C 8.4 7.4, 10.7 4.6, 12.1 2.6" />
+            </svg>
+            Pick up flowers — anniversary
+          </div>
+        </div>
+        <div class="annunciator silent"></div>
+      </div>
+
+      <!-- 5: Three completed, light, journal density -->
+      <div class="frame" data-theme="light">
+        <span class="frame-label">5 · end-of-day · light</span>
+        <div class="column">
+          <div class="capture"><span class="caret"></span></div>
+          <div class="row">Reply to Jen about Q3 budget</div>
+          <div class="row completed">
+            <svg class="tick" viewBox="0 0 14 14" aria-hidden="true">
+              <path d="M2.4 7.5 C 3.9 8.7, 5 9.4, 6.1 10.2 C 8.3 7.6, 10.4 4.8, 12 2.8" />
+            </svg>
+            Run the migration on staging
+          </div>
+          <div class="row completed">
+            <svg class="tick" viewBox="0 0 14 14" aria-hidden="true">
+              <path d="M2.6 7.3 C 4 8.5, 5.2 9.5, 6.3 10.3 C 8.2 7.4, 10.5 4.7, 12 2.7" />
+            </svg>
+            Schedule dentist
+          </div>
+          <div class="row completed">
+            <svg class="tick" viewBox="0 0 14 14" aria-hidden="true">
+              <path d="M2.5 7.4 C 4 8.6, 5 9.5, 6 10.4 C 8.2 7.5, 10.5 4.7, 12 2.7" />
+            </svg>
+            Pick up flowers — anniversary
+          </div>
+        </div>
+        <div class="annunciator silent"></div>
+      </div>
+
+      <!-- 6: Annunciator surfaced (offline), dark -->
+      <div class="frame" data-theme="dark">
+        <span class="frame-label">6 · annunciator · dark</span>
+        <div class="column">
+          <div class="capture typed">
+            <span class="typed-text">Note: revisit the deploy script</span
+            ><span class="caret"></span>
+          </div>
+          <div class="row">Reply to Jen about Q3 budget</div>
+          <div class="row">Run the migration on staging</div>
+          <div class="row">Schedule dentist</div>
+          <div class="row completed">
+            <svg class="tick" viewBox="0 0 14 14" aria-hidden="true">
+              <path d="M2.5 7.4 C 4 8.6, 5 9.5, 6 10.4 C 8.2 7.5, 10.5 4.7, 12 2.7" />
+            </svg>
+            Pick up flowers — anniversary
+          </div>
+        </div>
+        <div class="annunciator-label">Offline</div>
+        <div class="annunciator"></div>
+      </div>
     </div>
-    <div class="annunciator silent"></div>
-  </div>
 
-  <!-- 2: Empty dark -->
-  <div class="frame" data-theme="dark">
-    <span class="frame-label">2 · empty · dark</span>
-    <div class="column">
-      <div class="capture"><span class="caret"></span></div>
-    </div>
-    <div class="annunciator silent"></div>
-  </div>
+    <header
+      class="meta-header"
+      style="border-top: 1px solid #d7d0c2; border-bottom: none; margin-top: 32px"
+    >
+      <h1>Mobile preview</h1>
+      <p>Same layout. Column edge-padded. Touch-row activates on tap. No auto-focus on load.</p>
+    </header>
 
-  <!-- 3: Mid-typing light -->
-  <div class="frame" data-theme="light">
-    <span class="frame-label">3 · mid-typing · light</span>
-    <div class="column">
-      <div class="capture typed">
-        <span class="typed-text">Reply to Jen about Q3 budget</span><span class="caret"></span>
+    <div class="grid mobile-row">
+      <div class="mobile-frame">
+        <div class="frame" data-theme="light" style="height: 600px">
+          <span class="frame-label">7 · mobile · light</span>
+          <div class="column">
+            <div class="capture"><span class="caret"></span></div>
+            <div class="row">Reply to Jen about Q3 budget</div>
+            <div class="row">Run the migration on staging</div>
+            <div class="row">Schedule dentist</div>
+          </div>
+          <div class="annunciator silent"></div>
+        </div>
       </div>
-      <div class="row">Run the migration on staging</div>
-      <div class="row">Schedule dentist</div>
-      <div class="row completed">
-        <svg class="tick" viewBox="0 0 14 14" aria-hidden="true">
-          <path d="M2.5 7.4 C 4 8.6, 5 9.5, 6 10.4 C 8.2 7.5, 10.5 4.7, 12 2.7" />
-        </svg>
-        Pick up flowers — anniversary
-      </div>
-    </div>
-    <div class="annunciator silent"></div>
-  </div>
-
-  <!-- 4: Populated dark, focus on row 2 -->
-  <div class="frame" data-theme="dark">
-    <span class="frame-label">4 · navigating · dark</span>
-    <div class="column">
-      <div class="capture"><span class="caret"></span></div>
-      <div class="row">Reply to Jen about Q3 budget</div>
-      <div class="row focused focus-ring">Run the migration on staging</div>
-      <div class="row">Schedule dentist</div>
-      <div class="row completed">
-        <svg class="tick" viewBox="0 0 14 14" aria-hidden="true">
-          <path d="M2.7 7.2 C 4.1 8.4, 5.3 9.6, 6.2 10.5 C 8.4 7.4, 10.7 4.6, 12.1 2.6" />
-        </svg>
-        Pick up flowers — anniversary
+      <div class="mobile-frame">
+        <div class="frame" data-theme="dark" style="height: 600px">
+          <span class="frame-label">8 · mobile · dark</span>
+          <div class="column">
+            <div class="capture"><span class="caret"></span></div>
+            <div class="row">Reply to Jen about Q3 budget</div>
+            <div class="row">Run the migration on staging</div>
+            <div class="row">Schedule dentist</div>
+          </div>
+          <div class="annunciator silent"></div>
+        </div>
       </div>
     </div>
-    <div class="annunciator silent"></div>
-  </div>
 
-  <!-- 5: Three completed, light, journal density -->
-  <div class="frame" data-theme="light">
-    <span class="frame-label">5 · end-of-day · light</span>
-    <div class="column">
-      <div class="capture"><span class="caret"></span></div>
-      <div class="row">Reply to Jen about Q3 budget</div>
-      <div class="row completed">
-        <svg class="tick" viewBox="0 0 14 14" aria-hidden="true">
-          <path d="M2.4 7.5 C 3.9 8.7, 5 9.4, 6.1 10.2 C 8.3 7.6, 10.4 4.8, 12 2.8" />
-        </svg>
-        Run the migration on staging
-      </div>
-      <div class="row completed">
-        <svg class="tick" viewBox="0 0 14 14" aria-hidden="true">
-          <path d="M2.6 7.3 C 4 8.5, 5.2 9.5, 6.3 10.3 C 8.2 7.4, 10.5 4.7, 12 2.7" />
-        </svg>
-        Schedule dentist
-      </div>
-      <div class="row completed">
-        <svg class="tick" viewBox="0 0 14 14" aria-hidden="true">
-          <path d="M2.5 7.4 C 4 8.6, 5 9.5, 6 10.4 C 8.2 7.5, 10.5 4.7, 12 2.7" />
-        </svg>
-        Pick up flowers — anniversary
-      </div>
+    <div class="footer-note">
+      <p>
+        <strong>What you're looking at, what you're not.</strong> No "+" button anywhere. No section
+        headers. No persistent checkboxes. No "saving…" or "added!" toasts. The annunciator (frame
+        6) is the <em>only</em> non-content surface in the entire app, and it surfaces only on
+        abnormal state. The capture line and rendered tasks share identical typography — the cursor
+        is the only difference. Tick marks are slightly different per row (frame 5): SVG paths use
+        Bezier control-point variance.
+      </p>
+      <p>
+        <strong>Reminder:</strong> illustrative HTML; final implementation may differ in exact hex
+        values, font-loading behavior, and subpixel layout. The structural moves and proportions are
+        the load-bearing claims.
+      </p>
     </div>
-    <div class="annunciator silent"></div>
-  </div>
-
-  <!-- 6: Annunciator surfaced (offline), dark -->
-  <div class="frame" data-theme="dark">
-    <span class="frame-label">6 · annunciator · dark</span>
-    <div class="column">
-      <div class="capture typed">
-        <span class="typed-text">Note: revisit the deploy script</span><span class="caret"></span>
-      </div>
-      <div class="row">Reply to Jen about Q3 budget</div>
-      <div class="row">Run the migration on staging</div>
-      <div class="row">Schedule dentist</div>
-      <div class="row completed">
-        <svg class="tick" viewBox="0 0 14 14" aria-hidden="true">
-          <path d="M2.5 7.4 C 4 8.6, 5 9.5, 6 10.4 C 8.2 7.5, 10.5 4.7, 12 2.7" />
-        </svg>
-        Pick up flowers — anniversary
-      </div>
-    </div>
-    <div class="annunciator-label">Offline</div>
-    <div class="annunciator"></div>
-  </div>
-
-</div>
-
-<header class="meta-header" style="border-top:1px solid #D7D0C2; border-bottom:none; margin-top: 32px;">
-  <h1>Mobile preview</h1>
-  <p>Same layout. Column edge-padded. Touch-row activates on tap. No auto-focus on load.</p>
-</header>
-
-<div class="grid mobile-row">
-  <div class="mobile-frame">
-    <div class="frame" data-theme="light" style="height:600px;">
-      <span class="frame-label">7 · mobile · light</span>
-      <div class="column">
-        <div class="capture"><span class="caret"></span></div>
-        <div class="row">Reply to Jen about Q3 budget</div>
-        <div class="row">Run the migration on staging</div>
-        <div class="row">Schedule dentist</div>
-      </div>
-      <div class="annunciator silent"></div>
-    </div>
-  </div>
-  <div class="mobile-frame">
-    <div class="frame" data-theme="dark" style="height:600px;">
-      <span class="frame-label">8 · mobile · dark</span>
-      <div class="column">
-        <div class="capture"><span class="caret"></span></div>
-        <div class="row">Reply to Jen about Q3 budget</div>
-        <div class="row">Run the migration on staging</div>
-        <div class="row">Schedule dentist</div>
-      </div>
-      <div class="annunciator silent"></div>
-    </div>
-  </div>
-</div>
-
-<div class="footer-note">
-  <p><strong>What you're looking at, what you're not.</strong> No "+" button anywhere. No section headers. No persistent checkboxes. No "saving…" or "added!" toasts. The annunciator (frame 6) is the <em>only</em> non-content surface in the entire app, and it surfaces only on abnormal state. The capture line and rendered tasks share identical typography — the cursor is the only difference. Tick marks are slightly different per row (frame 5): SVG paths use Bezier control-point variance.</p>
-  <p><strong>Reminder:</strong> illustrative HTML; final implementation may differ in exact hex values, font-loading behavior, and subpixel layout. The structural moves and proportions are the load-bearing claims.</p>
-</div>
-
-</body>
+  </body>
 </html>

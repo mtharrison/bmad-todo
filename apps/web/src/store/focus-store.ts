@@ -3,7 +3,9 @@ import { tasks } from "./task-store";
 
 const [focusedRowIndexSignal, setFocusedRowIndexInternal] = createSignal<number | null>(null);
 const [editingTaskIdSignal, setEditingTaskIdInternal] = createSignal<string | null>(null);
-const [captureInputRefSignal, setCaptureInputRefInternal] = createSignal<HTMLInputElement | null>(null);
+const [captureInputRefSignal, setCaptureInputRefInternal] = createSignal<HTMLInputElement | null>(
+  null,
+);
 
 export const focusedRowIndex = focusedRowIndexSignal;
 export const editingTaskId = editingTaskIdSignal;

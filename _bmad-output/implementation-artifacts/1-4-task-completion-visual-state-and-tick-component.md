@@ -89,19 +89,20 @@ so that completing tasks feels instant and unobtrusive.
   - [x] 4.4 The checkbox's `onChange` handler MUST also dispatch `toggleTaskCompleted`. Stop click propagation on the checkbox itself (`onClick={(e) => e.stopPropagation()}`) so a click on the visible-on-hover checkbox doesn't double-toggle by also bubbling to the row.
   - [x] 4.5 The text MUST remain rendered as plain text via JSX text interpolation only — never `innerHTML`, never `prop:innerHTML` (FR4, NFR-Sec-1). The `<span class="task-text">` wrapper is what enables both the click-target detection and the strike-through CSS.
   - [x] 4.6 Forbidden in this story: any toast / `Snackbar` / `Toaster` / `Skeleton` / `Spinner` / `<Modal` / `<Dialog` / `<ErrorBoundary` / `confirm(` / `alert(` / `🎉` / `✨` / `🏆` / `Streak` / `Achievement` / `XP` / `Karma` (anti-feature grep, AR18). No CSS animation on the strike-through transition (FR53; NFR9 — completion is sub-frame). No `<button>` element wrapping the row — the `<li>` is the click surface (avoiding nested interactives, simpler semantics).
-  - [x] 4.7 `tabindex={0}` on every `<li>` is the *minimal* focus enabling needed for AC#1 in this story. The full roving-tabindex two-cursor focus model lands in Story 1.7. Story 1.7 will replace this `tabindex` with a roving-tabindex pattern (only the focused row is `tabindex=0`; siblings are `tabindex=-1`). Leave a single short comment in the JSX: `// tabindex=0 here; replaced by roving tabindex in Story 1.7`.
+  - [x] 4.7 `tabindex={0}` on every `<li>` is the _minimal_ focus enabling needed for AC#1 in this story. The full roving-tabindex two-cursor focus model lands in Story 1.7. Story 1.7 will replace this `tabindex` with a roving-tabindex pattern (only the focused row is `tabindex=0`; siblings are `tabindex=-1`). Leave a single short comment in the JSX: `// tabindex=0 here; replaced by roving tabindex in Story 1.7`.
   - [x] 4.8 Replace `apps/web/src/components/TaskRow.test.tsx` (the existing assertions that `<input>` and `<svg>` are null are now false and must change). New tests: an active task renders with `data-completed="false"`, exactly one `<input type="checkbox">` (always present), and zero `<svg>` (no tick when not completed); a completed task renders with `data-completed="true"`, exactly one `<input>` with `aria-checked="true"`, and exactly one `<svg>` (the tick); the input's `aria-label` is `"Mark complete"`; clicking the `<li>` outside `.task-text` calls `toggleTaskCompleted` (assert via store state change after render); clicking inside `.task-text` does NOT change completion state; pressing `x` while the `<li>` is focused toggles state; pressing `X` (capital) also toggles; pressing `y` is a no-op; an unrelated descendant keydown (e.g., simulated keydown on the checkbox) does NOT trigger the row's `x` handler (because `event.target !== event.currentTarget`).
 
 - [x] Task 5: CSS for at-rest hidden checkbox, focus/hover reveal, completed strike-through, and ≥44px tap target (AC: #3, #4, #10, #11)
   - [x] 5.1 Append to `apps/web/src/styles/globals.css` AFTER the existing `.task-row` rule. Do NOT modify the existing `@theme`, `:root,[data-theme="light"]`, or `[data-theme="dark"]` blocks — those are validated by 19 unit tests from Story 1.2 and any change there will break those tests. Also do NOT modify `.capture-line`, `.task-list`, the asymmetric column rules, or the existing single-line `.task-row` rule (only extend it).
   - [x] 5.2 Extend `.task-row`:
+
     ```css
     .task-row {
       padding: 8px 0;
       display: flex;
       align-items: baseline;
       gap: 8px;
-      min-height: 44px;          /* NFR-A11y-7 mobile tap target */
+      min-height: 44px; /* NFR-A11y-7 mobile tap target */
       cursor: pointer;
       outline: 0;
     }
@@ -117,7 +118,9 @@ so that completing tasks feels instant and unobtrusive.
       color: var(--color-ink-muted);
     }
     ```
+
   - [x] 5.3 Add the visually-suppressed checkbox rule (the load-bearing accessible-hidden pattern; clip-path NOT display:none — UX spec line 854):
+
     ```css
     .task-checkbox {
       flex: 0 0 auto;
@@ -140,6 +143,7 @@ so that completing tasks feels instant and unobtrusive.
       clip-path: none;
     }
     ```
+
   - [x] 5.4 Add the tick rule:
     ```css
     .task-tick {
@@ -159,7 +163,7 @@ so that completing tasks feels instant and unobtrusive.
 
 - [x] Task 6: Update existing E2E specs and add new completion-toggle spec (AC: #1, #2, #3, #5)
   - [x] 6.1 Update `tests/e2e/j1-capture-work-review.spec.ts`: the existing `await expect(items.first()).toHaveText("Buy oat milk")` may now match against the row's textContent including the (zero-width) text inside the visually-suppressed checkbox's accessible name. Verify locally that `toHaveText` still passes with the new DOM (the checkbox's `aria-label` is not in `textContent`, and the SVG isn't rendered until the task is completed — so existing assertions should still pass). If they do not, scope to `.task-text` (`page.locator("li .task-text")`) rather than the whole `<li>`. Document the choice in completion notes.
-  - [x] 6.2 Update `tests/e2e/visual-regression.spec.ts`: the `imageCount === 0` assertion in the empty-state block remains valid (no tasks → no checkboxes → no SVG). No baseline regeneration is required for the *empty-state* snapshot. The `blank-light.png` and `blank-dark.png` snapshots also stay byte-identical because the populated DOM diff happens only after a task is added.
+  - [x] 6.2 Update `tests/e2e/visual-regression.spec.ts`: the `imageCount === 0` assertion in the empty-state block remains valid (no tasks → no checkboxes → no SVG). No baseline regeneration is required for the _empty-state_ snapshot. The `blank-light.png` and `blank-dark.png` snapshots also stay byte-identical because the populated DOM diff happens only after a task is added.
   - [x] 6.3 Create `tests/e2e/j1-completion-toggle.spec.ts` (Journey 1, completion-loop subset). Test: goto `/`; type "Walk the dog" + Enter; click the rendered `<li>` outside `.task-text` (e.g., click on the `<input>` or use a small offset from the right edge of the `<li>`); assert the row now has `data-completed="true"` AND `aria-checked="true"` is set on the row's checkbox AND a `<svg>` is now rendered inside the `<li>`. Then click again outside `.task-text`; assert `data-completed="false"` AND `aria-checked="false"` AND no `<svg>` in the row.
   - [x] 6.4 In the same spec, add a keyboard test: type "Buy bread" + Enter; programmatically focus the new `<li>` via `await page.locator("li").first().focus()`; press `x`; assert `data-completed="true"`. Press `X` (capital — `await page.keyboard.press("Shift+KeyX")`); assert `data-completed="false"` (toggled back).
   - [x] 6.5 In the same spec, add an anti-feature regression assertion: after toggling, `await expect(page.locator("text=/saving|loading|saved|done!|nice|great/i")).toHaveCount(0)` AND `await expect(page.locator("[role=alertdialog], [role=dialog]")).toHaveCount(0)`. (FR28, FR30, FR35.)
@@ -261,7 +265,9 @@ export function createTask(text: string): void {
   setTasks((prev) => [task, ...prev]);
 }
 
-export function clearAllTasks(): void { setTasks(() => []); }
+export function clearAllTasks(): void {
+  setTasks(() => []);
+}
 ```
 
 What 1.4 changes: extend `ActiveTask` with `completedAt: number | null`; default to `null` in `createTask`; add `toggleTaskCompleted(id)`. Keep `createTask`'s newest-first behaviour, whitespace rejection, and id generation EXACTLY as-is — they are validated by 7 existing tests that must continue to pass.
@@ -436,7 +442,7 @@ export type ActiveTask = {
   id: string;
   text: string;
   createdAt: number;
-  completedAt: number | null;        // NEW — aligns with packages/shared Task schema (Story 1.9)
+  completedAt: number | null; // NEW — aligns with packages/shared Task schema (Story 1.9)
 };
 
 // in createTask, add the field on the new task:
@@ -447,7 +453,7 @@ export function toggleTaskCompleted(id: string): void {
   setTasks(
     (t) => t.id === id,
     "completedAt",
-    (current) => (current === null ? Date.now() : null)
+    (current) => (current === null ? Date.now() : null),
   );
 }
 ```
@@ -516,12 +522,12 @@ The `:focus-visible` selector on `.task-row` reveals the focus ring on keyboard 
 
 ### Library / Framework Requirements
 
-| Package | Version | Source | Why |
-|---|---|---|---|
-| `solid-js` | already in `apps/web/package.json` (^1.9.5) | existing | reactivity primitives + `<Show>` |
-| `uuidv7` | already added in 1.3 | existing | task ids — used as `<Tick>` seed |
-| `@solidjs/testing-library` | already added in 1.3 | existing | component testing |
-| `@testing-library/jest-dom` | root devDependencies | existing | DOM assertions |
+| Package                     | Version                                     | Source   | Why                              |
+| --------------------------- | ------------------------------------------- | -------- | -------------------------------- |
+| `solid-js`                  | already in `apps/web/package.json` (^1.9.5) | existing | reactivity primitives + `<Show>` |
+| `uuidv7`                    | already added in 1.3                        | existing | task ids — used as `<Tick>` seed |
+| `@solidjs/testing-library`  | already added in 1.3                        | existing | component testing                |
+| `@testing-library/jest-dom` | root devDependencies                        | existing | DOM assertions                   |
 
 **No new dependencies in this story.** The `tick-path.ts` PRNG is an inline ~20-line implementation — adding `seedrandom` or similar would breach the "minimum dependency surface" posture.
 

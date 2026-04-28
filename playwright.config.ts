@@ -22,7 +22,10 @@ export default defineConfig({
       name: "perf",
       testDir: "./tests/perf",
       testMatch: "**/*.bench.ts",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: "http://localhost:4173",
+      },
     },
   ],
   webServer: [
@@ -35,6 +38,12 @@ export default defineConfig({
     {
       command: "pnpm --filter @bmad-todo/web dev",
       port: 5173,
+      timeout: 120000,
+      reuseExistingServer: !process.env["CI"],
+    },
+    {
+      command: "pnpm --filter @bmad-todo/web preview --port 4173",
+      port: 4173,
       timeout: 120000,
       reuseExistingServer: !process.env["CI"],
     },

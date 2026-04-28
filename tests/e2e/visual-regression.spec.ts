@@ -104,6 +104,7 @@ test.describe("visual regression - blank screen", () => {
     });
   });
 
+
   test("empty state contains only capture line and empty list", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
@@ -182,77 +183,106 @@ test.describe("visual regression - populated state", () => {
 });
 
 test.describe("visual regression - focused state", () => {
-  for (const theme of THEMES) {
-    test(`focused row — ${theme} theme (desktop)`, async ({ page }) => {
-      await page.setViewportSize(VIEWPORTS.desktop);
-      await page.addInitScript((t: string) => {
-        localStorage.setItem("theme", t);
-      }, theme);
-      await page.goto("/");
-      await page.waitForLoadState("networkidle");
-      const input = page.locator(".capture-line");
-      for (const text of ["Task A", "Task B", "Task C"]) {
-        await input.fill(text);
-        await input.press("Enter");
-      }
-      await expect(page.locator(".task-list li")).toHaveCount(3);
-      await page.keyboard.press("Tab");
-      await expect(page).toHaveScreenshot(`focused-desktop-${theme}.png`, {
-        fullPage: true,
-        maxDiffPixelRatio: 0.01,
+  for (const [vpName, vpSize] of Object.entries(VIEWPORTS)) {
+    for (const theme of THEMES) {
+      test(`focused row — ${theme} theme (${vpName})`, async ({ page }) => {
+        await page.setViewportSize(vpSize);
+        await page.addInitScript((t: string) => {
+          localStorage.setItem("theme", t);
+        }, theme);
+        await page.goto("/");
+        await page.waitForLoadState("networkidle");
+        const input = page.locator(".capture-line");
+        for (const text of ["Task A", "Task B", "Task C"]) {
+          await input.fill(text);
+          await input.press("Enter");
+        }
+        await expect(page.locator(".task-list li")).toHaveCount(3);
+        await page.keyboard.press("Tab");
+        await expect(page).toHaveScreenshot(`focused-${vpName}-${theme}.png`, {
+          fullPage: true,
+          maxDiffPixelRatio: 0.01,
+        });
       });
-    });
+    }
   }
 });
 
 test.describe("visual regression - completed state", () => {
-  for (const theme of THEMES) {
-    test(`completed task — ${theme} theme (desktop)`, async ({ page }) => {
-      await page.setViewportSize(VIEWPORTS.desktop);
-      await page.addInitScript((t: string) => {
-        localStorage.setItem("theme", t);
-      }, theme);
-      await page.goto("/");
-      await page.waitForLoadState("networkidle");
-      const input = page.locator(".capture-line");
-      for (const text of ["Done item", "Active item A", "Active item B"]) {
-        await input.fill(text);
-        await input.press("Enter");
-      }
-      await expect(page.locator(".task-list li")).toHaveCount(3);
-      const firstRow = page.locator(".task-list li").first();
-      await firstRow.focus();
-      await page.keyboard.press("x");
-      await expect(firstRow).toHaveAttribute("data-completed", "true");
-      await expect(page).toHaveScreenshot(`completed-desktop-${theme}.png`, {
-        fullPage: true,
-        maxDiffPixelRatio: 0.01,
+  for (const [vpName, vpSize] of Object.entries(VIEWPORTS)) {
+    for (const theme of THEMES) {
+      test(`completed task — ${theme} theme (${vpName})`, async ({ page }) => {
+        await page.setViewportSize(vpSize);
+        await page.addInitScript((t: string) => {
+          localStorage.setItem("theme", t);
+        }, theme);
+        await page.goto("/");
+        await page.waitForLoadState("networkidle");
+        const input = page.locator(".capture-line");
+        for (const text of ["Done item", "Active item A", "Active item B"]) {
+          await input.fill(text);
+          await input.press("Enter");
+        }
+        await expect(page.locator(".task-list li")).toHaveCount(3);
+        const firstRow = page.locator(".task-list li").first();
+        await firstRow.focus();
+        await page.keyboard.press("x");
+        await expect(firstRow).toHaveAttribute("data-completed", "true");
+        await expect(page).toHaveScreenshot(`completed-${vpName}-${theme}.png`, {
+          fullPage: true,
+          maxDiffPixelRatio: 0.01,
+        });
       });
-    });
+    }
   }
 });
 
 test.describe("visual regression - edit mode", () => {
-  for (const theme of THEMES) {
-    test(`edit mode — ${theme} theme (desktop)`, async ({ page }) => {
-      await page.setViewportSize(VIEWPORTS.desktop);
-      await page.addInitScript((t: string) => {
-        localStorage.setItem("theme", t);
-      }, theme);
-      await page.goto("/");
-      await page.waitForLoadState("networkidle");
-      const input = page.locator(".capture-line");
-      await input.fill("Edit this task");
-      await input.press("Enter");
-      await expect(page.locator(".task-list li")).toHaveCount(1);
-      const row = page.locator(".task-list li").first();
-      await row.focus();
-      await page.keyboard.press("e");
-      await expect(page.locator('.task-text[contenteditable="plaintext-only"]')).toBeVisible();
-      await expect(page).toHaveScreenshot(`edit-desktop-${theme}.png`, {
-        fullPage: true,
-        maxDiffPixelRatio: 0.01,
+  for (const [vpName, vpSize] of Object.entries(VIEWPORTS)) {
+    for (const theme of THEMES) {
+      test(`edit mode — ${theme} theme (${vpName})`, async ({ page }) => {
+        await page.setViewportSize(vpSize);
+        await page.addInitScript((t: string) => {
+          localStorage.setItem("theme", t);
+        }, theme);
+        await page.goto("/");
+        await page.waitForLoadState("networkidle");
+        const input = page.locator(".capture-line");
+        await input.fill("Edit this task");
+        await input.press("Enter");
+        await expect(page.locator(".task-list li")).toHaveCount(1);
+        const row = page.locator(".task-list li").first();
+        await row.focus();
+        await page.keyboard.press("e");
+        await expect(page.locator('.task-text[contenteditable="plaintext-only"]')).toBeVisible();
+        await expect(page).toHaveScreenshot(`edit-${vpName}-${theme}.png`, {
+          fullPage: true,
+          maxDiffPixelRatio: 0.01,
+        });
       });
-    });
+    }
+  }
+});
+
+test.describe("visual regression - annunciator state (all viewports)", () => {
+  for (const [vpName, vpSize] of Object.entries(VIEWPORTS)) {
+    for (const theme of THEMES) {
+      test(`annunciator — ${theme} theme (${vpName})`, async ({ page, context }) => {
+        await page.setViewportSize(vpSize);
+        await page.addInitScript((t: string) => {
+          localStorage.setItem("theme", t);
+        }, theme);
+        await page.goto("/");
+        await page.waitForLoadState("networkidle");
+        await context.setOffline(true);
+        await page.evaluate(() => window.dispatchEvent(new Event("offline")));
+        await page.waitForTimeout(2500);
+        await expect(page.locator(".annunciator")).toBeVisible({ timeout: 5000 });
+        await expect(page).toHaveScreenshot(`annunciator-${vpName}-${theme}.png`, {
+          fullPage: true,
+          maxDiffPixelRatio: 0.01,
+        });
+      });
+    }
   }
 });

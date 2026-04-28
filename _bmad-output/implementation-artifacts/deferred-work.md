@@ -1,5 +1,11 @@
 # Deferred Work
 
+## Deferred from: code review of 1-12-ci-performance-accessibility-and-visual-regression-gates (2026-04-28)
+
+- P95 with 10 samples is effectively the max — `check-to-strike` uses 10 samples; `Math.floor(10 * 0.95) = 9`, so "P95" is the single worst value. One outlier fails CI. Acceptable for v1 (budgets have wide margin; completion p95 measured at 2.2ms vs 50ms budget).
+- Latency tracker is a process-global singleton — module-level mutable arrays/flags could leak between test files if `_reset()` not called. Only used by DevLatencyDisplay (dev mode only), not test-critical.
+- Rapid keystrokes drop latency samples due to scalar start timestamp — when two keydown events fire within a single animation frame, `recordKeystrokeStart()` overwrites the previous start. Affects fast typists (>60 WPM) on dev-mode display only, not CI gates.
+
 ## Deferred from: code review of 1-10-annunciator-and-failure-feedback-routing (2026-04-28)
 
 - No E2E tests for conflict/error annunciator states (AC3/AC4) — unit tests cover state-to-label mapping and click-to-flush, but no Playwright test exercises conflict or error states at integration level

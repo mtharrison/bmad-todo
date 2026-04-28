@@ -24,9 +24,11 @@ test("cold-load with 100 tasks paints within 100ms", async ({ page, request }) =
     (window as unknown as Record<string, unknown>).__COLD_LOAD_RESULT = new Promise<number>(
       (resolve) => {
         const start = performance.now();
+        const timeout = setTimeout(() => resolve(Infinity), 5000);
         const check = () => {
           const items = document.querySelectorAll(".task-list li");
           if (items.length >= count) {
+            clearTimeout(timeout);
             resolve(performance.now() - start);
           } else {
             requestAnimationFrame(check);
@@ -47,8 +49,8 @@ test("cold-load with 100 tasks paints within 100ms", async ({ page, request }) =
     return (window as unknown as Record<string, unknown>).__COLD_LOAD_RESULT as Promise<number>;
   });
 
+  expect(paintTime).toBeLessThan(BUDGET_MS);
+
   // eslint-disable-next-line no-console
   console.log(`cold-load-paint: ${paintTime.toFixed(2)}ms for ${TASK_COUNT} tasks`);
-
-  expect(paintTime).toBeLessThan(BUDGET_MS);
 });

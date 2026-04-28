@@ -33,6 +33,14 @@ export default defineConfig({
       "/admin": "http://localhost:3000",
     },
   },
+  preview: {
+    port: 4173,
+    proxy: {
+      "/tasks": "http://localhost:3000",
+      "/health": "http://localhost:3000",
+      "/admin": "http://localhost:3000",
+    },
+  },
   build: {
     target: "esnext",
   },

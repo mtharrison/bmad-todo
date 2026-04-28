@@ -22,11 +22,6 @@ export function CaptureLine() {
     if (event.metaKey || event.ctrlKey) return;
     if (event.isComposing) return;
 
-    if (latencyTracker.isActive()) {
-      latencyTracker.recordKeystrokeStart();
-      requestAnimationFrame(() => latencyTracker.recordKeystrokeEnd());
-    }
-
     if (event.key === "Enter") {
       event.preventDefault();
       if (inputEl.value.trim().length === 0) return;
@@ -38,6 +33,12 @@ export function CaptureLine() {
     if (event.key === "Escape") {
       event.preventDefault();
       inputEl.value = "";
+      return;
+    }
+
+    if (latencyTracker.isActive() && event.key.length === 1) {
+      latencyTracker.recordKeystrokeStart();
+      requestAnimationFrame(() => latencyTracker.recordKeystrokeEnd());
     }
   }
 

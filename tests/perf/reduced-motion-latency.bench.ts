@@ -14,26 +14,30 @@ test.describe("reduced-motion latency budgets", () => {
     const input = page.locator(".capture-line");
     await input.focus();
 
-    const samples = await page.evaluate(async (count: number) => {
-      const el = document.querySelector<HTMLInputElement>(".capture-line")!;
-      const results: number[] = [];
+    const samples: number[] = [];
 
-      for (let i = 0; i < count; i++) {
-        const start = performance.now();
-        el.dispatchEvent(new KeyboardEvent("keydown", { key: "a", bubbles: true }));
-        el.value += "a";
-        el.dispatchEvent(new InputEvent("input", { bubbles: true, data: "a" }));
-
-        await new Promise<void>((resolve) => {
-          requestAnimationFrame(() => {
-            results.push(performance.now() - start);
-            resolve();
+    for (let i = 0; i < SAMPLE_COUNT; i++) {
+      await page.evaluate(() => {
+        const el = document.querySelector<HTMLInputElement>(".capture-line")!;
+        (window as unknown as Record<string, unknown>).__PERF_KS_RESULT = new Promise<number>((resolve) => {
+          el.addEventListener("input", function handler() {
+            el.removeEventListener("input", handler);
+            const start = performance.now();
+            requestAnimationFrame(() => {
+              resolve(performance.now() - start);
+            });
           });
         });
-      }
+      });
 
-      return results;
-    }, SAMPLE_COUNT);
+      await page.keyboard.press("a");
+
+      const latency = await page.evaluate(async () => {
+        return (window as unknown as Record<string, unknown>).__PERF_KS_RESULT as Promise<number>;
+      });
+
+      samples.push(latency);
+    }
 
     const sorted = [...samples].sort((a, b) => a - b);
     const p95 = sorted[Math.floor(sorted.length * 0.95)]!;

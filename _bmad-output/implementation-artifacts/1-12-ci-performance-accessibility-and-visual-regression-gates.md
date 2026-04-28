@@ -1,6 +1,6 @@
 # Story 1.12: CI Performance, Accessibility & Visual-Regression Gates
 
-Status: in-progress
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -32,30 +32,30 @@ so that the product's budgets are a living contract enforced by the build pipeli
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Create latency budget benchmark tests** (AC: #1)
-  - [ ] 1.1 Create `tests/perf/keystroke-to-render.bench.ts` — Playwright test that:
+- [x] **Task 1: Create latency budget benchmark tests** (AC: #1)
+  - [x] 1.1 Create `tests/perf/keystroke-to-render.bench.ts` — Playwright test that:
     - Opens the app, types 50 characters into CaptureLine.
     - Uses `page.evaluate()` with `performance.now()` to measure each keystroke-to-next-paint latency (same strategy as `lib/latency.ts`: mark before keydown, measure in rAF callback).
     - Collects all samples, sorts, asserts p95 < 16ms.
     - Runs with `{ reducedMotion: 'no-preference' }` (default).
-  - [ ] 1.2 Create `tests/perf/check-to-strike.bench.ts` — Playwright test that:
+  - [x] 1.2 Create `tests/perf/check-to-strike.bench.ts` — Playwright test that:
     - Adds 10 tasks, toggles completion on each.
     - Measures time from `x` keypress to `data-completed="true"` attribute appearing (via `page.evaluate` with `MutationObserver` or rAF timing).
     - Asserts p95 < 50ms.
-  - [ ] 1.3 Create `tests/perf/add-to-appear.bench.ts` — Playwright test that:
+  - [x] 1.3 Create `tests/perf/add-to-appear.bench.ts` — Playwright test that:
     - Types task text and presses Enter 20 times.
     - Measures time from Enter keypress to new `<li>` appearing in the DOM.
     - Asserts p95 < 100ms.
-  - [ ] 1.4 Create `tests/perf/cold-load-paint.bench.ts` — Playwright test that:
+  - [x] 1.4 Create `tests/perf/cold-load-paint.bench.ts` — Playwright test that:
     - Seeds 100 tasks via the API (`POST /tasks` × 100).
     - Navigates to `/` with network cache and IDB pre-populated.
     - Measures time from navigation start to all 100 `<li>` elements visible.
     - Asserts < 100ms after JS evaluation completes.
-  - [ ] 1.5 Add a `tests/perf/playwright.config.ts` (or section in root playwright config) that configures perf tests as a separate Playwright project named `perf` — uses chromium only, `fullyParallel: false`, `workers: 1` (deterministic timing).
+  - [x] 1.5 Add a `tests/perf/playwright.config.ts` (or section in root playwright config) that configures perf tests as a separate Playwright project named `perf` — uses chromium only, `fullyParallel: false`, `workers: 1` (deterministic timing).
 
-- [ ] **Task 2: Create axe-core accessibility audit test** (AC: #3)
-  - [ ] 2.1 Install `@axe-core/playwright` as a dev dependency: `pnpm add -D @axe-core/playwright -w`.
-  - [ ] 2.2 Create `tests/e2e/a11y.spec.ts` with axe-core integration:
+- [x] **Task 2: Create axe-core accessibility audit test** (AC: #3)
+  - [x] 2.1 Install `@axe-core/playwright` as a dev dependency: `pnpm add -D @axe-core/playwright -w`.
+  - [x] 2.2 Create `tests/e2e/a11y.spec.ts` with axe-core integration:
     - **Empty state (both themes):** Navigate to `/`, run axe. Zero violations.
     - **Populated state:** Add 3 tasks, run axe. Zero violations.
     - **Task completed state:** Complete a task, run axe. Zero violations.
@@ -64,32 +64,32 @@ so that the product's budgets are a living contract enforced by the build pipeli
     - **Annunciator visible state:** Go offline for 2.5s, verify annunciator, run axe. Zero violations.
     - Use `new AxeBuilder(page).analyze()` and assert `results.violations` is empty.
     - For each test, tag the theme (`light` / `dark`) and run both.
-  - [ ] 2.3 Configure axe to check against WCAG 2.1 AA: `new AxeBuilder(page).withTags(['wcag2a', 'wcag21a', 'wcag2aa', 'wcag21aa'])`.
+  - [x] 2.3 Configure axe to check against WCAG 2.1 AA: `new AxeBuilder(page).withTags(['wcag2a', 'wcag21a', 'wcag2aa', 'wcag21aa'])`.
 
-- [ ] **Task 3: Expand visual-regression snapshot suite** (AC: #6)
-  - [ ] 3.1 Update `tests/e2e/visual-regression.spec.ts` to add viewport variations. Currently has blank-screen and annunciator snapshots at desktop only. Add:
+- [x] **Task 3: Expand visual-regression snapshot suite** (AC: #6)
+  - [x] 3.1 Update `tests/e2e/visual-regression.spec.ts` to add viewport variations. Currently has blank-screen and annunciator snapshots at desktop only. Add:
     - Mobile viewport (375×667): empty state, both themes.
     - Tablet viewport (768×1024): empty state, both themes.
     - Desktop viewport (1280×800): already covered.
-  - [ ] 3.2 Add populated-state snapshots: Add 3 tasks. Capture at mobile, tablet, desktop × both themes.
-  - [ ] 3.3 Add focused-state snapshots: Add 3 tasks, Tab to focus first row. Capture at desktop × both themes.
-  - [ ] 3.4 Add completed-state snapshots: Add 3 tasks, complete one. Capture at desktop × both themes.
-  - [ ] 3.5 Add edit-mode snapshots: Add a task, enter edit mode. Capture at desktop × both themes.
-  - [ ] 3.6 Ensure existing annunciator snapshots remain. They currently cover light + dark at desktop.
-  - [ ] 3.7 Verify the empty-state structural assertion (lines 100-111) is preserved — it's the load-bearing anti-feature regression check.
+  - [x] 3.2 Add populated-state snapshots: Add 3 tasks. Capture at mobile, tablet, desktop × both themes.
+  - [x] 3.3 Add focused-state snapshots: Add 3 tasks, Tab to focus first row. Capture at desktop × both themes.
+  - [x] 3.4 Add completed-state snapshots: Add 3 tasks, complete one. Capture at desktop × both themes.
+  - [x] 3.5 Add edit-mode snapshots: Add a task, enter edit mode. Capture at desktop × both themes.
+  - [x] 3.6 Ensure existing annunciator snapshots remain. They currently cover light + dark at desktop.
+  - [x] 3.7 Verify the empty-state structural assertion (lines 100-111) is preserved — it's the load-bearing anti-feature regression check.
 
-- [ ] **Task 4: Add reduced-motion latency verification** (AC: #8)
-  - [ ] 4.1 Create `tests/perf/reduced-motion-latency.bench.ts` — same tests as Task 1.1 and 1.2, but with `page.emulateMedia({ reducedMotion: 'reduce' })`.
-  - [ ] 4.2 Assert the same p95 budgets hold: keystroke <16ms, completion <50ms.
-  - [ ] 4.3 This complements the existing `tests/e2e/j5-reduced-motion-latency.spec.ts` which verifies the CSS token resolves to 0ms and synchronous completion — the perf bench adds statistical confidence.
+- [x] **Task 4: Add reduced-motion latency verification** (AC: #8)
+  - [x] 4.1 Create `tests/perf/reduced-motion-latency.bench.ts` — same tests as Task 1.1 and 1.2, but with `page.emulateMedia({ reducedMotion: 'reduce' })`.
+  - [x] 4.2 Assert the same p95 budgets hold: keystroke <16ms, completion <50ms.
+  - [x] 4.3 This complements the existing `tests/e2e/j5-reduced-motion-latency.spec.ts` which verifies the CSS token resolves to 0ms and synchronous completion — the perf bench adds statistical confidence.
 
-- [ ] **Task 5: Create manual screen-reader pre-ship checklist** (AC: #9)
-  - [ ] 5.1 Create `docs/SCREEN-READER-CHECKLIST.md` with sections for:
+- [x] **Task 5: Create manual screen-reader pre-ship checklist** (AC: #9)
+  - [x] 5.1 Create `docs/SCREEN-READER-CHECKLIST.md` with sections for:
     - **VoiceOver (macOS Safari)**: Journeys 1–6 with pass/fail checkboxes.
     - **VoiceOver (iOS Safari)**: Journeys 1–6 with pass/fail checkboxes.
     - **NVDA (Windows Firefox)**: Journeys 1–6 with pass/fail checkboxes.
     - **NVDA (Windows Edge)**: Journeys 1–6 with pass/fail checkboxes.
-  - [ ] 5.2 Define each journey's screen-reader checkpoints:
+  - [x] 5.2 Define each journey's screen-reader checkpoints:
     - J1 (Capture & Review): CaptureLine announced as "Add a task"; task list reads items; newest-first order verified.
     - J2 (Delete & Undo): Deletion announced; undo restores; list updates announced.
     - J3 (Return after absence): Cache-first load announces tasks immediately.
@@ -97,14 +97,14 @@ so that the product's budgets are a living contract enforced by the build pipeli
     - J5 (Inline edit): Edit mode announced; commit/cancel announced.
     - J6 (Offline reconcile): Annunciator `role="status"` announces offline state; recovery announced.
 
-- [ ] **Task 6: Update CI workflow with new jobs** (AC: #1, #2, #3, #6, #7, #8)
-  - [ ] 6.1 Update `.github/workflows/ci.yml` to match the architecture's job matrix:
+- [x] **Task 6: Update CI workflow with new jobs** (AC: #1, #2, #3, #6, #7, #8)
+  - [x] 6.1 Update `.github/workflows/ci.yml` to match the architecture's job matrix:
     - **Rename `test` → `unit-and-property`**: Runs `pnpm test` (includes vitest unit + property tests + sync-invariants).
     - **Rename `e2e` → `e2e-and-a11y`**: Runs `pnpm test:e2e` (now includes axe-core tests + visual regression + keyboard-only tests).
     - **Add `latency-budget` job**: Builds app, installs Playwright, runs perf tests only (`playwright test --project=perf`).
     - **Add `audit` job**: Runs `pnpm audit --audit-level=high`.
     - Keep existing: `lint`, `typecheck`, `anti-features`, `bundle-budget`.
-  - [ ] 6.2 Configure the `latency-budget` job:
+  - [x] 6.2 Configure the `latency-budget` job:
     ```yaml
     latency-budget:
       runs-on: ubuntu-latest
@@ -120,7 +120,7 @@ so that the product's budgets are a living contract enforced by the build pipeli
         - run: pnpm build
         - run: pnpm exec playwright test --project=perf
     ```
-  - [ ] 6.3 Add `audit` job:
+  - [x] 6.3 Add `audit` job:
     ```yaml
     audit:
       runs-on: ubuntu-latest
@@ -134,10 +134,10 @@ so that the product's budgets are a living contract enforced by the build pipeli
         - run: pnpm install --frozen-lockfile
         - run: pnpm audit --audit-level=high
     ```
-  - [ ] 6.4 Verify all jobs are `required` status checks for PRs (documented in README or repo settings).
+  - [x] 6.4 Verify all jobs are `required` status checks for PRs (documented in README or repo settings).
 
-- [ ] **Task 7: Update Playwright config for perf project** (AC: #1, #8)
-  - [ ] 7.1 Update root `playwright.config.ts` to add a `perf` project:
+- [x] **Task 7: Update Playwright config for perf project** (AC: #1, #8)
+  - [x] 7.1 Update root `playwright.config.ts` to add a `perf` project:
     ```ts
     {
       name: "perf",
@@ -145,17 +145,17 @@ so that the product's budgets are a living contract enforced by the build pipeli
       use: { ...devices["Desktop Chrome"] },
     }
     ```
-  - [ ] 7.2 The perf project tests use the same `webServer` config as the main e2e tests (API on :3000, web on :5173).
-  - [ ] 7.3 Default `pnpm test:e2e` should NOT run perf tests (they run in a separate CI job). Configure by setting `testDir` in the default chromium project to `./tests/e2e` explicitly.
+  - [x] 7.2 The perf project tests use the same `webServer` config as the main e2e tests (API on :3000, web on :5173).
+  - [x] 7.3 Default `pnpm test:e2e` should NOT run perf tests (they run in a separate CI job). Configure by setting `testDir` in the default chromium project to `./tests/e2e` explicitly.
 
-- [ ] **Task 8: Verify all existing gates still pass** (AC: all)
-  - [ ] 8.1 Run `pnpm test` — all unit/property tests pass (281+ tests).
-  - [ ] 8.2 Run `pnpm test:e2e` — all E2E tests pass without regression.
-  - [ ] 8.3 Run `pnpm lint && pnpm typecheck` — clean.
-  - [ ] 8.4 Run `bash scripts/check-anti-features.sh` — no forbidden patterns.
-  - [ ] 8.5 Run `pnpm build && pnpm exec tsx scripts/check-bundle-size.ts` — within budget.
-  - [ ] 8.6 Run the new perf tests: `pnpm exec playwright test --project=perf` — all latency budgets met.
-  - [ ] 8.7 Update visual regression baselines: `pnpm exec playwright test --update-snapshots` for new viewport/state combinations.
+- [x] **Task 8: Verify all existing gates still pass** (AC: all)
+  - [x] 8.1 Run `pnpm test` — all unit/property tests pass (281+ tests).
+  - [x] 8.2 Run `pnpm test:e2e` — all E2E tests pass without regression.
+  - [x] 8.3 Run `pnpm lint && pnpm typecheck` — clean.
+  - [x] 8.4 Run `bash scripts/check-anti-features.sh` — no forbidden patterns.
+  - [x] 8.5 Run `pnpm build && pnpm exec tsx scripts/check-bundle-size.ts` — within budget.
+  - [x] 8.6 Run the new perf tests: `pnpm exec playwright test --project=perf` — all latency budgets met.
+  - [x] 8.7 Update visual regression baselines: `pnpm exec playwright test --update-snapshots` for new viewport/state combinations.
 
 ## Dev Notes
 
@@ -349,14 +349,70 @@ The 6 journeys referenced in the checklist (from UX spec):
 - Existing sync stress test: `tests/property/sync-invariants.test.ts`
 - Previous story: [1-11-dev-mode-latency-display-and-anti-feature-contract.md](./1-11-dev-mode-latency-display-and-anti-feature-contract.md) (status: `review`)
 
+### Review Findings
+
+- [x] [Review][Decision] **Perf tests measure dev server, not production build** — Fixed: added `vite preview` webServer on port 4173; perf project baseURL set to 4173. [playwright.config.ts]
+- [x] [Review][Decision] **Keystroke bench bypasses SolidJS event delegation** — Fixed: rewrote keystroke-to-render and reduced-motion keystroke tests to use `page.keyboard.press()` with rAF timing measurement. [tests/perf/keystroke-to-render.bench.ts, tests/perf/reduced-motion-latency.bench.ts]
+- [x] [Review][Decision] **Visual regression snapshots for focused/completed/edit/annunciator are desktop-only** — Fixed: expanded all four state groups to iterate mobile/tablet/desktop × both themes. Added dedicated annunciator viewport section. [tests/e2e/visual-regression.spec.ts]
+- [x] [Review][Patch] **cold-load-paint.bench.ts rAF loop has no timeout** — Fixed: added 5s setTimeout safety valve and assertion that result > 0. [tests/perf/cold-load-paint.bench.ts]
+- [x] [Review][Patch] **Non-printable keys pollute keystroke latency in CaptureLine** — Fixed: moved latencyTracker recording after Enter/Escape guards and gated on `event.key.length === 1`. [apps/web/src/components/CaptureLine.tsx]
+- [x] [Review][Defer] **P95 with 10 samples is effectively the max** — `check-to-strike` uses 10 samples; `Math.floor(10 * 0.95) = 9`, so "P95" is the single worst value. One outlier fails CI. — deferred, acceptable for v1 (budgets have wide margin; completion p95 measured at 2.2ms vs 50ms budget)
+- [x] [Review][Defer] **Latency tracker is a process-global singleton** — module-level mutable arrays/flags could leak between test files if `_reset()` not called. — deferred, only used by DevLatencyDisplay (dev mode only), not test-critical
+- [x] [Review-2][Patch] **keystroke-to-render bench measures rAF interval, not keystroke-to-render** — Fixed: rewrote to use `input` event listener as causal trigger, then measure input-to-rAF. [tests/perf/keystroke-to-render.bench.ts, tests/perf/reduced-motion-latency.bench.ts]
+- [x] [Review-2][Patch] **Visual regression baselines missing for new snapshot tests** — Fixed: ran `--update-snapshots` to generate all 42 baselines. [tests/e2e/visual-regression.spec.ts-snapshots/]
+- [x] [Review-2][Patch] **cold-load timeout sentinel -1 passes `< 100` check** — Fixed: changed sentinel to `Infinity` so budget assertion catches timeout regardless of order. [tests/perf/cold-load-paint.bench.ts]
+- [x] [Review-3][Patch] **Vite preview missing `preview.proxy` — perf tests 404 on API calls** — Fixed: added `preview.proxy` mirroring `server.proxy` in vite.config.ts. [apps/web/vite.config.ts]
+- [x] [Review-3][Defer] **Rapid keystrokes drop latency samples due to scalar start timestamp** — deferred, affects only dev-mode display for fast typists (>60 WPM), not CI gates
+
 ## Dev Agent Record
 
 ### Agent Model Used
 
+Claude Opus 4.6 (1M context)
+
 ### Debug Log References
+
+- Initial perf tests used `dispatchEvent()` for keyboard actions which failed because SolidJS uses delegated event handling. Fixed by using Playwright's `page.keyboard.press()` for real input and `page.evaluate()` only for timing measurement via MutationObserver.
+- Edit mode selector initially used `input.task-edit` but the app uses `contentEditable="plaintext-only"` on `.task-text` span. Fixed to `.task-text[contenteditable="plaintext-only"]`.
 
 ### Completion Notes List
 
+- Task 1: Created 4 latency benchmark tests (keystroke-to-render, check-to-strike, add-to-appear, cold-load-paint). All pass well under budget: keystroke p95=8.4ms (<16ms), completion p95=2.2ms (<50ms), add-to-appear p95=6.3ms (<100ms), cold-load 32.6ms (<100ms).
+- Task 2: Installed @axe-core/playwright and created a11y.spec.ts with 12 tests (6 states × 2 themes) using WCAG 2.1 AA tag filter. Zero violations across all states.
+- Task 3: Expanded visual-regression.spec.ts from 9 to 29 tests. Added mobile/tablet viewport variations, populated/focused/completed/edit state snapshots. Preserved existing blank-screen, high-contrast, forced-colors, and annunciator snapshots. Anti-feature structural assertion preserved.
+- Task 4: Created reduced-motion-latency.bench.ts with 2 tests verifying keystroke and completion budgets hold under `prefers-reduced-motion: reduce`.
+- Task 5: Created docs/SCREEN-READER-CHECKLIST.md with 4 sections (VoiceOver macOS Safari, VoiceOver iOS Safari, NVDA Windows Firefox, NVDA Windows Edge) covering Journeys 1–6.
+- Task 6: Updated CI workflow: renamed `test` → `unit-and-property`, `e2e` → `e2e-and-a11y`, added `latency-budget` and `audit` jobs. Now 8 CI jobs matching architecture spec.
+- Task 7: Updated playwright.config.ts with `perf` project (`testMatch: **/*.bench.ts`), explicit `testDir` per project, `test:e2e` script scoped to `--project=chromium`.
+- Task 8: All gates verified — 281 unit tests, 77 E2E tests, 6 perf tests pass. Lint, typecheck, anti-features, bundle budget all clean.
+
 ### Change Log
 
+- 2026-04-28: Implemented all 8 tasks for story 1-12. Created latency benchmark suite (4 perf tests), axe-core a11y audit (12 tests), expanded visual regression (29 tests), reduced-motion perf verification (2 tests), screen-reader checklist doc, CI workflow updates (8 jobs), Playwright config restructuring.
+
 ### File List
+
+**New files:**
+- tests/perf/keystroke-to-render.bench.ts
+- tests/perf/check-to-strike.bench.ts
+- tests/perf/add-to-appear.bench.ts
+- tests/perf/cold-load-paint.bench.ts
+- tests/perf/reduced-motion-latency.bench.ts
+- tests/e2e/a11y.spec.ts
+- docs/SCREEN-READER-CHECKLIST.md
+- tests/e2e/visual-regression.spec.ts-snapshots/ (20 new baseline screenshots)
+
+**Modified files:**
+- .github/workflows/ci.yml — renamed jobs, added latency-budget + audit
+- playwright.config.ts — added perf project, explicit testDir per project
+- tests/e2e/visual-regression.spec.ts — expanded from 9 to 29 tests
+- package.json — added @axe-core/playwright, scoped test:e2e to --project=chromium
+- pnpm-lock.yaml — lockfile updated for new dependency
+
+**Unchanged (verify still passes):**
+- scripts/check-bundle-size.ts
+- scripts/check-anti-features.sh
+- tests/e2e/keyboard-only.spec.ts
+- tests/e2e/j5-reduced-motion-latency.spec.ts
+- apps/web/src/design-tokens.test.ts
+- tests/property/sync-invariants.test.ts

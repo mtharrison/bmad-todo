@@ -1,6 +1,6 @@
 # Story 1.10: Annunciator and Failure Feedback Routing
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -42,13 +42,13 @@ so that the UI stays quiet and I only notice the dot when something genuinely ne
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Create `<Annunciator>` component** (AC: #1, #2, #3, #4, #6, #9, #10, #11, #12)
-  - [ ] 1.1 Create `apps/web/src/components/Annunciator.tsx` as a named export (never default export per architecture pattern). Component reads `syncState()` from `annunciator-store` and renders conditionally:
+- [x] **Task 1: Create `<Annunciator>` component** (AC: #1, #2, #3, #4, #6, #9, #10, #11, #12)
+  - [x] 1.1 Create `apps/web/src/components/Annunciator.tsx` as a named export (never default export per architecture pattern). Component reads `syncState()` from `annunciator-store` and renders conditionally:
     ```tsx
     import { syncState } from "../store/annunciator-store";
     import { flushOutbox } from "../store/task-store";
     ```
-  - [ ] 1.2 HTML structure per UX spec (line 918-926):
+  - [x] 1.2 HTML structure per UX spec (line 918-926):
     ```html
     <div
       class="annunciator"
@@ -62,16 +62,16 @@ so that the UI stays quiet and I only notice the dot when something genuinely ne
       <span class="annunciator-label">{label()}</span>
     </div>
     ```
-  - [ ] 1.3 State-to-label mapping:
+  - [x] 1.3 State-to-label mapping:
     - `"online"` / `"silent"` -> not visible (`display: none` via CSS `[data-state="online"]`)
     - `"offline"` -> label: "Offline"
     - `"conflict"` -> label: "Sync conflict"
     - `"error"` -> label: "Storage error"
-  - [ ] 1.4 Click handler triggers contextual recovery: call `void flushOutbox()` for all abnormal states. (v1 has no multi-device conflict resolver or file-export UI; all three states trigger the same retry action.)
-  - [ ] 1.5 Render `tabindex="0"` only when surfaced (when `syncState() !== "online"`) so the annunciator does not create a phantom tab stop when invisible.
+  - [x] 1.4 Click handler triggers contextual recovery: call `void flushOutbox()` for all abnormal states. (v1 has no multi-device conflict resolver or file-export UI; all three states trigger the same retry action.)
+  - [x] 1.5 Render `tabindex="0"` only when surfaced (when `syncState() !== "online"`) so the annunciator does not create a phantom tab stop when invisible.
 
-- [ ] **Task 2: Add Annunciator CSS to globals.css** (AC: #1, #2, #9, #11, #12)
-  - [ ] 2.1 Add `.annunciator` styles to `apps/web/src/styles/globals.css`:
+- [x] **Task 2: Add Annunciator CSS to globals.css** (AC: #1, #2, #9, #11, #12)
+  - [x] 2.1 Add `.annunciator` styles to `apps/web/src/styles/globals.css`:
 
     ```css
     .annunciator {
@@ -120,7 +120,7 @@ so that the UI stays quiet and I only notice the dot when something genuinely ne
     }
     ```
 
-  - [ ] 2.2 Add `forced-colors` rule for annunciator inside the existing `@media (forced-colors: active)` block:
+  - [x] 2.2 Add `forced-colors` rule for annunciator inside the existing `@media (forced-colors: active)` block:
     ```css
     .annunciator-dot {
       background: CanvasText;
@@ -131,14 +131,14 @@ so that the UI stays quiet and I only notice the dot when something genuinely ne
       color: CanvasText;
     }
     ```
-  - [ ] 2.3 Verify no transitions or animations on the annunciator -- `prefers-reduced-motion` is already handled globally by `--motion-default: 0ms` but the annunciator uses `transition: none` explicitly to ensure zero decorative motion (FR53).
+  - [x] 2.3 Verify no transitions or animations on the annunciator -- `prefers-reduced-motion` is already handled globally by `--motion-default: 0ms` but the annunciator uses `transition: none` explicitly to ensure zero decorative motion (FR53).
 
-- [ ] **Task 3: Wire Annunciator into App.tsx** (AC: #1, #14)
-  - [ ] 3.1 Import and render `<Annunciator />` inside `<main>` in `App.tsx`, after `<TaskList />` and before or after the theme toggle button. The annunciator is fixed-positioned so DOM order doesn't affect layout, but placing it after the main content is semantically correct for tab order.
-  - [ ] 3.2 Verify that all existing keyboard handlers, focus management, and theme toggle behavior remain unchanged. The `<Annunciator>` is purely additive.
+- [x] **Task 3: Wire Annunciator into App.tsx** (AC: #1, #14)
+  - [x] 3.1 Import and render `<Annunciator />` inside `<main>` in `App.tsx`, after `<TaskList />` and before or after the theme toggle button. The annunciator is fixed-positioned so DOM order doesn't affect layout, but placing it after the main content is semantically correct for tab order.
+  - [x] 3.2 Verify that all existing keyboard handlers, focus management, and theme toggle behavior remain unchanged. The `<Annunciator>` is purely additive.
 
-- [ ] **Task 4: Create Annunciator unit tests** (AC: #1, #2, #3, #4, #6, #10)
-  - [ ] 4.1 Create `apps/web/src/components/Annunciator.test.tsx` with tests:
+- [x] **Task 4: Create Annunciator unit tests** (AC: #1, #2, #3, #4, #6, #10)
+  - [x] 4.1 Create `apps/web/src/components/Annunciator.test.tsx` with tests:
     - When `syncState` is `"online"`, the annunciator div has `data-state="online"` (CSS hides it via `display: none`).
     - When `syncState` is `"offline"`, the annunciator is visible with label "Offline" revealed on hover/focus.
     - When `syncState` is `"conflict"`, label is "Sync conflict".
@@ -146,25 +146,25 @@ so that the UI stays quiet and I only notice the dot when something genuinely ne
     - When `syncState` is not `"online"`, `tabindex="0"` is present; when `"online"`, no `tabindex`.
     - Click on annunciator when surfaced calls `flushOutbox`.
     - `role="status"` and `aria-live="polite"` are always present.
-  - [ ] 4.2 Use `@solidjs/testing-library` + `vitest` consistent with existing component tests (e.g., `App.test.tsx`). Mock `annunciator-store` and `task-store` as needed.
+  - [x] 4.2 Use `@solidjs/testing-library` + `vitest` consistent with existing component tests (e.g., `App.test.tsx`). Mock `annunciator-store` and `task-store` as needed.
 
-- [ ] **Task 5: Add E2E tests for annunciator behavior** (AC: #2, #5, #6, #7, #8)
-  - [ ] 5.1 Add annunciator tests to `tests/e2e/j6-offline-reconcile.spec.ts` (or create a dedicated `tests/e2e/annunciator.spec.ts` if the existing file is scoped too narrowly):
+- [x] **Task 5: Add E2E tests for annunciator behavior** (AC: #2, #5, #6, #7, #8)
+  - [x] 5.1 Add annunciator tests to `tests/e2e/j6-offline-reconcile.spec.ts` (or create a dedicated `tests/e2e/annunciator.spec.ts` if the existing file is scoped too narrowly):
     - Simulate offline (via `page.route` to block `/tasks`), wait >2s, verify annunciator dot is visible.
     - Simulate restore, verify annunciator disappears.
     - Verify no success toast or banner appears after any task operation.
     - Verify annunciator label is readable on hover/focus.
-  - [ ] 5.2 Add annunciator visual-regression snapshot to `tests/e2e/visual-regression.spec.ts` -- state "annunciator-surfaced" at desktop viewport, both themes. The UX spec (UX-DR26) lists this as a required snapshot state.
+  - [x] 5.2 Add annunciator visual-regression snapshot to `tests/e2e/visual-regression.spec.ts` -- state "annunciator-surfaced" at desktop viewport, both themes. The UX spec (UX-DR26) lists this as a required snapshot state.
 
-- [ ] **Task 6: Verify anti-feature compliance** (AC: #7, #8, #9)
-  - [ ] 6.1 Run `bash scripts/check-anti-features.sh` and confirm the annunciator implementation introduces no forbidden patterns.
-  - [ ] 6.2 Verify no `toast(`, `Snackbar`, `<Modal`, `<Dialog`, `Spinner`, `Skeleton`, `<ErrorBoundary` patterns in any new or modified file.
-  - [ ] 6.3 Verify annunciator uses `--color-accent` only (never status colors red/green/yellow), consistent with UX spec line 455: "No additional colors."
+- [x] **Task 6: Verify anti-feature compliance** (AC: #7, #8, #9)
+  - [x] 6.1 Run `bash scripts/check-anti-features.sh` and confirm the annunciator implementation introduces no forbidden patterns.
+  - [x] 6.2 Verify no `toast(`, `Snackbar`, `<Modal`, `<Dialog`, `Spinner`, `Skeleton`, `<ErrorBoundary` patterns in any new or modified file.
+  - [x] 6.3 Verify annunciator uses `--color-accent` only (never status colors red/green/yellow), consistent with UX spec line 455: "No additional colors."
 
-- [ ] **Task 7: Verify existing test suites pass** (AC: #14)
-  - [ ] 7.1 Run `pnpm test` -- all unit/property tests pass.
-  - [ ] 7.2 Run `pnpm test:e2e` -- all existing E2E tests pass without regression.
-  - [ ] 7.3 Run `pnpm lint` and `pnpm typecheck` -- clean.
+- [x] **Task 7: Verify existing test suites pass** (AC: #14)
+  - [x] 7.1 Run `pnpm test` -- all unit/property tests pass.
+  - [x] 7.2 Run `pnpm test:e2e` -- all existing E2E tests pass without regression.
+  - [x] 7.3 Run `pnpm lint` and `pnpm typecheck` -- clean.
 
 ## Dev Notes
 
@@ -336,8 +336,37 @@ so that the UI stays quiet and I only notice the dot when something genuinely ne
 
 ### Agent Model Used
 
+Claude Opus 4.6 (1M context)
+
 ### Debug Log References
+
+No debug issues encountered. Clean implementation.
 
 ### Completion Notes List
 
+- Created `<Annunciator>` component reading `syncState()` from `annunciator-store` with conditional rendering, label mapping, click-to-retry via `flushOutbox()`, and `onMouseDown={preventDefault}` to preserve capture-line focus stickiness.
+- Added annunciator CSS to `globals.css`: fixed-position dot at bottom-right, `clip-path` label reveal on hover/focus, `forced-colors` overrides using `CanvasText`/`Canvas` system tokens, `transition: none` enforcing FR53 no-decorative-motion.
+- Wired `<Annunciator />` into `App.tsx` after `<TaskList />`, before theme toggle. Purely additive — zero changes to existing keyboard/focus/undo behavior.
+- 12 unit tests covering all states (online/offline/conflict/error), label text, tabindex presence, click handler, aria attributes, and return-to-online behavior.
+- 5 dedicated E2E tests (annunciator.spec.ts): hidden-when-online, offline-appearance-and-restore, label-on-focus, no-success-toast, accent-color-verification.
+- 2 visual-regression snapshots (annunciator-surfaced light + dark themes) added to visual-regression.spec.ts.
+- Anti-feature compliance verified: `check-anti-features.sh` passes, no forbidden patterns introduced.
+- All 265 unit/property tests pass. All 49 E2E tests pass. Lint and typecheck clean.
+
+### Change Log
+
+- 2026-04-28: Implemented Story 1.10 — Annunciator component, CSS, App wiring, unit tests, E2E tests, visual regression snapshots.
+
 ### File List
+
+**New files:**
+- `apps/web/src/components/Annunciator.tsx`
+- `apps/web/src/components/Annunciator.test.tsx`
+- `tests/e2e/annunciator.spec.ts`
+- `tests/e2e/visual-regression.spec.ts-snapshots/annunciator-surfaced-light-chromium-darwin.png`
+- `tests/e2e/visual-regression.spec.ts-snapshots/annunciator-surfaced-dark-chromium-darwin.png`
+
+**Modified files:**
+- `apps/web/src/components/App.tsx` (added Annunciator import and render)
+- `apps/web/src/styles/globals.css` (added annunciator CSS rules + forced-colors overrides)
+- `tests/e2e/visual-regression.spec.ts` (added 2 annunciator-surfaced snapshot tests)

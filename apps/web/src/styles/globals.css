@@ -223,6 +223,51 @@ main.app-main {
   }
 }
 
+.annunciator {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1000;
+  outline: 0;
+  cursor: pointer;
+}
+
+.annunciator[data-state="online"] {
+  display: none;
+}
+
+.annunciator:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+.annunciator-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 18%, transparent);
+  flex-shrink: 0;
+}
+
+.annunciator-label {
+  font-size: 12px;
+  color: var(--color-ink-muted);
+  white-space: nowrap;
+  clip-path: inset(50%);
+  transition: none;
+}
+
+.annunciator:hover .annunciator-label,
+.annunciator:focus-within .annunciator-label,
+.annunciator:focus-visible .annunciator-label {
+  clip-path: none;
+}
+
 @media (forced-colors: active) {
   .capture-line:focus-visible,
   .task-row:focus-visible,
@@ -238,6 +283,20 @@ main.app-main {
     clip-path: none;
     font-size: 12px;
     border-color: CanvasText;
+    color: CanvasText;
+  }
+
+  .annunciator:focus-visible {
+    outline-color: Highlight;
+  }
+
+  .annunciator-dot {
+    background: CanvasText;
+    box-shadow: none;
+    border: 1px solid CanvasText;
+  }
+
+  .annunciator-label {
     color: CanvasText;
   }
 }

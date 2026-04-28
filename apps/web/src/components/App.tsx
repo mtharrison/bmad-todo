@@ -1,4 +1,5 @@
 import { onMount, onCleanup } from "solid-js";
+import { Annunciator } from "./Annunciator";
 import { CaptureLine } from "./CaptureLine";
 import { TaskList } from "./TaskList";
 import { applyUndo, pushUndo } from "../store/undo-stack";
@@ -162,6 +163,7 @@ export function App() {
     <main class="app-main bg-paper text-ink">
       <CaptureLine />
       <TaskList />
+      <Annunciator />
       <button
         type="button"
         class="theme-toggle"

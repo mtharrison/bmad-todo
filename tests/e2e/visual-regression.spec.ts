@@ -65,6 +65,38 @@ test.describe("visual regression - blank screen", () => {
     });
   });
 
+  test("annunciator-surfaced light theme snapshot", async ({ page, context }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem("theme", "light");
+    });
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    await context.setOffline(true);
+    await page.evaluate(() => window.dispatchEvent(new Event("offline")));
+    await page.waitForTimeout(2500);
+    await expect(page.locator(".annunciator")).toBeVisible({ timeout: 5000 });
+    await expect(page).toHaveScreenshot("annunciator-surfaced-light.png", {
+      fullPage: true,
+      maxDiffPixelRatio: 0.01,
+    });
+  });
+
+  test("annunciator-surfaced dark theme snapshot", async ({ page, context }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem("theme", "dark");
+    });
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    await context.setOffline(true);
+    await page.evaluate(() => window.dispatchEvent(new Event("offline")));
+    await page.waitForTimeout(2500);
+    await expect(page.locator(".annunciator")).toBeVisible({ timeout: 5000 });
+    await expect(page).toHaveScreenshot("annunciator-surfaced-dark.png", {
+      fullPage: true,
+      maxDiffPixelRatio: 0.01,
+    });
+  });
+
   test("empty state contains only capture line and empty list", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");

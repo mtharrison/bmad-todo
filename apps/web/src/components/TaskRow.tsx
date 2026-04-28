@@ -41,6 +41,13 @@ export function TaskRow(props: { task: ActiveTask; index: number }) {
     }
   });
 
+  createEffect(() => {
+    if (isEditing() && textRef) {
+      textRef.focus();
+      placeCursorAtEnd(textRef);
+    }
+  });
+
   function enterEditMode() {
     if (isEditing()) return;
     if (editingTaskId() !== null) return;

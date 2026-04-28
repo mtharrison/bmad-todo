@@ -9,7 +9,7 @@ test.describe("Journey 6: Undo Edit", () => {
     await page.keyboard.press("Enter");
 
     await page.locator(".task-text").first().click();
-    await page.keyboard.press("Control+a");
+    await page.keyboard.press("ControlOrMeta+A");
     await page.keyboard.type("buy almond milk");
     await page.keyboard.press("Enter");
 
@@ -30,7 +30,7 @@ test.describe("Journey 6: Undo Edit", () => {
     await page.keyboard.press("Enter");
 
     await page.locator(".task-text").first().click();
-    await page.keyboard.press("Control+a");
+    await page.keyboard.press("ControlOrMeta+A");
     await page.keyboard.type("   ");
     await page.keyboard.press("Enter");
 

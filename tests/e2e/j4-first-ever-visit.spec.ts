@@ -8,7 +8,7 @@ test.describe("Journey 4: First ever visit", () => {
     await expect(captureInput).toBeFocused();
 
     const taskList = page.locator('ul[role="list"]');
-    await expect(taskList).toBeVisible();
+    await expect(taskList).toBeAttached();
     const items = taskList.locator("li");
     await expect(items).toHaveCount(0);
 

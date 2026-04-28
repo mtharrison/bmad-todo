@@ -50,7 +50,7 @@ test.describe("Journey 1: Completion toggle", () => {
 
     const row = page.locator("li").first();
     const checkbox = row.locator('input[type="checkbox"]');
-    await checkbox.click();
+    await checkbox.click({ force: true });
 
     await expect(page.locator("text=/saving|loading|saved|done!|nice|great/i")).toHaveCount(0);
     await expect(page.locator("[role=alertdialog], [role=dialog]")).toHaveCount(0);

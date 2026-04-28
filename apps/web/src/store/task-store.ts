@@ -147,12 +147,14 @@ export function clearAllTasks(): void {
 export async function flushOutbox(): Promise<void> {
   try {
     await resetBackoff();
-    // Drain repeatedly until the queue is empty or a transient failure halts
-    // it. Each call respects backoff for entries that just failed.
     for (let i = 0; i < 5; i++) {
       const r = await drain();
       if (r.remaining === 0) return;
-      if (r.applied === 0 && r.rejected === 0) return;
+      if (r.applied === 0 && r.rejected === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await resetBackoff();
+        continue;
+      }
     }
   } catch {
     setSyncState("error");
@@ -171,7 +173,11 @@ export async function hydrateFromCache(): Promise<void> {
   }
 }
 
+let reconciling = false;
+
 export async function reconcileWithServer(): Promise<void> {
+  if (reconciling) return;
+  reconciling = true;
   try {
     const serverTasks = await fetchTasks();
     const serverById = new Map(serverTasks.map((t) => [t.id, t]));
@@ -206,5 +212,7 @@ export async function reconcileWithServer(): Promise<void> {
     setSyncState(hasConflict ? "conflict" : "online");
   } catch {
     setSyncState("offline");
+  } finally {
+    reconciling = false;
   }
 }

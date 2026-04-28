@@ -99,12 +99,14 @@ so that my task data is private, the app is accessible from any browser, and the
 ### Architecture Compliance
 
 **Deployment topology** (architecture.md §Infrastructure):
+
 - Cloudflare → Cloudflare Access gate → Fly app
 - Single Node process: Fastify serves API routes AND static SPA assets from same origin
 - Same-origin serving eliminates CORS entirely in production
 - SQLite on persistent volume at `/data`, WAL mode
 
 **Environment configuration** (architecture.md §Environments):
+
 - `development`: Vite dev server + Fastify dev, CORS allowed from localhost, auth bypassed
 - `production`: Single Fly app, no staging. CI is the staging environment
 
@@ -112,35 +114,36 @@ so that my task data is private, the app is accessible from any browser, and the
 
 ### Files to Create
 
-| File | Purpose |
-|------|---------|
-| `.github/workflows/deploy.yml` | CD pipeline: flyctl deploy on main after CI |
-| `docker-compose.yml` | Local full-stack run: `docker compose up` builds and serves the production app |
-| `scripts/backup-db.sh` | SQLite backup to R2 (optional) |
+| File                           | Purpose                                                                        |
+| ------------------------------ | ------------------------------------------------------------------------------ |
+| `.github/workflows/deploy.yml` | CD pipeline: flyctl deploy on main after CI                                    |
+| `docker-compose.yml`           | Local full-stack run: `docker compose up` builds and serves the production app |
+| `scripts/backup-db.sh`         | SQLite backup to R2 (optional)                                                 |
 
 ### Files to Modify
 
-| File | What Changes |
-|------|-------------|
-| `infra/Dockerfile` | Complete multi-stage build (currently placeholder) |
-| `infra/fly.toml` | Add mounts, checks, env sections (currently placeholder) |
-| `apps/api/src/app.ts` | Register `@fastify/helmet` and `@fastify/static` |
-| `apps/api/src/middleware/auth-jwt.ts` | Implement real CF Access JWT verification |
-| `apps/api/src/env.ts` | Add `CF_TEAM_DOMAIN`, `CF_ACCESS_AUD` env vars |
-| `apps/api/package.json` | Add `@fastify/helmet`, `@fastify/static`, `jose` deps |
+| File                                  | What Changes                                             |
+| ------------------------------------- | -------------------------------------------------------- |
+| `infra/Dockerfile`                    | Complete multi-stage build (currently placeholder)       |
+| `infra/fly.toml`                      | Add mounts, checks, env sections (currently placeholder) |
+| `apps/api/src/app.ts`                 | Register `@fastify/helmet` and `@fastify/static`         |
+| `apps/api/src/middleware/auth-jwt.ts` | Implement real CF Access JWT verification                |
+| `apps/api/src/env.ts`                 | Add `CF_TEAM_DOMAIN`, `CF_ACCESS_AUD` env vars           |
+| `apps/api/package.json`               | Add `@fastify/helmet`, `@fastify/static`, `jose` deps    |
 
 ### Files to Verify (NO changes expected)
 
-| File | Verify |
-|------|--------|
-| `apps/web/index.html` | `<meta name="robots" content="noindex, nofollow">` present |
-| `apps/api/src/lib/log.ts` | Task text redaction working (`*.text` paths) |
-| `apps/api/src/server.ts` | Migrations run before `app.listen` |
-| `apps/api/src/routes/health.ts` | Returns `{ status: "ok" }` with 200 |
+| File                            | Verify                                                     |
+| ------------------------------- | ---------------------------------------------------------- |
+| `apps/web/index.html`           | `<meta name="robots" content="noindex, nofollow">` present |
+| `apps/api/src/lib/log.ts`       | Task text redaction working (`*.text` paths)               |
+| `apps/api/src/server.ts`        | Migrations run before `app.listen`                         |
+| `apps/api/src/routes/health.ts` | Returns `{ status: "ok" }` with 200                        |
 
 ### Existing Patterns to Follow
 
 **Middleware registration order** in `app.ts` (lines 22-29):
+
 1. `registerAuth(app)` — auth hook on every request
 2. `registerRateLimit(app)` — rate limiting
 3. `app.setErrorHandler(errorEnvelope)` — error formatting
@@ -156,6 +159,7 @@ Helmet MUST be registered before routes but consider ordering with auth. Registe
 ### Anti-Feature Contract
 
 These MUST NOT appear in any code:
+
 - No analytics, tracking pixels, session-replay tooling
 - No third-party scripts in client bundle
 - No `toast(`, `Snackbar`, `Toaster`, `Skeleton`, `Spinner`
@@ -174,6 +178,7 @@ These MUST NOT appear in any code:
 ### CSP Considerations for This App
 
 The app is a SPA with:
+
 - Service worker (`worker-src 'self'`)
 - Self-hosted Fraunces font (`font-src 'self'`)
 - No inline scripts (theme script in `index.html` may need a nonce or hash — check if Vite inlines it)
@@ -181,6 +186,7 @@ The app is a SPA with:
 - Solid.js may inject `<style>` tags → `style-src 'self' 'unsafe-inline'` (verify if needed, prefer hash/nonce if possible)
 
 **Important**: The theme-detection `<script>` in `index.html` is an inline script. Options:
+
 1. Use CSP nonce via `@fastify/helmet`'s `enableCSPNonces` — requires templating index.html at serve time
 2. Use a SHA-256 hash of the script content in `script-src`
 3. Move theme detection to an external `.js` file (simplest CSP, no inline needed)
@@ -190,6 +196,7 @@ Option 3 is cleanest for this architecture. If the inline script is small and st
 ### Previous Story Intelligence
 
 **From Story 1.12** (CI gates — status: review):
+
 - 281 unit tests, 77 E2E tests, 6 perf tests all passing
 - CI workflow at `.github/workflows/ci.yml` has 8 jobs: `lint`, `typecheck`, `unit-and-property`, `e2e-and-a11y`, `latency-budget`, `bundle-budget`, `anti-features`, `audit`
 - `deploy.yml` should use `workflow_run` or `needs` to gate on CI passing
@@ -198,6 +205,7 @@ Option 3 is cleanest for this architecture. If the inline script is small and st
 - Screen-reader checklist at `docs/SCREEN-READER-CHECKLIST.md` is a pre-ship manual gate
 
 **From Story 1.9** (Persistence):
+
 - SQLite with WAL mode, migrations system working
 - Property-based sync stress test at `tests/property/sync-invariants.test.ts`
 - `apps/api/src/db/migrate.ts` handles idempotent migration application
@@ -205,6 +213,7 @@ Option 3 is cleanest for this architecture. If the inline script is small and st
 ### Technology Quick Reference
 
 **Fly.io `fly.toml` checks syntax:**
+
 ```toml
 [http_service.checks]
   interval = "15s"
@@ -215,18 +224,23 @@ Option 3 is cleanest for this architecture. If the inline script is small and st
 ```
 
 **Cloudflare Access JWT verification with `jose`:**
+
 ```typescript
 import { createRemoteJWKSet, jwtVerify } from "jose";
 const JWKS = createRemoteJWKSet(new URL(`${CF_TEAM_DOMAIN}/cdn-cgi/access/certs`));
-const { payload } = await jwtVerify(token, JWKS, { issuer: CF_TEAM_DOMAIN, audience: CF_ACCESS_AUD });
+const { payload } = await jwtVerify(token, JWKS, {
+  issuer: CF_TEAM_DOMAIN,
+  audience: CF_ACCESS_AUD,
+});
 const userNamespace = payload.sub;
 ```
 
 **`@fastify/helmet` registration:**
+
 ```typescript
 import helmet from "@fastify/helmet";
 await app.register(helmet, {
-  contentSecurityPolicy: { directives: { defaultSrc: ["'self'"], /* ... */ } },
+  contentSecurityPolicy: { directives: { defaultSrc: ["'self'"] /* ... */ } },
   hsts: { maxAge: 63072000, includeSubDomains: true, preload: true },
   frameguard: { action: "deny" },
   referrerPolicy: { policy: "no-referrer" },
@@ -234,6 +248,7 @@ await app.register(helmet, {
 ```
 
 **`@fastify/static` for SPA:**
+
 ```typescript
 import fastifyStatic from "@fastify/static";
 await app.register(fastifyStatic, { root: path.join(__dirname, "../../web/dist") });
@@ -242,6 +257,7 @@ await app.register(fastifyStatic, { root: path.join(__dirname, "../../web/dist")
 ### Project Structure Notes
 
 All new files follow the architecture directory structure exactly:
+
 - `infra/Dockerfile` and `infra/fly.toml` — already exist as placeholders
 - `.github/workflows/deploy.yml` — new, alongside existing `ci.yml`
 - `scripts/backup-db.sh` — new, alongside existing `check-anti-features.sh` and `check-bundle-size.ts`

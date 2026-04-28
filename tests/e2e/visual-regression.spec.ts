@@ -104,7 +104,6 @@ test.describe("visual regression - blank screen", () => {
     });
   });
 
-
   test("empty state contains only capture line and empty list", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");

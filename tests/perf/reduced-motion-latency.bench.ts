@@ -19,15 +19,17 @@ test.describe("reduced-motion latency budgets", () => {
     for (let i = 0; i < SAMPLE_COUNT; i++) {
       await page.evaluate(() => {
         const el = document.querySelector<HTMLInputElement>(".capture-line")!;
-        (window as unknown as Record<string, unknown>).__PERF_KS_RESULT = new Promise<number>((resolve) => {
-          el.addEventListener("input", function handler() {
-            el.removeEventListener("input", handler);
-            const start = performance.now();
-            requestAnimationFrame(() => {
-              resolve(performance.now() - start);
+        (window as unknown as Record<string, unknown>).__PERF_KS_RESULT = new Promise<number>(
+          (resolve) => {
+            el.addEventListener("input", function handler() {
+              el.removeEventListener("input", handler);
+              const start = performance.now();
+              requestAnimationFrame(() => {
+                resolve(performance.now() - start);
+              });
             });
-          });
-        });
+          },
+        );
       });
 
       await page.keyboard.press("a");
@@ -74,16 +76,23 @@ test.describe("reduced-motion latency budgets", () => {
         const rows = document.querySelectorAll<HTMLElement>(".task-list li");
         const target = rows[index]!;
         (window as unknown as Record<string, unknown>).__PERF_START = performance.now();
-        (window as unknown as Record<string, unknown>).__PERF_RESULT = new Promise<number>((resolve) => {
-          const observer = new MutationObserver(() => {
-            if (target.getAttribute("data-completed") === "true") {
+        (window as unknown as Record<string, unknown>).__PERF_RESULT = new Promise<number>(
+          (resolve) => {
+            const observer = new MutationObserver(() => {
+              if (target.getAttribute("data-completed") === "true") {
+                observer.disconnect();
+                resolve(
+                  performance.now() - (window as unknown as Record<string, number>).__PERF_START,
+                );
+              }
+            });
+            observer.observe(target, { attributes: true, attributeFilter: ["data-completed"] });
+            setTimeout(() => {
               observer.disconnect();
-              resolve(performance.now() - ((window as unknown as Record<string, number>).__PERF_START));
-            }
-          });
-          observer.observe(target, { attributes: true, attributeFilter: ["data-completed"] });
-          setTimeout(() => { observer.disconnect(); resolve(-1); }, 5000);
-        });
+              resolve(-1);
+            }, 5000);
+          },
+        );
       }, i);
 
       await page.keyboard.press("x");

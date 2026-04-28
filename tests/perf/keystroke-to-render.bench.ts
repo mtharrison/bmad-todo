@@ -15,15 +15,17 @@ test("p95 keystroke-to-render latency is under 16ms", async ({ page }) => {
   for (let i = 0; i < SAMPLE_COUNT; i++) {
     await page.evaluate(() => {
       const el = document.querySelector<HTMLInputElement>(".capture-line")!;
-      (window as unknown as Record<string, unknown>).__PERF_KS_RESULT = new Promise<number>((resolve) => {
-        el.addEventListener("input", function handler() {
-          el.removeEventListener("input", handler);
-          const start = performance.now();
-          requestAnimationFrame(() => {
-            resolve(performance.now() - start);
+      (window as unknown as Record<string, unknown>).__PERF_KS_RESULT = new Promise<number>(
+        (resolve) => {
+          el.addEventListener("input", function handler() {
+            el.removeEventListener("input", handler);
+            const start = performance.now();
+            requestAnimationFrame(() => {
+              resolve(performance.now() - start);
+            });
           });
-        });
-      });
+        },
+      );
     });
 
     await page.keyboard.press("a");

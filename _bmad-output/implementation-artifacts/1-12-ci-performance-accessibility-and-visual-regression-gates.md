@@ -393,6 +393,7 @@ Claude Opus 4.6 (1M context)
 ### File List
 
 **New files:**
+
 - tests/perf/keystroke-to-render.bench.ts
 - tests/perf/check-to-strike.bench.ts
 - tests/perf/add-to-appear.bench.ts
@@ -403,6 +404,7 @@ Claude Opus 4.6 (1M context)
 - tests/e2e/visual-regression.spec.ts-snapshots/ (20 new baseline screenshots)
 
 **Modified files:**
+
 - .github/workflows/ci.yml — renamed jobs, added latency-budget + audit
 - playwright.config.ts — added perf project, explicit testDir per project
 - tests/e2e/visual-regression.spec.ts — expanded from 9 to 29 tests
@@ -410,6 +412,7 @@ Claude Opus 4.6 (1M context)
 - pnpm-lock.yaml — lockfile updated for new dependency
 
 **Unchanged (verify still passes):**
+
 - scripts/check-bundle-size.ts
 - scripts/check-anti-features.sh
 - tests/e2e/keyboard-only.spec.ts

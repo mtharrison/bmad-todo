@@ -27,16 +27,23 @@ test("p95 completion-to-strikethrough latency is under 50ms", async ({ page }) =
       const rows = document.querySelectorAll<HTMLElement>(".task-list li");
       const target = rows[index]!;
       (window as unknown as Record<string, unknown>).__PERF_START = performance.now();
-      (window as unknown as Record<string, unknown>).__PERF_RESULT = new Promise<number>((resolve) => {
-        const observer = new MutationObserver(() => {
-          if (target.getAttribute("data-completed") === "true") {
+      (window as unknown as Record<string, unknown>).__PERF_RESULT = new Promise<number>(
+        (resolve) => {
+          const observer = new MutationObserver(() => {
+            if (target.getAttribute("data-completed") === "true") {
+              observer.disconnect();
+              resolve(
+                performance.now() - (window as unknown as Record<string, number>).__PERF_START,
+              );
+            }
+          });
+          observer.observe(target, { attributes: true, attributeFilter: ["data-completed"] });
+          setTimeout(() => {
             observer.disconnect();
-            resolve(performance.now() - ((window as unknown as Record<string, number>).__PERF_START));
-          }
-        });
-        observer.observe(target, { attributes: true, attributeFilter: ["data-completed"] });
-        setTimeout(() => { observer.disconnect(); resolve(-1); }, 5000);
-      });
+            resolve(-1);
+          }, 5000);
+        },
+      );
     }, i);
 
     await page.keyboard.press("x");

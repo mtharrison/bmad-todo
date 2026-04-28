@@ -29,15 +29,15 @@ If it needs a loading spinner, it's too slow. If it needs a confirmation dialog,
 
 ## ✨ Features
 
-| | Feature | Details |
-|---|---|---|
-| ⌨️ | **Keyboard-First** | Vim-inspired bindings — navigate, edit, complete, and delete without touching the mouse |
-| 🔄 | **Instant Undo** | Session-long undo stack — no confirmation dialogs, just `u` to reverse any action |
-| ✏️ | **Inline Editing** | Press `e` to edit in-place — no modals, no popups, no context switches |
-| 🌗 | **Dark & Light Themes** | Toggle with `t` — respects `prefers-color-scheme` on first visit |
-| 📡 | **Offline-First** | Service worker + IndexedDB — works without a connection, syncs when back online |
-| ♿ | **Accessible** | WCAG 2.1 AA — screen reader tested, keyboard-only navigable, reduced motion support |
-| 📏 | **Performance Obsessed** | Every interaction has a p95 latency budget enforced in CI |
+|     | Feature                  | Details                                                                                 |
+| --- | ------------------------ | --------------------------------------------------------------------------------------- |
+| ⌨️  | **Keyboard-First**       | Vim-inspired bindings — navigate, edit, complete, and delete without touching the mouse |
+| 🔄  | **Instant Undo**         | Session-long undo stack — no confirmation dialogs, just `u` to reverse any action       |
+| ✏️  | **Inline Editing**       | Press `e` to edit in-place — no modals, no popups, no context switches                  |
+| 🌗  | **Dark & Light Themes**  | Toggle with `t` — respects `prefers-color-scheme` on first visit                        |
+| 📡  | **Offline-First**        | Service worker + IndexedDB — works without a connection, syncs when back online         |
+| ♿  | **Accessible**           | WCAG 2.1 AA — screen reader tested, keyboard-only navigable, reduced motion support     |
+| 📏  | **Performance Obsessed** | Every interaction has a p95 latency budget enforced in CI                               |
 
 ---
 
@@ -45,20 +45,20 @@ If it needs a loading spinner, it's too slow. If it needs a confirmation dialog,
 
 bmad-todo is designed to be driven entirely from the keyboard.
 
-| Key | Action |
-|-----|--------|
-| `n` | 📝 New task (focus capture line) |
-| `j` / `↓` | ⬇️ Move focus down |
-| `k` / `↑` | ⬆️ Move focus up |
-| `x` | ✅ Toggle task completion |
-| `e` | ✏️ Edit task inline |
-| `d` | 🗑️ Delete task (soft delete) |
-| `u` | ↩️ Undo last action |
-| `t` | 🌗 Toggle theme |
-| `Enter` | ✓ Confirm edit / Submit task |
-| `Escape` | ✕ Cancel edit |
-| `Ctrl/⌘ + Enter` | 🎯 Focus capture line from anywhere |
-| `Ctrl/⌘ + Shift + L` | 📊 Toggle dev latency overlay |
+| Key                  | Action                              |
+| -------------------- | ----------------------------------- |
+| `n`                  | 📝 New task (focus capture line)    |
+| `j` / `↓`            | ⬇️ Move focus down                  |
+| `k` / `↑`            | ⬆️ Move focus up                    |
+| `x`                  | ✅ Toggle task completion           |
+| `e`                  | ✏️ Edit task inline                 |
+| `d`                  | 🗑️ Delete task (soft delete)        |
+| `u`                  | ↩️ Undo last action                 |
+| `t`                  | 🌗 Toggle theme                     |
+| `Enter`              | ✓ Confirm edit / Submit task        |
+| `Escape`             | ✕ Cancel edit                       |
+| `Ctrl/⌘ + Enter`     | 🎯 Focus capture line from anywhere |
+| `Ctrl/⌘ + Shift + L` | 📊 Toggle dev latency overlay       |
 
 ---
 
@@ -67,7 +67,7 @@ bmad-todo is designed to be driven entirely from the keyboard.
 Every interaction has an enforced **p95 latency budget** — verified in CI, visible in dev mode.
 
 ```
- Interaction                  Budget          
+ Interaction                  Budget
 ╔══════════════════════════════╦═════════════════╗
 ║ Keystroke → render           ║     < 16ms  ⚡  ║
 ║ Completion → strikethrough   ║     < 50ms  ⚡  ║
@@ -87,17 +87,17 @@ Toggle the **dev latency overlay** with `Ctrl/⌘ + Shift + L` to see live p95 m
 
 This project has an explicit [Anti-Feature Contract](docs/ANTI-FEATURES.md) — a list of patterns **deliberately excluded**. Their absence is a feature, not a gap.
 
-| | Commitment | Why |
-|---|---|---|
-| 🚫 | No onboarding tours or tutorials | If it needs a tutorial, the interface isn't clear enough |
-| 🚫 | No usage stats or time tracking | A task list is not a productivity tracker |
-| 🚫 | No streaks, points, or gamification | Productivity tools should not manipulate behavior |
-| 🚫 | No social sharing or leaderboards | Tasks are private; comparison is corrosive |
-| 🚫 | No re-engagement notifications | The app serves the user, not the other way around |
-| 🚫 | No autocomplete that rewrites text | The user owns every character |
-| 🚫 | No sounds by default | Silence is the default |
-| 🚫 | No decorative animations | Motion budget is reserved for meaningful state changes |
-| 🚫 | No AI-based reordering | The user's order is the correct order |
+|     | Commitment                          | Why                                                      |
+| --- | ----------------------------------- | -------------------------------------------------------- |
+| 🚫  | No onboarding tours or tutorials    | If it needs a tutorial, the interface isn't clear enough |
+| 🚫  | No usage stats or time tracking     | A task list is not a productivity tracker                |
+| 🚫  | No streaks, points, or gamification | Productivity tools should not manipulate behavior        |
+| 🚫  | No social sharing or leaderboards   | Tasks are private; comparison is corrosive               |
+| 🚫  | No re-engagement notifications      | The app serves the user, not the other way around        |
+| 🚫  | No autocomplete that rewrites text  | The user owns every character                            |
+| 🚫  | No sounds by default                | Silence is the default                                   |
+| 🚫  | No decorative animations            | Motion budget is reserved for meaningful state changes   |
+| 🚫  | No AI-based reordering              | The user's order is the correct order                    |
 
 **Banned UI patterns:** toasts, skeleton loaders, spinners, confirmation dialogs, modals, celebration emoji. Enforced in CI via `scripts/check-anti-features.sh`.
 
@@ -234,15 +234,15 @@ pnpm dev
 
 ### Available Scripts
 
-| Script | Description |
-|--------|-------------|
-| `pnpm dev` | 🏃 Start API + web dev servers concurrently |
-| `pnpm build` | 📦 Build all workspace packages |
-| `pnpm test` | 🧪 Run Vitest unit & property tests |
-| `pnpm test:e2e` | 🎭 Run Playwright E2E tests |
-| `pnpm typecheck` | 🔍 TypeScript strict mode checks |
-| `pnpm lint` | 📏 ESLint (+ `lint:fix` to auto-fix) |
-| `pnpm format` | 💅 Prettier check (+ `format:fix` to auto-fix) |
+| Script           | Description                                    |
+| ---------------- | ---------------------------------------------- |
+| `pnpm dev`       | 🏃 Start API + web dev servers concurrently    |
+| `pnpm build`     | 📦 Build all workspace packages                |
+| `pnpm test`      | 🧪 Run Vitest unit & property tests            |
+| `pnpm test:e2e`  | 🎭 Run Playwright E2E tests                    |
+| `pnpm typecheck` | 🔍 TypeScript strict mode checks               |
+| `pnpm lint`      | 📏 ESLint (+ `lint:fix` to auto-fix)           |
+| `pnpm format`    | 💅 Prettier check (+ `format:fix` to auto-fix) |
 
 ---
 
@@ -260,16 +260,16 @@ Every push and PR runs **8 parallel quality gates** — code doesn't merge unles
          check        features  budget               budget
 ```
 
-| Gate | What it checks |
-|------|---------------|
-| 📏 **Lint** | ESLint + Prettier formatting |
-| 🔍 **Typecheck** | TypeScript strict mode |
-| 🧪 **Unit & Property** | Vitest + fast-check invariants |
-| 🚫 **Anti-Features** | Greps for banned patterns |
-| 📦 **Bundle Budget** | ≤ 50KB initial JS, ≤ 150KB total |
-| 🎭 **E2E + A11y** | Playwright journeys + axe-core audits |
-| 🏎️ **Latency Budget** | p95 interaction benchmarks |
-| 🔐 **Audit** | `pnpm audit` for vulnerable dependencies |
+| Gate                   | What it checks                           |
+| ---------------------- | ---------------------------------------- |
+| 📏 **Lint**            | ESLint + Prettier formatting             |
+| 🔍 **Typecheck**       | TypeScript strict mode                   |
+| 🧪 **Unit & Property** | Vitest + fast-check invariants           |
+| 🚫 **Anti-Features**   | Greps for banned patterns                |
+| 📦 **Bundle Budget**   | ≤ 50KB initial JS, ≤ 150KB total         |
+| 🎭 **E2E + A11y**      | Playwright journeys + axe-core audits    |
+| 🏎️ **Latency Budget**  | p95 interaction benchmarks               |
+| 🔐 **Audit**           | `pnpm audit` for vulnerable dependencies |
 
 ---
 
@@ -291,10 +291,10 @@ Every push and PR runs **8 parallel quality gates** — code doesn't merge unles
 
 ## 📖 Documentation
 
-| Document | Description |
-|----------|-------------|
-| [Anti-Feature Contract](docs/ANTI-FEATURES.md) | 🚫 What this app will never do |
-| [Contributing Guide](docs/CONTRIBUTING.md) | 🤝 Dev setup & code standards |
+| Document                                                   | Description                      |
+| ---------------------------------------------------------- | -------------------------------- |
+| [Anti-Feature Contract](docs/ANTI-FEATURES.md)             | 🚫 What this app will never do   |
+| [Contributing Guide](docs/CONTRIBUTING.md)                 | 🤝 Dev setup & code standards    |
 | [Screen Reader Checklist](docs/SCREEN-READER-CHECKLIST.md) | 🗣️ Manual VoiceOver verification |
 
 ---

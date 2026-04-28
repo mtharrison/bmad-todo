@@ -18,16 +18,23 @@ test("p95 enter-to-task-visible latency is under 100ms", async ({ page }) => {
     await page.evaluate((count: number) => {
       const list = document.querySelector<HTMLElement>(".task-list")!;
       (window as unknown as Record<string, unknown>).__PERF_START = performance.now();
-      (window as unknown as Record<string, unknown>).__PERF_RESULT = new Promise<number>((resolve) => {
-        const observer = new MutationObserver(() => {
-          if (list.querySelectorAll("li").length >= count) {
+      (window as unknown as Record<string, unknown>).__PERF_RESULT = new Promise<number>(
+        (resolve) => {
+          const observer = new MutationObserver(() => {
+            if (list.querySelectorAll("li").length >= count) {
+              observer.disconnect();
+              resolve(
+                performance.now() - (window as unknown as Record<string, number>).__PERF_START,
+              );
+            }
+          });
+          observer.observe(list, { childList: true, subtree: true });
+          setTimeout(() => {
             observer.disconnect();
-            resolve(performance.now() - ((window as unknown as Record<string, number>).__PERF_START));
-          }
-        });
-        observer.observe(list, { childList: true, subtree: true });
-        setTimeout(() => { observer.disconnect(); resolve(-1); }, 5000);
-      });
+            resolve(-1);
+          }, 5000);
+        },
+      );
     }, expectedCount);
 
     await input.press("Enter");
